@@ -29,4 +29,12 @@
 
 <script setup>
 import { RouterLink, RouterView } from "vue-router";
+import { useFinnhubStore } from "./stores/finnhub";
+import { onMounted } from "vue";
+
+const finnhubStore = useFinnhubStore();
+
+onMounted(() => {
+    finnhubStore.symbolSearch("AM");
+});
 </script>
