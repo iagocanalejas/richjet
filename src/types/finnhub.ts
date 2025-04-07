@@ -30,6 +30,15 @@ export interface TransactionItem {
     transactionType: "buy" | "sell";
 }
 
+export interface PortfolioItem {
+    symbol: string;
+    image: string;
+    type: string;
+    quantity: number;
+    totalPrice: number; // if quantity is 0, this is the win/loss
+    currentPrice: number;
+}
+
 export function symbolType2Image(from: string) {
     switch (from.toUpperCase()) {
         case "COMMON STOCK":

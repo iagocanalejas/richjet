@@ -7,13 +7,13 @@ export const useTransactionStore = defineStore("transaction", () => {
 
     function _loadTransaction() {
         console.log("loading transactions from localStorage");
-        const storedTransactions = localStorage.getItem("portfolio");
+        const storedTransactions = localStorage.getItem("transactions");
         transactions.value = storedTransactions ? JSON.parse(storedTransactions) : [];
     }
 
     function addTransaction(transaction: TransactionItem) {
         transactions.value.unshift(transaction);
-        localStorage.setItem("portfolio", JSON.stringify(transactions.value));
+        localStorage.setItem("transactions", JSON.stringify(transactions.value));
     }
 
     function removeTransaction(transaction: TransactionItem) {
@@ -21,7 +21,7 @@ export const useTransactionStore = defineStore("transaction", () => {
 
         if (lastIndex !== -1) {
             transactions.value.splice(lastIndex, 1);
-            localStorage.setItem("portfolio", JSON.stringify(transactions.value));
+            localStorage.setItem("transactions", JSON.stringify(transactions.value));
         }
     }
 

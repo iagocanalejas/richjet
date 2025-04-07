@@ -1,16 +1,13 @@
 <template>
-    <main class="justify-center min-h-[calc(100vh-72px)] bg-gray-900 text-white p-6">
-        <div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
-            <SearchComponent @on-search="debouncedFilterResults" />
-        </div>
-        <div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
-            <SharesListComponent
-                :values="filteredResults"
-                @on-favorite="toggleFavorite"
-                @on-transaction="addTransaction"
-            />
-        </div>
-    </main>
+	<main class="justify-center min-h-[calc(100vh-72px)] bg-gray-900 text-white p-6">
+		<div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
+			<SearchComponent @on-search="debouncedFilterResults" />
+		</div>
+		<div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
+			<SharesListComponent :values="filteredResults" @on-favorite="toggleFavorite"
+				@on-transaction="addTransaction" />
+		</div>
+	</main>
 </template>
 
 <script setup lang="ts">
@@ -31,27 +28,27 @@ const filteredResults: Ref<FinnhubStockSymbolForDisplay[]> = ref(watchlistStore.
 
 const debouncedFilterResults = debounce(_filterResults);
 async function _filterResults(query: string) {
-    if (!query) {
-        filteredResults.value = watchlistStore.watchlist;
-        return;
-    }
-    const results = (await finnhubStore.symbolSearch(query.toUpperCase())) as FinnhubStockSymbolForDisplay[];
-    if (results) {
-        const res = results.filter((s) => !s.symbol.includes("."));
-        res.forEach((s) => {
-            s.isFavorite = watchlistStore.isInWatchlist(s);
-            s.hideImage = false;
-        });
-        filteredResults.value = res;
-    }
+	if (!query) {
+		filteredResults.value = watchlistStore.watchlist;
+		return;
+	}
+	const results = (await finnhubStore.symbolSearch(query.toUpperCase())) as FinnhubStockSymbolForDisplay[];
+	if (results) {
+		const res = results.filter((s) => !s.symbol.includes("."));
+		res.forEach((s) => {
+			s.isFavorite = watchlistStore.isInWatchlist(s);
+			s.hideImage = false;
+		});
+		filteredResults.value = res;
+	}
 }
 
 function toggleFavorite(result: FinnhubStockSymbolForDisplay) {
-    result.isFavorite = !result.isFavorite;
-    if (result.isFavorite) {
-        watchlistStore.addToWatchlist(result);
-    } else {
-        watchlistStore.removeFromWatchlist(result);
-    }
+	result.isFavorite = !result.isFavorite;
+	if (result.isFavorite) {
+		watchlistStore.addToWatchlist(result);
+	} else {
+		watchlistStore.removeFromWatchlist(result);
+	}
 }
 </script>
