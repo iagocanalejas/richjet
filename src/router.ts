@@ -15,9 +15,9 @@ const router = createRouter({
             component: () => import("./views/SharesView.vue"),
         },
         {
-            path: "/indexes",
-            name: "indexes",
-            component: () => import("./views/PortfolioView.vue"),
+            path: "/transactions",
+            name: "transactions",
+            component: () => import("./views/TransactionsView.vue"),
         },
     ],
 });

@@ -14,13 +14,13 @@
                 to="/shares"
                 class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
             >
-                Market Shares
+                Shares
             </RouterLink>
             <RouterLink
-                to="/indexes"
+                to="/transactions"
                 class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
             >
-                Indexes
+                Transactions
             </RouterLink>
         </nav>
     </header>
