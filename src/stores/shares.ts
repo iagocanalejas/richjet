@@ -5,7 +5,7 @@ import { ref } from "vue";
 export const useWatchlistStore = defineStore("watchlist", () => {
     const watchlist = ref<FinnhubStockSymbolForDisplay[]>([]);
 
-    function _loadWatchlist() {
+    function init() {
         console.log("loading watchlist from localStorage");
         const storedWatchlist = localStorage.getItem("watchlist");
         watchlist.value = storedWatchlist ? JSON.parse(storedWatchlist) : [];
@@ -25,5 +25,5 @@ export const useWatchlistStore = defineStore("watchlist", () => {
         localStorage.setItem("watchlist", JSON.stringify(watchlist.value));
     }
 
-    return { _loadWatchlist, isInWatchlist, addToWatchlist, removeFromWatchlist, watchlist };
+    return { init, isInWatchlist, addToWatchlist, removeFromWatchlist, watchlist };
 });

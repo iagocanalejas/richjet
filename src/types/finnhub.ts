@@ -25,6 +25,7 @@ export interface TransactionItem {
     image: string;
     quantity: number;
     price: number;
+    currency: string;
     type: string;
     date: string;
     transactionType: "buy" | "sell";
@@ -37,6 +38,7 @@ export interface PortfolioItem {
     quantity: number;
     totalPrice: number; // if quantity is 0, this is the win/loss
     currentPrice: number;
+    currency: string;
 }
 
 export function symbolType2Image(from: string) {

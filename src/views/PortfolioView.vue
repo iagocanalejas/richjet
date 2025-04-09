@@ -13,13 +13,14 @@
 import PortfolioListComponent from "@/components/PortfolioListComponent.vue";
 import { useFinnhubStore } from "@/stores/finnhub";
 import { usePortfolioStore } from "@/stores/portfolio";
+import { storeToRefs } from "pinia";
 import { onBeforeMount } from "vue";
 
-const { portfolio } = usePortfolioStore();
+const { portfolio } = storeToRefs(usePortfolioStore());
 const finnhubStore = useFinnhubStore();
 
 onBeforeMount(() => {
-	portfolio.forEach(async (item) => {
+	portfolio.value.forEach(async (item) => {
 		if (item.quantity > 0) {
 			const quote = await finnhubStore.getStockQuote(item.symbol);
 			if (!quote) {

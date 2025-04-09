@@ -73,6 +73,8 @@
 import { symbolType2Image, type FinnhubStockSymbolForDisplay, type TransactionItem } from "@/types/finnhub";
 import { computed, ref } from "vue";
 import Observer from "./Observer.vue";
+import { storeToRefs } from "pinia";
+import { useSettingsStore } from "@/stores/settings";
 
 const ITEMS_PER_PATE = 20;
 
@@ -83,6 +85,8 @@ const props = defineProps({
 	},
 });
 const emit = defineEmits(["onFavorite", "onTransaction"]);
+
+const { currency } = storeToRefs(useSettingsStore());
 
 const currentPage = ref(0);
 const visibleItems = computed(() => {
@@ -102,6 +106,7 @@ function openContextModal(option: FinnhubStockSymbolForDisplay) {
 		quantity: 0,
 		date: new Date().toISOString(),
 		transactionType: "buy",
+		currency: currency.value,
 	};
 }
 
@@ -110,7 +115,7 @@ function buy(option: TransactionItem) {
 		alert("Please enter a valid quantity and price.");
 		return;
 	}
-	emit("onTransaction", option)
+	emit("onTransaction", option);
 	closeModal();
 }
 
@@ -120,7 +125,7 @@ function sell(option: TransactionItem) {
 		return;
 	}
 	option.transactionType = "sell";
-	emit("onTransaction", option)
+	emit("onTransaction", option);
 	closeModal();
 }
 

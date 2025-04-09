@@ -5,7 +5,7 @@ import { ref } from "vue";
 export const useTransactionStore = defineStore("transaction", () => {
     const transactions = ref<TransactionItem[]>([]);
 
-    function _loadTransaction() {
+    function init() {
         console.log("loading transactions from localStorage");
         const storedTransactions = localStorage.getItem("transactions");
         transactions.value = storedTransactions ? JSON.parse(storedTransactions) : [];
@@ -25,5 +25,5 @@ export const useTransactionStore = defineStore("transaction", () => {
         }
     }
 
-    return { _loadTransaction, addTransaction, removeTransaction, transactions };
+    return { init, addTransaction, removeTransaction, transactions };
 });

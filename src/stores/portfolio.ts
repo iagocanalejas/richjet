@@ -6,7 +6,7 @@ import { useTransactionStore } from "./transactions";
 export const usePortfolioStore = defineStore("portfolio", () => {
     const portfolio: Ref<PortfolioItem[]> = ref([]);
 
-    function _loadPortfolio() {
+    function init() {
         const { transactions } = useTransactionStore();
         transactions.forEach((transaction) => {
             const idx = portfolio.value.findIndex((item) => item.symbol === transaction.symbol);
@@ -26,10 +26,11 @@ export const usePortfolioStore = defineStore("portfolio", () => {
                     quantity: transaction.quantity,
                     totalPrice: transaction.price * transaction.quantity,
                     currentPrice: 0.0,
+                    currency: transaction.currency,
                 });
             }
         });
     }
 
-    return { _loadPortfolio, portfolio };
+    return { init, portfolio };
 });
