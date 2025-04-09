@@ -18,11 +18,11 @@ import { useFinnhubStore } from "@/stores/finnhub";
 import type { FinnhubStockSymbolForDisplay } from "@/types/finnhub";
 import { debounce } from "@/types/utils";
 import { useWatchlistStore } from "@/stores/shares";
-import { useTransactionStore } from "@/stores/transactions";
+import { usePortfolioStore } from "@/stores/portfolio";
 
 const finnhubStore = useFinnhubStore();
 const watchlistStore = useWatchlistStore();
-const { addTransaction } = useTransactionStore();
+const { addTransaction } = usePortfolioStore();
 
 const filteredResults: Ref<FinnhubStockSymbolForDisplay[]> = ref(watchlistStore.watchlist);
 

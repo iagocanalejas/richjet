@@ -26,6 +26,7 @@ export interface TransactionItem {
     quantity: number;
     price: number;
     currency: string;
+    comission: number;
     type: string;
     date: string;
     transactionType: "buy" | "sell";
@@ -38,6 +39,7 @@ export interface PortfolioItem {
     quantity: number;
     totalPrice: number; // if quantity is 0, this is the win/loss
     currentPrice: number;
+    comission: number;
     currency: string;
 }
 

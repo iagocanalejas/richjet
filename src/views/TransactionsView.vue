@@ -11,10 +11,10 @@
 
 <script setup lang="ts">
 import TransactionsListComponent from "@/components/TransactionsListComponent.vue";
-import { useTransactionStore } from "@/stores/transactions";
+import { usePortfolioStore } from "@/stores/portfolio";
 import { storeToRefs } from "pinia";
 
-const transactionStore = useTransactionStore();
-const { removeTransaction } = transactionStore;
-const { transactions } = storeToRefs(transactionStore);
+const portfolioStore = usePortfolioStore();
+const { removeTransaction } = portfolioStore;
+const { transactions } = storeToRefs(portfolioStore);
 </script>

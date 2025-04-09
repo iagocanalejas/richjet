@@ -53,6 +53,16 @@
 				<input id="price" v-model="selectedOption.price" type="number" min="0" step="0.01"
 					class="w-full bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
 			</div>
+			<div class="space-y-2">
+				<label for="price" class="text-sm">Comission</label>
+				<input id="price" v-model="selectedOption.comission" type="number" min="0" step="0.01"
+					class="w-full bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+			</div>
+			<div class="space-y-2">
+				<label for="date" class="text-sm">Date</label>
+				<input id="date" v-model="selectedOption.date" type="date"
+					class="w-full bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+			</div>
 			<button @click="buy(selectedOption)"
 				class="block w-full bg-green-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm transition">
 				Buy
@@ -88,11 +98,11 @@ const emit = defineEmits(["onFavorite", "onTransaction"]);
 
 const { currency } = storeToRefs(useSettingsStore());
 
+// pagination
 const currentPage = ref(0);
-const visibleItems = computed(() => {
-	return props.values.slice(0, (currentPage.value + 1) * ITEMS_PER_PATE);
-});
+const visibleItems = computed(() => props.values.slice(0, (currentPage.value + 1) * ITEMS_PER_PATE));
 
+// modal
 const isModalOpen = ref(false);
 const selectedOption = ref<TransactionItem | null>(null);
 
@@ -104,7 +114,8 @@ function openContextModal(option: FinnhubStockSymbolForDisplay) {
 		type: option.type,
 		price: 0,
 		quantity: 0,
-		date: new Date().toISOString(),
+		comission: 0,
+		date: new Date().toISOString().split("T")[0],
 		transactionType: "buy",
 		currency: currency.value,
 	};

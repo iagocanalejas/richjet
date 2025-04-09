@@ -11,23 +11,8 @@
 
 <script setup lang="ts">
 import PortfolioListComponent from "@/components/PortfolioListComponent.vue";
-import { useFinnhubStore } from "@/stores/finnhub";
 import { usePortfolioStore } from "@/stores/portfolio";
 import { storeToRefs } from "pinia";
-import { onBeforeMount } from "vue";
 
 const { portfolio } = storeToRefs(usePortfolioStore());
-const finnhubStore = useFinnhubStore();
-
-onBeforeMount(() => {
-	portfolio.value.forEach(async (item) => {
-		if (item.quantity > 0) {
-			const quote = await finnhubStore.getStockQuote(item.symbol);
-			if (!quote) {
-				console.error(`Failed to fetch quote for ${item.symbol}`);
-			}
-			item.currentPrice = quote?.c || 0.0;
-		}
-	});
-});
 </script>
