@@ -5,15 +5,18 @@
 		</div>
 		<nav class="flex space-x-4 ml-auto">
 			<RouterLink to="/"
-				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300">
+				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
+				active-class="bg-gray-700 text-gray-300" exact>
 				Portfolio
 			</RouterLink>
 			<RouterLink to="/shares"
-				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300">
+				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
+				active-class="bg-gray-700 text-gray-300">
 				Shares
 			</RouterLink>
 			<RouterLink to="/transactions"
-				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300">
+				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
+				active-class="bg-gray-700 text-gray-300">
 				Transactions
 			</RouterLink>
 			<div class="relative">
@@ -30,15 +33,8 @@
 
 <script setup lang="ts">
 import { RouterLink, RouterView } from "vue-router";
-import { useFinnhubStore } from "./stores/finnhub";
-import { onMounted } from "vue";
 import { useSettingsStore } from "./stores/settings";
 import { storeToRefs } from "pinia";
 
-const finnhubStore = useFinnhubStore();
 const { currency } = storeToRefs(useSettingsStore());
-
-onMounted(() => {
-	finnhubStore.symbolSearch("AM");
-});
 </script>

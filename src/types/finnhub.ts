@@ -36,11 +36,13 @@ export interface PortfolioItem {
     symbol: string;
     image: string;
     type: string;
-    quantity: number;
-    totalPrice: number; // if quantity is 0, this is the win/loss
-    currentPrice: number;
-    comission: number;
     currency: string;
+    quantity: number;
+    currentPrice: number;
+    currentInvested: number;
+    totalInverted: number;
+    totalRetrieved: number;
+    comission: number;
 }
 
 export function symbolType2Image(from: string) {

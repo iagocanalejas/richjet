@@ -10,7 +10,8 @@
 						{{ result.symbol }}
 					</span>
 				</div>
-				<button @click="emit('onFavorite', result)" class="text-gray-400 hover:text-red-500 transition-colors"
+				<button @click.stop="emit('onFavorite', result)"
+					class="text-gray-400 hover:text-red-500 transition-colors"
 					:title="result.isFavorite ? 'Unfavorite' : 'Favorite'">
 					<svg v-if="result.isFavorite" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
 						viewBox="0 0 24 24" class="w-5 h-5">

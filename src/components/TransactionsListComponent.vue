@@ -45,6 +45,8 @@ import { type TransactionItem } from "@/types/finnhub";
 import { computed, ref } from "vue";
 import Observer from "./Observer.vue";
 
+// TODO: differentiate between buy and sell transactions
+
 const emit = defineEmits(["onRemove"]);
 
 const ITEMS_PER_PATE = 20;

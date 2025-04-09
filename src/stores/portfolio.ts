@@ -11,15 +11,26 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 
     async function init() {
         console.log("loading transactions from localStorage");
-        const storedTransactions = localStorage.getItem("transactions");
-        transactions.value = storedTransactions ? JSON.parse(storedTransactions) : [];
+        const stored = localStorage.getItem("transactions");
+        const parsedTransactions: TransactionItem[] = stored ? JSON.parse(stored) : [];
 
-        transactions.value.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        transactions.value.forEach(_updatePortfolio);
+        // Sort once before assigning, avoids extra reactivity triggering if using Vue
+        parsedTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        transactions.value = parsedTransactions;
+
+        for (let transaction of transactions.value) {
+            await _updatePortfolio(transaction);
+        }
+
+        portfolio.value.sort((a, b) => {
+            if (a.quantity === 0 && b.quantity !== 0) return 1;
+            if (a.quantity !== 0 && b.quantity === 0) return -1;
+            return a.currentInvested - b.currentInvested;
+        });
     }
 
     function addTransaction(transaction: TransactionItem) {
-        transactions.value.push(transaction);
+        transactions.value.unshift(transaction);
         localStorage.setItem("transactions", JSON.stringify(transactions.value));
         _updatePortfolio(transaction);
     }
@@ -37,14 +48,17 @@ export const usePortfolioStore = defineStore("portfolio", () => {
         const idx = portfolio.value.findIndex((item) => item.symbol === transaction.symbol);
         if (transaction.type === "buy") {
             portfolio.value[idx].quantity -= transaction.quantity;
-            portfolio.value[idx].totalPrice -= transaction.price * transaction.quantity;
-            portfolio.value[idx].comission -= transaction.comission;
             if (portfolio.value[idx].quantity <= 0) {
                 portfolio.value.splice(idx, 1);
+                return;
             }
+            portfolio.value[idx].currentInvested -= transaction.price * transaction.quantity;
+            portfolio.value[idx].totalInverted -= transaction.price * transaction.quantity;
+            portfolio.value[idx].comission -= transaction.comission;
         } else {
             portfolio.value[idx].quantity += transaction.quantity;
-            portfolio.value[idx].totalPrice += transaction.price * transaction.quantity;
+            portfolio.value[idx].currentInvested += transaction.price * transaction.quantity;
+            portfolio.value[idx].totalRetrieved -= transaction.price * transaction.quantity;
             portfolio.value[idx].comission -= transaction.comission;
         }
     }
@@ -54,11 +68,13 @@ export const usePortfolioStore = defineStore("portfolio", () => {
         if (idx >= 0) {
             if (transaction.transactionType === "buy") {
                 portfolio.value[idx].quantity += transaction.quantity;
-                portfolio.value[idx].totalPrice += transaction.price * transaction.quantity;
+                portfolio.value[idx].currentInvested += transaction.price * transaction.quantity;
+                portfolio.value[idx].totalInverted += transaction.price * transaction.quantity;
                 portfolio.value[idx].comission += transaction.comission;
             } else {
                 portfolio.value[idx].quantity -= transaction.quantity;
-                portfolio.value[idx].totalPrice -= transaction.price * transaction.quantity;
+                portfolio.value[idx].currentInvested -= transaction.price * transaction.quantity;
+                portfolio.value[idx].totalRetrieved += transaction.price * transaction.quantity;
                 portfolio.value[idx].comission += transaction.comission;
             }
         } else {
@@ -70,10 +86,12 @@ export const usePortfolioStore = defineStore("portfolio", () => {
                 symbol: transaction.symbol,
                 image: transaction.image,
                 type: transaction.type,
-                quantity: transaction.quantity,
-                totalPrice: transaction.price * transaction.quantity,
-                currentPrice: quote?.c || 0.0,
                 currency: transaction.currency,
+                quantity: transaction.quantity,
+                currentPrice: quote?.c || 0.0,
+                currentInvested: transaction.price * transaction.quantity,
+                totalInverted: transaction.price * transaction.quantity,
+                totalRetrieved: 0,
                 comission: transaction.comission,
             });
         }
