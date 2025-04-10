@@ -2,22 +2,22 @@ import { defineStore } from "pinia";
 import { type PortfolioItem, type TransactionItem } from "@/types/finnhub";
 import { ref, type Ref } from "vue";
 import { useFinnhubStore } from "./finnhub";
+import { useGoogleStore } from "./google";
 
 export const usePortfolioStore = defineStore("portfolio", () => {
     const portfolio: Ref<PortfolioItem[]> = ref([]);
     const transactions = ref<TransactionItem[]>([]);
 
     const finnhubStore = useFinnhubStore();
+    const googleStore = useGoogleStore();
 
-    // TODO: change localStorage to use GDrive
-    async function init() {
-        console.log("loading transactions from localStorage");
-        const stored = localStorage.getItem("transactions");
-        const transactionsForPortfolio: TransactionItem[] = stored ? JSON.parse(stored) : [];
+    async function init(loadedTransactions?: TransactionItem[]) {
+        const transactionsForPortfolio = loadedTransactions ?? [];
 
         // Sort once before assigning, avoids extra reactivity triggering if using Vue
         transactionsForPortfolio.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         transactions.value = [...transactionsForPortfolio].reverse();
+        portfolio.value = [];
 
         for (let transaction of transactionsForPortfolio) {
             await _updatePortfolio(transaction);
@@ -32,7 +32,8 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 
     function addTransaction(transaction: TransactionItem) {
         transactions.value.unshift(transaction);
-        localStorage.setItem("transactions", JSON.stringify(transactions.value));
+        console.log("synced from addTransaction");
+        googleStore.syncData();
         _updatePortfolio(transaction);
     }
 
@@ -43,7 +44,8 @@ export const usePortfolioStore = defineStore("portfolio", () => {
         }
 
         transactions.value.splice(lastIndex, 1);
-        localStorage.setItem("transactions", JSON.stringify(transactions.value));
+        console.log("synced from removeTransaction");
+        googleStore.syncData();
 
         // inverse update the portfolio
         const idx = portfolio.value.findIndex((item) => item.symbol === transaction.symbol);

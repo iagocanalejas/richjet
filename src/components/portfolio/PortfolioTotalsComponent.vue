@@ -7,21 +7,11 @@
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Current</h2>
 			<p class="text-lg font-semibold" :class="{
-				'text-green-400': portfolioCurrentValue > 0,
-				'text-red-400': portfolioCurrentValue < 0,
-				'text-white': portfolioCurrentValue === 0,
+				'text-green-400': portfolioCurrentValue - totalInvested > 0,
+				'text-red-400': portfolioCurrentValue - totalInvested < 0,
+				'text-white': portfolioCurrentValue - totalInvested === 0,
 			}">
 				{{ formatCurrency(portfolioCurrentValue, currency) }}
-			</p>
-		</div>
-		<div class="text-center">
-			<h2 class="text-sm font-medium text-gray-400">Rentability</h2>
-			<p class="text-lg font-semibold" :class="{
-				'text-green-400': rentability > 0,
-				'text-red-400': rentability < 0,
-				'text-white': rentability === 0,
-			}">
-				{{ rentability.toFixed(2) }}%
 			</p>
 		</div>
 		<div class="text-center">
@@ -32,6 +22,16 @@
 				'text-white': closedPositions === 0,
 			}">
 				{{ formatCurrency(closedPositions, currency) }}
+			</p>
+		</div>
+		<div class="text-center">
+			<h2 class="text-sm font-medium text-gray-400">Rentability</h2>
+			<p class="text-lg font-semibold" :class="{
+				'text-green-400': rentability > 0,
+				'text-red-400': rentability < 0,
+				'text-white': rentability === 0,
+			}">
+				{{ rentability.toFixed(2) }}%
 			</p>
 		</div>
 	</section>
@@ -60,7 +60,9 @@ const portfolioCurrentValue = computed(() => {
 });
 
 const rentability = computed(() => {
-	return totalInvested.value ? ((portfolioCurrentValue.value - totalInvested.value) / totalInvested.value) * 100 : 0;
+	return totalInvested.value
+		? ((portfolioCurrentValue.value + closedPositions.value - totalInvested.value) / totalInvested.value) * 100
+		: 0;
 });
 
 const closedPositions = computed(() => {

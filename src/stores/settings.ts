@@ -1,15 +1,10 @@
-import type { GoogleUser } from "@/types/google";
+import type { Settings } from "@/types/google";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-
-type Settings = {
-    currency: string;
-    token?: google.accounts.oauth2.TokenResponse;
-    user?: GoogleUser;
-};
+import { useGoogleStore } from "./google";
 
 export const useSettingsStore = defineStore("settings", () => {
-    const API_KEY = import.meta.env.VITE_EXCHANGERATE_API_KEY;
+    const googleStore = useGoogleStore();
 
     const _settings = ref<Settings>({ currency: "USD" });
     const conversionRate = ref<number>(1.0);
@@ -20,29 +15,20 @@ export const useSettingsStore = defineStore("settings", () => {
         },
         async set(currency: string) {
             _settings.value.currency = currency;
-            localStorage.setItem("settings", JSON.stringify(_settings.value));
+            console.log("synced from set currency");
+            googleStore.syncData();
             await _getConvertionRate(currency);
         },
     });
 
-    const auth_token = computed(() => _settings.value.token);
-    const user = computed(() => _settings.value.user);
-
-    async function init() {
-        console.log("loading settings from localStorage");
-        const storedSettings = localStorage.getItem("settings");
-        if (storedSettings) {
-            _settings.value = JSON.parse(storedSettings);
-            await _getConvertionRate(_settings.value.currency);
+    async function init(settings?: Settings) {
+        if (settings) {
+            _settings.value = settings;
         } else {
-            localStorage.setItem("settings", JSON.stringify(_settings.value));
+            console.log("synced from init settings");
+            googleStore.syncData();
         }
-    }
-
-    function updateGoogleData(token?: google.accounts.oauth2.TokenResponse, user?: GoogleUser) {
-        _settings.value.token = token;
-        _settings.value.user = user;
-        localStorage.setItem("settings", JSON.stringify(_settings.value));
+        await _getConvertionRate(_settings.value.currency);
     }
 
     async function _getConvertionRate(currency: string) {
@@ -51,7 +37,10 @@ export const useSettingsStore = defineStore("settings", () => {
         }
         try {
             const url = "https://v6.exchangerate-api.com/v6/";
-            const response = await fetch(`${url}${API_KEY}/pair/USD/${currency}`, { method: "GET" });
+            const response = await fetch(
+                `${url}${import.meta.env.VITE_PUBLIC_EXCHANGERATE_API_KEY}/pair/USD/${currency}`,
+                { method: "GET" },
+            );
             if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
@@ -62,5 +51,5 @@ export const useSettingsStore = defineStore("settings", () => {
         }
     }
 
-    return { init, currency, conversionRate, googleUser: user, auth_token, updateGoogleData };
+    return { init, currency, conversionRate, settings: _settings };
 });

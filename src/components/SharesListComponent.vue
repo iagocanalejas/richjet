@@ -65,11 +65,11 @@
 					class="w-full bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
 			</div>
 			<button @click="buy(selectedOption)"
-				class="block w-full bg-green-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm transition">
+				class="block w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm transition">
 				Buy
 			</button>
 			<button @click="sell(selectedOption)"
-				class="block w-full bg-blue-600 hover:bg-green-700 text-white py-2 rounded-md text-sm transition">
+				class="block w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-md text-sm transition">
 				Sell
 			</button>
 			<button @click="closeModal"
