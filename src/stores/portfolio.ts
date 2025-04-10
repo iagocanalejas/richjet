@@ -9,6 +9,7 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 
     const finnhubStore = useFinnhubStore();
 
+    // TODO: change localStorage to use GDrive
     async function init() {
         console.log("loading transactions from localStorage");
         const stored = localStorage.getItem("transactions");

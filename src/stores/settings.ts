@@ -1,8 +1,11 @@
+import type { GoogleUser } from "@/types/google";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
 type Settings = {
     currency: string;
+    token?: google.accounts.oauth2.TokenResponse;
+    user?: GoogleUser;
 };
 
 export const useSettingsStore = defineStore("settings", () => {
@@ -18,10 +21,12 @@ export const useSettingsStore = defineStore("settings", () => {
         async set(currency: string) {
             _settings.value.currency = currency;
             localStorage.setItem("settings", JSON.stringify(_settings.value));
-
             await _getConvertionRate(currency);
         },
     });
+
+    const auth_token = computed(() => _settings.value.token);
+    const user = computed(() => _settings.value.user);
 
     async function init() {
         console.log("loading settings from localStorage");
@@ -32,6 +37,12 @@ export const useSettingsStore = defineStore("settings", () => {
         } else {
             localStorage.setItem("settings", JSON.stringify(_settings.value));
         }
+    }
+
+    function updateGoogleData(token?: google.accounts.oauth2.TokenResponse, user?: GoogleUser) {
+        _settings.value.token = token;
+        _settings.value.user = user;
+        localStorage.setItem("settings", JSON.stringify(_settings.value));
     }
 
     async function _getConvertionRate(currency: string) {
@@ -51,5 +62,5 @@ export const useSettingsStore = defineStore("settings", () => {
         }
     }
 
-    return { init, currency, conversionRate };
+    return { init, currency, conversionRate, googleUser: user, auth_token, updateGoogleData };
 });
