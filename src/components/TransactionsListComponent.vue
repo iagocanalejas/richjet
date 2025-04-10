@@ -1,27 +1,35 @@
 <template>
 	<div v-if="values.length" class="mt-6 w-full">
-		<div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
+		<div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
 			<div>Asset</div>
+			<div class="text-right">Date</div>
 			<div class="text-right">Avg Price</div>
 			<div class="text-right">Quantity</div>
 			<div class="text-right">Total</div>
 			<div class="text-right"></div>
 		</div>
 		<ul class="space-y-4">
-			<li v-for="(result, index) in visibleItems" :key="index"
-				class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 items-center bg-gray-800 p-4 rounded-lg cursor-pointer">
+			<li v-for="(item, index) in visibleItems" :key="index" :class="[
+				'grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4',
+				item.transactionType === 'buy' ? 'border-green-600 bg-gray-800' : 'border-red-600 bg-gray-800',
+			]">
 				<div class="flex items-center space-x-3">
-					<img :src="result.image" alt="Icon" class="w-6 h-6 object-contain" />
+					<img :src="item.image" alt="Icon" class="w-6 h-6 object-contain" />
 					<span class="text-sm font-medium tracking-wide text-white">
-						{{ result.symbol }}
+						{{ item.symbol }}
 					</span>
 				</div>
-				<div class="text-sm text-right">{{ result.price }} €</div>
-				<div class="text-sm text-right">{{ result.quantity }}</div>
-				<div class="text-sm text-right">{{ result.quantity * result.price }} €</div>
+				<div class="text-sm text-right">{{ new Date(item.date).toLocaleDateString() }}</div>
+				<div class="text-sm text-right">{{ formatCurrency(item.price, currency) }}</div>
+				<div class="text-sm text-right">
+					{{ item.transactionType === "buy" ? "+" : "-" }}{{ item.quantity }}
+				</div>
+				<div class="text-sm text-right">
+					{{ item.transactionType === "sell" ? "+" : "-" }}
+					{{ formatCurrency(item.quantity * item.price, currency) }}
+				</div>
 				<div class="text-gray-400 text-right">
-					<button @click="emit('onRemove', result)" class="hover:text-red-500 transition-colors"
-						title="Remove">
+					<button @click="emit('onRemove', item)" class="hover:text-red-500 transition-colors" title="Remove">
 						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
 							class="w-5 h-5">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -44,10 +52,12 @@
 import { type TransactionItem } from "@/types/finnhub";
 import { computed, ref } from "vue";
 import Observer from "./Observer.vue";
-
-// TODO: differentiate between buy and sell transactions
+import { formatCurrency } from "@/types/utils";
+import { storeToRefs } from "pinia";
+import { useSettingsStore } from "@/stores/settings";
 
 const emit = defineEmits(["onRemove"]);
+const { currency } = storeToRefs(useSettingsStore());
 
 const ITEMS_PER_PATE = 20;
 

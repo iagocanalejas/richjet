@@ -12,13 +12,13 @@ export const usePortfolioStore = defineStore("portfolio", () => {
     async function init() {
         console.log("loading transactions from localStorage");
         const stored = localStorage.getItem("transactions");
-        const parsedTransactions: TransactionItem[] = stored ? JSON.parse(stored) : [];
+        const transactionsForPortfolio: TransactionItem[] = stored ? JSON.parse(stored) : [];
 
         // Sort once before assigning, avoids extra reactivity triggering if using Vue
-        parsedTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        transactions.value = parsedTransactions;
+        transactionsForPortfolio.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        transactions.value = [...transactionsForPortfolio].reverse();
 
-        for (let transaction of transactions.value) {
+        for (let transaction of transactionsForPortfolio) {
             await _updatePortfolio(transaction);
         }
 

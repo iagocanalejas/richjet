@@ -12,7 +12,7 @@
 		'text-red-400': winOrLoss < 0,
 		'text-white': winOrLoss === 0,
 	}">
-		{{ winOrLoss.toFixed(2) }} €
+		{{ formatCurrency(winOrLoss, currency) }}
 	</div>
 	<div class="text-sm text-right" :class="{
 		'text-green-400': rentability > 0,
@@ -24,12 +24,17 @@
 </template>
 
 <script lang="ts" setup>
+import { useSettingsStore } from "@/stores/settings";
 import type { PortfolioItem } from "@/types/finnhub";
+import { formatCurrency } from "@/types/utils";
+import { storeToRefs } from "pinia";
 import { computed } from "vue";
 
 const props = defineProps({
 	item: { type: Object as () => PortfolioItem, required: true },
 });
+
+const { currency } = storeToRefs(useSettingsStore());
 
 const winOrLoss = computed(() => {
 	return props.item.totalRetrieved - (props.item.totalInverted + props.item.comission);

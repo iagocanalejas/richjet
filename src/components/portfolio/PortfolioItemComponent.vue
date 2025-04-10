@@ -11,10 +11,10 @@
 			'text-red-400': rentability < 0,
 			'text-white': rentability === 0,
 		}">
-			{{ item.currentPrice.toFixed(2) }} €
+			{{ formatCurrency(item.currentPrice, currency) }}
 		</div>
 		<div class="text-xs text-gray-400">
-			({{ ((item.currentInvested + item.comission) / item.quantity).toFixed(2) }} €)
+			({{ formatCurrency((item.currentInvested + item.comission) / item.quantity, currency) }})
 		</div>
 	</div>
 	<div class="text-sm text-right text-white">
@@ -26,9 +26,9 @@
 			'text-red-400': rentability < 0,
 			'text-white': rentability === 0,
 		}">
-			{{ (item.currentPrice * item.quantity).toFixed(2) }} €
+			{{ formatCurrency(item.currentPrice * item.quantity, currency) }}
 		</div>
-		<div class="text-xs text-gray-400">({{ (item.currentInvested + item.comission).toFixed(2) }} €)</div>
+		<div class="text-xs text-gray-400">({{ formatCurrency(item.currentInvested + item.comission, currency) }})</div>
 	</div>
 	<div class="text-sm text-right" :class="{
 		'text-green-400': rentability > 0,
@@ -40,12 +40,17 @@
 </template>
 
 <script lang="ts" setup>
+import { useSettingsStore } from "@/stores/settings";
 import type { PortfolioItem } from "@/types/finnhub";
+import { formatCurrency } from "@/types/utils";
+import { storeToRefs } from "pinia";
 import { computed } from "vue";
 
 const props = defineProps({
 	item: { type: Object as () => PortfolioItem, required: true },
 });
+
+const { currency } = storeToRefs(useSettingsStore());
 
 const rentability = computed(() => {
 	const buyPrice = props.item.currentInvested + props.item.comission;
