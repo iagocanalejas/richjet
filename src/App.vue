@@ -59,22 +59,29 @@ import { useSettingsStore } from "./stores/settings";
 import { storeToRefs } from "pinia";
 import { onMounted, ref } from "vue";
 import { useGoogleStore } from "./stores/google";
+import { useWatchlistStore } from "./stores/shares";
+import { usePortfolioStore } from "./stores/portfolio";
 
 const googleStore = useGoogleStore();
-const { googleClient } = googleStore;
-const { currency, googleUser } = storeToRefs(useSettingsStore());
+const { client: googleClient, user: googleUser } = storeToRefs(googleStore);
+const { currency } = storeToRefs(useSettingsStore());
 
 const showMenu = ref(false);
 
 function signIn() {
-	googleClient?.requestAccessToken();
+	googleClient.value!.requestAccessToken();
 }
 
 function signOut(): void {
 	googleStore.revoke();
+	showMenu.value = false;
 }
 
-onMounted(() => {
-	googleStore.init();
+onMounted(async () => {
+	const config = await googleStore.init();
+
+	await useSettingsStore().init(config?.settings);
+	await useWatchlistStore().init(config?.watchlist);
+	await usePortfolioStore().init(config?.transactions);
 });
 </script>

@@ -1,14 +1,15 @@
 import { defineStore } from "pinia";
 import { type FinnhubStockSymbolForDisplay } from "@/types/finnhub";
 import { ref } from "vue";
+import { useGoogleStore } from "./google";
 
 export const useWatchlistStore = defineStore("watchlist", () => {
     const watchlist = ref<FinnhubStockSymbolForDisplay[]>([]);
 
-    function init() {
-        console.log("loading watchlist from localStorage");
-        const storedWatchlist = localStorage.getItem("watchlist");
-        watchlist.value = storedWatchlist ? JSON.parse(storedWatchlist) : [];
+    const googleStore = useGoogleStore();
+
+    async function init(watchlistSymbols?: FinnhubStockSymbolForDisplay[]) {
+        watchlist.value = watchlistSymbols || [];
     }
 
     function isInWatchlist(symbol: FinnhubStockSymbolForDisplay) {
@@ -17,12 +18,14 @@ export const useWatchlistStore = defineStore("watchlist", () => {
 
     function addToWatchlist(symbol: FinnhubStockSymbolForDisplay) {
         watchlist.value.push(symbol);
-        localStorage.setItem("watchlist", JSON.stringify(watchlist.value));
+        console.log("synced from addToWatchlist");
+        googleStore.syncData();
     }
 
     function removeFromWatchlist(symbol: FinnhubStockSymbolForDisplay) {
         watchlist.value = watchlist.value.filter((s) => s.symbol !== symbol.symbol);
-        localStorage.setItem("watchlist", JSON.stringify(watchlist.value));
+        console.log("synced from removeFromWatchlist");
+        googleStore.syncData();
     }
 
     return { init, isInWatchlist, addToWatchlist, removeFromWatchlist, watchlist };

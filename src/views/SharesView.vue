@@ -4,8 +4,17 @@
 			<SearchComponent @on-search="debouncedFilterResults" />
 		</div>
 		<div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
-			<SharesListComponent :values="filteredResults" @on-favorite="toggleFavorite"
-				@on-transaction="addTransaction" />
+			<div v-if="watchlist.length" class="w-full mt-4">
+				<h2 class="text-xl font-semibold mb-2">Favorites</h2>
+				<SharesListComponent :values="watchlist" @on-favorite="toggleFavorite"
+					@on-transaction="addTransaction" />
+			</div>
+
+			<div class="w-full mt-4">
+				<h2 class="text-xl font-semibold mb-2">Shares</h2>
+				<SharesListComponent :values="filteredResults" @on-favorite="toggleFavorite"
+					@on-transaction="addTransaction" />
+			</div>
 		</div>
 	</main>
 </template>
@@ -19,24 +28,27 @@ import type { FinnhubStockSymbolForDisplay } from "@/types/finnhub";
 import { debounce } from "@/types/utils";
 import { useWatchlistStore } from "@/stores/shares";
 import { usePortfolioStore } from "@/stores/portfolio";
+import { storeToRefs } from "pinia";
 
 const finnhubStore = useFinnhubStore();
-const watchlistStore = useWatchlistStore();
 const { addTransaction } = usePortfolioStore();
+const watchlistStore = useWatchlistStore();
+const { watchlist } = storeToRefs(watchlistStore);
+const { isInWatchlist, addToWatchlist, removeFromWatchlist } = watchlistStore;
 
-const filteredResults: Ref<FinnhubStockSymbolForDisplay[]> = ref(watchlistStore.watchlist);
+const filteredResults: Ref<FinnhubStockSymbolForDisplay[]> = ref([]);
 
 const debouncedFilterResults = debounce(_filterResults);
 async function _filterResults(query: string) {
 	if (!query) {
-		filteredResults.value = watchlistStore.watchlist;
+		filteredResults.value = [];
 		return;
 	}
 	const results = (await finnhubStore.symbolSearch(query.toUpperCase())) as FinnhubStockSymbolForDisplay[];
 	if (results) {
 		const res = results.filter((s) => !s.symbol.includes("."));
 		res.forEach((s) => {
-			s.isFavorite = watchlistStore.isInWatchlist(s);
+			s.isFavorite = isInWatchlist(s);
 			s.hideImage = false;
 		});
 		filteredResults.value = res;
@@ -45,10 +57,6 @@ async function _filterResults(query: string) {
 
 function toggleFavorite(result: FinnhubStockSymbolForDisplay) {
 	result.isFavorite = !result.isFavorite;
-	if (result.isFavorite) {
-		watchlistStore.addToWatchlist(result);
-	} else {
-		watchlistStore.removeFromWatchlist(result);
-	}
+	result.isFavorite ? addToWatchlist(result) : removeFromWatchlist(result);
 }
 </script>
