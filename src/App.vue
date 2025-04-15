@@ -59,7 +59,7 @@ import { useSettingsStore } from "./stores/settings";
 import { storeToRefs } from "pinia";
 import { onMounted, ref } from "vue";
 import { useGoogleStore } from "./stores/google";
-import { useWatchlistStore } from "./stores/shares";
+import { useWatchlistStore } from "./stores/watchlist";
 import { usePortfolioStore } from "./stores/portfolio";
 
 const googleStore = useGoogleStore();
@@ -67,6 +67,8 @@ const { client: googleClient, user: googleUser } = storeToRefs(googleStore);
 const { currency } = storeToRefs(useSettingsStore());
 
 const showMenu = ref(false);
+
+// TODO: loading state
 
 function signIn() {
 	googleClient.value!.requestAccessToken();

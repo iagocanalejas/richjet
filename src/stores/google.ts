@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import type { FileData, GoogleUser } from "@/types/google";
 import { usePortfolioStore } from "./portfolio";
-import { useWatchlistStore } from "./shares";
+import { useWatchlistStore } from "./watchlist";
 import { useSettingsStore } from "./settings";
 
 export const useGoogleStore = defineStore("google-store", () => {

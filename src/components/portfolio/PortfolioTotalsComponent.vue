@@ -6,31 +6,19 @@
 		</div>
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Current</h2>
-			<p class="text-lg font-semibold" :class="{
-				'text-green-400': portfolioCurrentValue - totalInvested > 0,
-				'text-red-400': portfolioCurrentValue - totalInvested < 0,
-				'text-white': portfolioCurrentValue - totalInvested === 0,
-			}">
+			<p class="text-lg font-semibold" :class="magicClass(portfolioCurrentValue - totalInvested)">
 				{{ formatCurrency(portfolioCurrentValue, currency) }}
 			</p>
 		</div>
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Closed</h2>
-			<p class="text-lg font-semibold" :class="{
-				'text-green-400': closedPositions > 0,
-				'text-red-400': closedPositions < 0,
-				'text-white': closedPositions === 0,
-			}">
+			<p class="text-lg font-semibold" :class="magicClass(closedPositions)">
 				{{ formatCurrency(closedPositions, currency) }}
 			</p>
 		</div>
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Rentability</h2>
-			<p class="text-lg font-semibold" :class="{
-				'text-green-400': rentability > 0,
-				'text-red-400': rentability < 0,
-				'text-white': rentability === 0,
-			}">
+			<p class="text-lg font-semibold" :class="magicClass(rentability)">
 				{{ rentability.toFixed(2) }}%
 			</p>
 		</div>
@@ -40,7 +28,7 @@
 <script lang="ts" setup>
 import { usePortfolioStore } from "@/stores/portfolio";
 import { useSettingsStore } from "@/stores/settings";
-import { formatCurrency } from "@/types/utils";
+import { formatCurrency, magicClass } from "@/types/utils";
 import { storeToRefs } from "pinia";
 import { computed } from "vue";
 

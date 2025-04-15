@@ -1,19 +1,28 @@
 <template>
 	<div v-if="values.length" class="mt-6 w-full">
 		<ul class="space-y-4">
-			<li v-for="(result, index) in visibleItems" :key="index" @click="openContextModal(result)"
+			<li v-for="(item, index) in visibleItems" :key="index" @click="openContextModal(item)"
 				class="flex items-center justify-between bg-gray-800 p-4 rounded-lg space-x-4 cursor-pointer">
 				<div class="flex items-center space-x-3">
-					<img v-show="!result.hideImage" :src="imageURLfor(result)" alt="Icon"
-						@error="result.hideImage = true" class="w-6 h-6 object-contain" />
+					<img v-show="!item.hideImage" :src="imageURLfor(item)" alt="Icon" @error="item.hideImage = true"
+						class="w-6 h-6 object-contain" />
 					<span class="text-sm font-medium tracking-wide text-white">
-						{{ result.symbol }}
+						{{ item.symbol }}
 					</span>
 				</div>
-				<button @click.stop="emit('onFavorite', result)"
+				<div v-if="item.price" class="flex items-center space-x-4 text-sm">
+					<div class="text-right" :class="magicClass(item.price - item.openPrice!)">
+						<div class="font-semibold">{{ formatCurrency(item.price, currency) }}</div>
+						<div class="text-xs">
+							{{ item.price - item.openPrice! > 0 ? '+' : '' }}
+							{{ ((item.price - item.openPrice!) / item.openPrice! * 100).toFixed(2) }}%
+						</div>
+					</div>
+				</div>
+				<button @click.stop="emit('onFavorite', item)"
 					class="text-gray-400 hover:text-red-500 transition-colors"
-					:title="result.isFavorite ? 'Unfavorite' : 'Favorite'">
-					<svg v-if="result.isFavorite" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+					:title="item.isFavorite ? 'Unfavorite' : 'Favorite'">
+					<svg v-if="item.isFavorite" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
 						viewBox="0 0 24 24" class="w-5 h-5">
 						<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2
 						5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5
@@ -86,6 +95,7 @@ import { computed, ref } from "vue";
 import Observer from "./Observer.vue";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
+import { formatCurrency, magicClass } from "@/types/utils";
 
 const ITEMS_PER_PATE = 20;
 

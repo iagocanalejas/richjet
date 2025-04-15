@@ -5,20 +5,12 @@
 			{{ item.symbol }}
 		</span>
 	</div>
-	<div class="text-sm text-right text-white">0</div>
-	<div class="text-sm text-right text-white">0</div>
-	<div class="text-sm text-right" :class="{
-		'text-green-400': winOrLoss > 0,
-		'text-red-400': winOrLoss < 0,
-		'text-white': winOrLoss === 0,
-	}">
+	<div class="text-sm text-right text-white">--</div>
+	<div class="text-sm text-right text-white">--</div>
+	<div class="text-sm text-right" :class="magicClass(winOrLoss)">
 		{{ formatCurrency(winOrLoss, currency) }}
 	</div>
-	<div class="text-sm text-right" :class="{
-		'text-green-400': rentability > 0,
-		'text-red-400': rentability < 0,
-		'text-white': rentability === 0,
-	}">
+	<div class="text-sm text-right" :class="magicClass(rentability)">
 		{{ rentability.toFixed(2) }} %
 	</div>
 </template>
@@ -26,7 +18,7 @@
 <script lang="ts" setup>
 import { useSettingsStore } from "@/stores/settings";
 import type { PortfolioItem } from "@/types/finnhub";
-import { formatCurrency } from "@/types/utils";
+import { formatCurrency, magicClass } from "@/types/utils";
 import { storeToRefs } from "pinia";
 import { computed } from "vue";
 

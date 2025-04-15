@@ -9,10 +9,9 @@
 			<div class="text-right"></div>
 		</div>
 		<ul class="space-y-4">
-			<li v-for="(item, index) in visibleItems" :key="index" :class="[
-				'grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4',
-				item.transactionType === 'buy' ? 'border-green-600 bg-gray-800' : 'border-red-600 bg-gray-800',
-			]">
+			<li v-for="(item, index) in visibleItems" :key="index" 
+				class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4" 
+				:class="[item.transactionType === 'buy' ? 'border-green-600 bg-gray-800' : 'border-red-600 bg-gray-800']">
 				<div class="flex items-center space-x-3">
 					<img :src="item.image" alt="Icon" class="w-6 h-6 object-contain" />
 					<span class="text-sm font-medium tracking-wide text-white">
