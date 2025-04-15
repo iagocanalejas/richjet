@@ -3,7 +3,6 @@ import { defineConfigWithVueTs, vueTsConfigs } from "@vue/eslint-config-typescri
 import pluginVue from "eslint-plugin-vue";
 import pluginVitest from "@vitest/eslint-plugin";
 import pluginOxlint from "eslint-plugin-oxlint";
-import skipFormatting from "@vue/eslint-config-prettier/skip-formatting";
 
 export default defineConfigWithVueTs(
 	{
@@ -21,5 +20,4 @@ export default defineConfigWithVueTs(
 		files: ["src/**/__tests__/*"],
 	},
 	...pluginOxlint.configs["flat/recommended"],
-	skipFormatting,
 );

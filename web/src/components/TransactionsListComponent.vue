@@ -9,8 +9,8 @@
 			<div class="text-right"></div>
 		</div>
 		<ul class="space-y-4">
-			<li v-for="(item, index) in visibleItems" :key="index" 
-				class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4" 
+			<li v-for="(item, index) in visibleItems" :key="index"
+				class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4"
 				:class="[item.transactionType === 'buy' ? 'border-green-600 bg-gray-800' : 'border-red-600 bg-gray-800']">
 				<div class="flex items-center space-x-3">
 					<img :src="item.image" alt="Icon" class="w-6 h-6 object-contain" />
@@ -20,13 +20,8 @@
 				</div>
 				<div class="text-sm text-right">{{ new Date(item.date).toLocaleDateString() }}</div>
 				<div class="text-sm text-right">{{ formatCurrency(item.price, currency) }}</div>
-				<div class="text-sm text-right">
-					{{ item.transactionType === "buy" ? "+" : "-" }}{{ item.quantity }}
-				</div>
-				<div class="text-sm text-right">
-					{{ item.transactionType === "sell" ? "+" : "-" }}
-					{{ formatCurrency(item.quantity * item.price, currency) }}
-				</div>
+				<div class="text-sm text-right">{{ item.quantity }}</div>
+				<div class="text-sm text-right">{{ formatCurrency(item.quantity * item.price, currency) }}</div>
 				<div class="text-gray-400 text-right">
 					<button @click="emit('onRemove', item)" class="hover:text-red-500 transition-colors" title="Remove">
 						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"

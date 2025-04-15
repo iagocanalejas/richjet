@@ -3,8 +3,7 @@ import { type FinnhubStockQuote, type FinnhubStockSymbol } from "@/types/finnhub
 import { useSettingsStore } from "./settings";
 
 export const useFinnhubStore = defineStore("finnhub", () => {
-	const BASE_URL = "https://finnhub.io/api/v1";
-	const API_KEY = import.meta.env.VITE_FINNHUB_API_KEY;
+	const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 
 	const { conversionRate } = storeToRefs(useSettingsStore());
 
@@ -12,10 +11,8 @@ export const useFinnhubStore = defineStore("finnhub", () => {
 
 	async function symbolSearch(query: string) {
 		try {
-			const response = await fetch(`${BASE_URL}/search?q=${query}&token=${API_KEY}`, { method: "GET" });
-			if (!response.ok) {
-				throw new Error("Network response was not ok");
-			}
+			const response = await fetch(`${BASE_URL}/search?q=${query}`, { method: "GET" });
+			if (!response.ok) throw new Error("Network response was not ok");
 
 			const data: { count: number; result: FinnhubStockSymbol[] } = await response.json();
 			return data.result;
@@ -28,10 +25,9 @@ export const useFinnhubStore = defineStore("finnhub", () => {
 		if (quoteCache.has(symbol)) return quoteCache.get(symbol)!;
 
 		try {
-			const response = await fetch(`${BASE_URL}/quote?symbol=${symbol}&token=${API_KEY}`, { method: "GET" });
-			if (!response.ok) {
-				throw new Error("Network response was not ok");
-			}
+			const response = await fetch(`${BASE_URL}/quote/${symbol}`, { method: "GET" });
+			if (!response.ok) throw new Error("Network response was not ok");
+
 			let data: FinnhubStockQuote = await response.json();
 			data = {
 				c: data.c * conversionRate.value,
