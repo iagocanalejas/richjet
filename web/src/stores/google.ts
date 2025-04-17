@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import type { FileData, GoogleUser } from "@/types/google";
 import { usePortfolioStore } from "./portfolio";
 import { useWatchlistStore } from "./watchlist";
@@ -8,12 +8,25 @@ import { useSettingsStore } from "./settings";
 export const useGoogleStore = defineStore("google-store", () => {
 	const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 	const FILE_NAME = import.meta.env.VITE_GOOGLE_FILE_NAME;
+	const GOOGLE_FILE_ID_KEY = "google-file-id";
+	const GOOGLE_SETTINGS_KEY = "google-settings";
 
 	const client = ref<google.accounts.oauth2.TokenClient>();
 	const token = ref<google.accounts.oauth2.TokenResponse>();
 	const user = ref<GoogleUser>();
 
-	let fileId: string | undefined;
+	let _fileId: string | undefined = localStorage.getItem(GOOGLE_FILE_ID_KEY) ?? undefined;
+	const fileId = computed<string | undefined>({
+		get: () => _fileId,
+		set: (value) => {
+			_fileId = value;
+			if (!value) {
+				localStorage.removeItem(GOOGLE_FILE_ID_KEY);
+			} else {
+				localStorage.setItem(GOOGLE_FILE_ID_KEY, value);
+			}
+		}
+	})
 
 	const _clientCallback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
 		if (!tokenResponse.access_token) return;
@@ -26,16 +39,14 @@ export const useGoogleStore = defineStore("google-store", () => {
 			user.value = (await res.json()) as GoogleUser;
 		}
 
-		localStorage.setItem("google-settings", JSON.stringify({ token: token.value, user: user.value }));
+		localStorage.setItem(GOOGLE_SETTINGS_KEY, JSON.stringify({ token: token.value, user: user.value }));
 
 		// @ts-ignore : reset the callback to the original function
 		client.value!.callback = _clientCallback;
 	};
 
 	async function init() {
-		fileId = localStorage.getItem("google-file-id") ?? undefined;
-
-		const storedSettings = localStorage.getItem("google-settings");
+		const storedSettings = localStorage.getItem(GOOGLE_SETTINGS_KEY);
 		if (storedSettings) {
 			const parsedSettings = JSON.parse(storedSettings);
 			token.value = parsedSettings.token;
@@ -59,8 +70,9 @@ export const useGoogleStore = defineStore("google-store", () => {
 		window.google.accounts.oauth2.revoke(token.value?.access_token, () => {
 			token.value = undefined;
 			user.value = undefined;
-			localStorage.removeItem("google-settings");
-			localStorage.removeItem("google-file-id");
+			_fileId = undefined;
+			localStorage.removeItem(GOOGLE_SETTINGS_KEY);
+			localStorage.removeItem(GOOGLE_FILE_ID_KEY);
 		});
 
 	}
@@ -70,10 +82,10 @@ export const useGoogleStore = defineStore("google-store", () => {
 		console.log("downloading google data");
 
 		try {
-			if (!fileId) await _searchSavedFileID();
-			if (!fileId) return;
+			if (!fileId.value) await _searchSavedFileID();
+			if (!fileId.value) return;
 
-			const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+			const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId.value}?alt=media`, {
 				headers: { Authorization: `Bearer ${token.value?.access_token}` },
 			});
 
@@ -110,7 +122,7 @@ export const useGoogleStore = defineStore("google-store", () => {
 		};
 		const fileBlob = new Blob([JSON.stringify(data)], { type: "text/plain" });
 		const metadata = { name: FILE_NAME, mimeType: "text/plain" };
-		if (!fileId) {
+		if (!fileId.value) {
 			// @ts-ignore
 			metadata.parents = ["appDataFolder"];
 		}
@@ -120,11 +132,12 @@ export const useGoogleStore = defineStore("google-store", () => {
 		form.append("file", fileBlob);
 
 		try {
-			const url = fileId
-				? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+			console.log(fileId.value ? `syncing google data: ${fileId.value}` : "creating google data");
+			const url = fileId.value
+				? `https://www.googleapis.com/upload/drive/v3/files/${fileId.value}?uploadType=multipart`
 				: "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
 			const res = await fetch(url, {
-				method: fileId ? "PATCH" : "POST",
+				method: fileId.value ? "PATCH" : "POST",
 				headers: new Headers({ Authorization: "Bearer " + token.value?.access_token }),
 				body: form,
 			});
@@ -136,8 +149,7 @@ export const useGoogleStore = defineStore("google-store", () => {
 			}
 			console.log("google data synced");
 
-			fileId = (await res.json()).id;
-			localStorage.setItem("google-file-id", fileId!);
+			fileId.value = (await res.json()).id;
 		} catch (error) {
 			console.warn("Attempting token refresh:", error);
 			// @ts-ignore
@@ -150,7 +162,7 @@ export const useGoogleStore = defineStore("google-store", () => {
 	}
 
 	async function _searchSavedFileID() {
-		if (fileId) return fileId;
+		if (fileId.value) return;
 		if (!token.value?.access_token) throw new Error("No access token available");
 		console.log("searching for file ID");
 
@@ -168,8 +180,7 @@ export const useGoogleStore = defineStore("google-store", () => {
 			}
 
 			const { files } = await res.json();
-			fileId = files?.[0]?.id;
-			localStorage.setItem("google-file-id", fileId!);
+			fileId.value = files?.[0]?.id;
 		} catch (error) {
 			console.warn("Attempting token refresh:", error);
 			// @ts-ignore

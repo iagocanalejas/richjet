@@ -94,6 +94,7 @@ function signOut(): void {
 
 onMounted(async () => {
 	const config = await googleStore.init();
+	console.log("google client initialized", config);
 
 	await useSettingsStore().init(config?.settings);
 	await useWatchlistStore().init(config?.watchlist);
