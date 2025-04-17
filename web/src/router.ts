@@ -19,6 +19,16 @@ const router = createRouter({
 			name: "transactions",
 			component: () => import("./views/TransactionsView.vue"),
 		},
+		{
+			path: "/privacy-policy",
+			name: "privacy-policy",
+			component: () => import("./views/PrivacyPolicy.vue"),
+		},
+		{  // TODO:
+			path: "/conditions",
+			name: "conditions",
+			component: () => import("./views/Conditions.vue"),
+		},
 	],
 });
 

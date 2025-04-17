@@ -1,8 +1,9 @@
 <template>
 	<header class="flex items-center justify-between p-4 bg-gray-800 text-white shadow-md">
-		<div class="flex items-center space-x-4">
-			<img src="@/assets/logo.svg" alt="Logo" class="h-10 w-10" />
-		</div>
+		<RouterLink to="/" class="flex items-center space-x-2 hover:opacity-80 transition">
+			<img src="@/assets/logo.png" alt="Logo" class="h-10 w-10" />
+			<span class="text-xl font-semibold text-white">RichJet</span>
+		</RouterLink>
 		<nav class="flex space-x-4 ml-auto">
 			<RouterLink to="/"
 				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
@@ -50,7 +51,18 @@
 			</div>
 		</nav>
 	</header>
+
 	<RouterView />
+
+	<footer class="bg-gray-900 text-gray-400 py-6">
+		<div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+			<p class="text-sm">&copy; {{ currentYear }}. All rights reserved.</p>
+			<nav class="flex space-x-4">
+				<RouterLink to="/privacy-policy" class="hover:text-gray-200 transition">Privacy Policy</RouterLink>
+				<RouterLink to="/conditions" class="hover:text-gray-200 transition">Terms & Conditions</RouterLink>
+			</nav>
+		</div>
+	</footer>
 </template>
 
 <script setup lang="ts">
@@ -65,6 +77,7 @@ import { usePortfolioStore } from "./stores/portfolio";
 const googleStore = useGoogleStore();
 const { client: googleClient, user: googleUser } = storeToRefs(googleStore);
 const { currency } = storeToRefs(useSettingsStore());
+const currentYear = new Date().getFullYear()
 
 const showMenu = ref(false);
 
