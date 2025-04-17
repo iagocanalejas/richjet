@@ -52,6 +52,7 @@
 		</nav>
 	</header>
 
+	<LoadingBar />
 	<RouterView />
 
 	<footer class="bg-gray-900 text-gray-400 py-6">
@@ -73,6 +74,7 @@ import { onMounted, ref } from "vue";
 import { useGoogleStore } from "./stores/google";
 import { useWatchlistStore } from "./stores/watchlist";
 import { usePortfolioStore } from "./stores/portfolio";
+import LoadingBar from "./components/LoadingBar.vue";
 
 const googleStore = useGoogleStore();
 const { client: googleClient, user: googleUser } = storeToRefs(googleStore);
@@ -80,8 +82,6 @@ const { currency } = storeToRefs(useSettingsStore());
 const currentYear = new Date().getFullYear()
 
 const showMenu = ref(false);
-
-// TODO: loading state
 
 function signIn() {
 	googleClient.value!.requestAccessToken();

@@ -1,4 +1,5 @@
 <template>
+	<LoadingSpinner />
 	<div v-if="values.length" class="mt-6 w-full">
 		<ul class="space-y-4">
 			<li v-for="(item, index) in visibleItems" :key="index" @click="openContextModal(item)"
@@ -96,6 +97,7 @@ import Observer from "./Observer.vue";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
 import { formatCurrency, magicClass } from "@/types/utils";
+import LoadingSpinner from "./LoadingSpinner.vue";
 
 const ITEMS_PER_PATE = 20;
 
