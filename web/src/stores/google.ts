@@ -98,12 +98,19 @@ export const useGoogleStore = defineStore("google-store", () => {
 			return (await res.json()) as FileData;
 		} catch (error) {
 			console.warn("Attempting token refresh:", error);
-			// @ts-ignore
-			client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
-				await _clientCallback(tokenResponse);
-				await downloadData();
-			};
-			client.value!.requestAccessToken();
+			return new Promise<FileData | undefined>((resolve, reject) => {
+				// @ts-ignore
+				client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
+					try {
+						await _clientCallback(tokenResponse);
+						resolve(await downloadData());
+					} catch (err) {
+						reject(err);
+					}
+				};
+
+				client.value!.requestAccessToken();
+			});
 		}
 	}
 
@@ -152,12 +159,19 @@ export const useGoogleStore = defineStore("google-store", () => {
 			fileId.value = (await res.json()).id;
 		} catch (error) {
 			console.warn("Attempting token refresh:", error);
-			// @ts-ignore
-			client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
-				await _clientCallback(tokenResponse);
-				await syncData();
-			};
-			client.value!.requestAccessToken();
+			return new Promise<void>((resolve, reject) => {
+				// @ts-ignore
+				client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
+					try {
+						await _clientCallback(tokenResponse);
+						resolve(await syncData());
+					} catch (err) {
+						reject(err);
+					}
+				};
+
+				client.value!.requestAccessToken();
+			});
 		}
 	}
 
@@ -183,12 +197,19 @@ export const useGoogleStore = defineStore("google-store", () => {
 			fileId.value = files?.[0]?.id;
 		} catch (error) {
 			console.warn("Attempting token refresh:", error);
-			// @ts-ignore
-			client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
-				await _clientCallback(tokenResponse);
-				await _searchSavedFileID();
-			};
-			client.value!.requestAccessToken();
+			return new Promise<void>((resolve, reject) => {
+				// @ts-ignore
+				client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
+					try {
+						await _clientCallback(tokenResponse);
+						resolve(await _searchSavedFileID());
+					} catch (err) {
+						reject(err);
+					}
+				};
+
+				client.value!.requestAccessToken();
+			});
 		}
 	}
 
