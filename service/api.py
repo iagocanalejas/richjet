@@ -14,7 +14,7 @@ cors_origins = []
 if os.getenv("DEBUG", False):
     cors_origins = ["http://localhost:5173"]
 if os.getenv("RENDER", False):
-    cors_origins = ["https://richjet-web.onrender.com"]
+    cors_origins = ["https://richjet-web.onrender.com", "https://iagocanalejas.com"]
 
 app.add_middleware(
     CORSMiddleware,

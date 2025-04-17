@@ -24,7 +24,7 @@ const router = createRouter({
 			name: "privacy-policy",
 			component: () => import("./views/PrivacyPolicy.vue"),
 		},
-		{  // TODO:
+		{
 			path: "/conditions",
 			name: "conditions",
 			component: () => import("./views/Conditions.vue"),
