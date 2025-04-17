@@ -11,6 +11,7 @@
 						{{ item.symbol }}
 					</span>
 				</div>
+
 				<div v-if="item.price" class="flex items-center space-x-4 text-sm">
 					<div class="text-right" :class="magicClass(item.price - item.openPrice!)">
 						<div class="font-semibold">{{ formatCurrency(item.price, currency) }}</div>
@@ -20,26 +21,30 @@
 						</div>
 					</div>
 				</div>
-				<button @click.stop="emit('onFavorite', item)"
-					class="text-gray-400 hover:text-red-500 transition-colors"
-					:title="item.isFavorite ? 'Unfavorite' : 'Favorite'">
-					<svg v-if="item.isFavorite" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-						viewBox="0 0 24 24" class="w-5 h-5">
-						<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2
+
+				<div class="flex items-center space-x-2 relative">
+					<button @click.stop="emit('onFavorite', item)"
+						class="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+						:title="item.isFavorite ? 'Unfavorite' : 'Favorite'">
+						<svg v-if="item.isFavorite" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+							viewBox="0 0 24 24" class="w-5 h-5">
+							<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2
 						5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5
 						2.09C13.09 3.81 14.76 3 16.5 3 19.58 3
 						22 5.42 22 8.5c0 3.78-3.4 6.86-8.55
 						11.54L12 21.35z" />
-					</svg>
-					<svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-						class="w-5 h-5">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2
+						</svg>
+						<svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+							stroke="currentColor" class="w-5 h-5">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2
 							5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5
 							2.09C13.09 3.81 14.76 3 16.5 3 19.58 3
 							22 5.42 22 8.5c0 3.78-3.4 6.86-8.55
 							11.54L12 21.35z" />
-					</svg>
-				</button>
+						</svg>
+					</button>
+					<button class="text-gray-400 hover:text-white cursor-pointer" title="Options"> ⋮ </button>
+				</div>
 			</li>
 		</ul>
 
@@ -52,41 +57,8 @@
 
 	<div v-if="isModalOpen && selectedOption"
 		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
-		<div class="bg-gray-900 text-white p-6 rounded-lg shadow-xl space-y-4 w-80">
-			<p class="text-lg font-semibold text-center">Choose an option for {{ selectedOption.symbol }}</p>
-			<div class="space-y-2">
-				<label for="quantity" class="text-sm">Quantity</label>
-				<input id="quantity" v-model="selectedOption.quantity" type="number" min="1" step="1"
-					class="w-full bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-			</div>
-			<div class="space-y-2">
-				<label for="price" class="text-sm">Price</label>
-				<input id="price" v-model="selectedOption.price" type="number" min="0" step="0.01"
-					class="w-full bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-			</div>
-			<div class="space-y-2">
-				<label for="price" class="text-sm">Comission</label>
-				<input id="price" v-model="selectedOption.comission" type="number" min="0" step="0.01"
-					class="w-full bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-			</div>
-			<div class="space-y-2">
-				<label for="date" class="text-sm">Date</label>
-				<input id="date" v-model="selectedOption.date" type="date"
-					class="w-full bg-gray-700 text-white p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-			</div>
-			<button @click="buy(selectedOption)"
-				class="block w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm transition">
-				Buy
-			</button>
-			<button @click="sell(selectedOption)"
-				class="block w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-md text-sm transition">
-				Sell
-			</button>
-			<button @click="closeModal"
-				class="block w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-md text-sm transition">
-				Cancel
-			</button>
-		</div>
+		<TransactionModal v-if="isModalOpen && selectedOption" :selectedOption="selectedOption" @buy="buy" @sell="sell"
+			@close="closeModal" />
 	</div>
 </template>
 
@@ -98,6 +70,7 @@ import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
 import { formatCurrency, magicClass } from "@/types/utils";
 import LoadingSpinner from "./LoadingSpinner.vue";
+import TransactionModal from "./TransactionModal.vue";
 
 const ITEMS_PER_PATE = 20;
 
