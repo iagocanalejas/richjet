@@ -16,16 +16,18 @@
 		</ul>
 	</div>
 
-	<div v-else class="mt-6 w-full text-center text-gray-500">
+	<div v-else-if="!isLoading" class="mt-6 w-full text-center text-gray-500">
 		<p class="text-sm">No results found.</p>
 	</div>
 </template>
 
 <script lang="ts" setup>
+import { useLoadingStore } from "@/stores/loading";
 import PortfolioItemComponent from "./PortfolioItemComponent.vue";
 import PortfolioTradeItemComponent from "./PortfolioTradeItemComponent.vue";
 import { usePortfolioStore } from "@/stores/portfolio";
 import { storeToRefs } from "pinia";
 
 const { portfolio } = storeToRefs(usePortfolioStore());
+const { isLoading } = storeToRefs(useLoadingStore());
 </script>

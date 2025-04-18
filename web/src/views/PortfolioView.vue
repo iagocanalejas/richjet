@@ -4,6 +4,7 @@
 			<PortfolioTotalsComponent />
 		</div>
 		<div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
+			<LoadingSpinner />
 			<PortfolioListComponent />
 		</div>
 		<!-- TODO: Dividends -->
@@ -11,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import PortfolioListComponent from "@/components/portfolio/PortfolioListComponent.vue";
 import PortfolioTotalsComponent from "@/components/portfolio/PortfolioTotalsComponent.vue";
 </script>

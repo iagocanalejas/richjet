@@ -51,7 +51,7 @@
 		<Observer @intersect="currentPage++" />
 	</div>
 
-	<div v-else class="mt-6 w-full text-center text-gray-500">
+	<div v-else-if="!isLoading" class="mt-6 w-full text-center text-gray-500">
 		<p class="text-sm">No results found.</p>
 	</div>
 
@@ -71,6 +71,7 @@ import { useSettingsStore } from "@/stores/settings";
 import { formatCurrency, magicClass } from "@/types/utils";
 import LoadingSpinner from "./LoadingSpinner.vue";
 import TransactionModal from "./TransactionModal.vue";
+import { useLoadingStore } from "@/stores/loading";
 
 const ITEMS_PER_PATE = 20;
 
@@ -83,6 +84,7 @@ const props = defineProps({
 const emit = defineEmits(["onFavorite", "onTransaction"]);
 
 const { currency } = storeToRefs(useSettingsStore());
+const { isLoading } = storeToRefs(useLoadingStore());
 
 // pagination
 const currentPage = ref(0);

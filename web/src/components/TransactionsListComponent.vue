@@ -1,4 +1,5 @@
 <template>
+	<LoadingSpinner />
 	<div v-if="values.length" class="mt-6 w-full">
 		<div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
 			<div>Asset</div>
@@ -37,7 +38,7 @@
 		<Observer @intersect="currentPage++" />
 	</div>
 
-	<div v-else class="mt-6 w-full text-center text-gray-500">
+	<div v-else-if="!isLoading" class="mt-6 w-full text-center text-gray-500">
 		<p class="text-sm">No results found.</p>
 	</div>
 </template>
@@ -49,9 +50,12 @@ import Observer from "./Observer.vue";
 import { formatCurrency } from "@/types/utils";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
+import { useLoadingStore } from "@/stores/loading";
+import LoadingSpinner from "./LoadingSpinner.vue";
 
 const emit = defineEmits(["onRemove"]);
 const { currency } = storeToRefs(useSettingsStore());
+const { isLoading } = storeToRefs(useLoadingStore());
 
 const ITEMS_PER_PATE = 20;
 
