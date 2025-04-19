@@ -5,23 +5,23 @@
 			<span class="text-xl font-semibold text-white">RichJet</span>
 		</RouterLink>
 		<nav class="flex space-x-4 ml-auto">
-			<RouterLink to="/"
+			<RouterLink v-if="isLogged" to="/"
 				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
 				active-class="bg-gray-700 text-gray-300" exact>
 				Portfolio
 			</RouterLink>
-			<RouterLink to="/shares"
+			<RouterLink v-if="isLogged" to="/shares"
 				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
 				active-class="bg-gray-700 text-gray-300">
 				Shares
 			</RouterLink>
-			<RouterLink to="/transactions"
+			<RouterLink v-if="isLogged" to="/transactions"
 				class="px-3 py-2 rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300"
 				active-class="bg-gray-700 text-gray-300">
 				Transactions
 			</RouterLink>
 
-			<div class="relative">
+			<div v-if="isLogged" class="relative">
 				<select v-model="currency"
 					class="appearance-none bg-gray-700 text-white pl-8 py-2 rounded-lg pr-8 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer">
 					<option value="USD">USD</option>
@@ -53,7 +53,8 @@
 	</header>
 
 	<LoadingBar />
-	<RouterView />
+	<LandingView v-if="!isLogged" @sign-in="signIn" />
+	<RouterView v-else />
 
 	<footer class="bg-gray-900 text-gray-400 py-6">
 		<div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -75,9 +76,10 @@ import { useGoogleStore } from "./stores/google";
 import { useWatchlistStore } from "./stores/watchlist";
 import { usePortfolioStore } from "./stores/portfolio";
 import LoadingBar from "./components/LoadingBar.vue";
+import LandingView from "./views/LandingView.vue";
 
 const googleStore = useGoogleStore();
-const { client: googleClient, user: googleUser } = storeToRefs(googleStore);
+const { client: googleClient, user: googleUser, isLogged } = storeToRefs(googleStore);
 const { currency } = storeToRefs(useSettingsStore());
 const currentYear = new Date().getFullYear()
 

@@ -22,12 +22,12 @@ const router = createRouter({
 		{
 			path: "/privacy-policy",
 			name: "privacy-policy",
-			component: () => import("./views/PrivacyPolicy.vue"),
+			component: () => import("./views/legal/PrivacyPolicy.vue"),
 		},
 		{
 			path: "/conditions",
 			name: "conditions",
-			component: () => import("./views/Conditions.vue"),
+			component: () => import("./views/legal/Conditions.vue"),
 		},
 	],
 });

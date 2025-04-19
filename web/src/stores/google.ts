@@ -28,6 +28,8 @@ export const useGoogleStore = defineStore("google-store", () => {
 		}
 	})
 
+	const isLogged = computed(() => !!token.value?.access_token);
+
 	const _clientCallback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
 		if (!tokenResponse.access_token) return;
 		token.value = tokenResponse;
@@ -214,5 +216,5 @@ export const useGoogleStore = defineStore("google-store", () => {
 	}
 
 
-	return { client, user, init, revoke, syncData, downloadData };
+	return { client, user, isLogged, init, revoke, syncData, downloadData };
 });
