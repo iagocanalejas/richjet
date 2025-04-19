@@ -1,4 +1,5 @@
 <template>
+	<!-- TODO: add landing page for non logged users -->
 	<header class="flex items-center justify-between p-4 bg-gray-800 text-white shadow-md">
 		<RouterLink to="/" class="flex items-center space-x-2 hover:opacity-80 transition">
 			<img src="@/assets/logo.png" alt="Logo" class="h-10 w-10" />
