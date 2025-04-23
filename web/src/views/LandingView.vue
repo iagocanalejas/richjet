@@ -65,7 +65,7 @@
 			<p class="mb-6">
 				Join thousands of investors using RichJet's portfolio tracker to stay organized and ahead.
 			</p>
-			<button @click.stop="emit('signIn')"
+			<button @click.stop="emit('sign-in')"
 				class="bg-white text-blue-700 font-semibold px-6 py-3 rounded-md hover:bg-gray-200 transition">
 				Start Now with RichJet — It’s Free
 			</button>
@@ -74,5 +74,5 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits(['signIn'])
+const emit = defineEmits(['sign-in'])
 </script>

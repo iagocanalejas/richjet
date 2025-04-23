@@ -6,7 +6,7 @@ export function debounce<T extends (...args: any[]) => void>(fn: T, delay = 300)
 	};
 }
 
-export function formatCurrency(value: number, currency: string): string {
+export function formatCurrency(value: number, currency: string, convertionRate?: number): string {
 	const userLocale = mapWeirdLocales(navigator.language || "en-US");
 	const formatter = new Intl.NumberFormat(userLocale, {
 		style: "currency",
@@ -14,7 +14,7 @@ export function formatCurrency(value: number, currency: string): string {
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,
 	});
-	return formatter.format(value);
+	return formatter.format(value * (convertionRate ?? 1));
 }
 
 function mapWeirdLocales(locale: string) {

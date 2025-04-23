@@ -1,25 +1,25 @@
-export interface FinnhubStockSymbol {
-	currency: string;
-	description: string;
-	displaySymbol: string;
+export interface StockSymbol {
 	symbol: string;
-	symbol2: string;
+	name: string;
 	type: string;
+	currency: string;
+	region: string;
+	source: string;
 }
 
-export type FinnhubStockSymbolForDisplay = FinnhubStockSymbol & {
+export type StockSymbolForDisplay = StockSymbol & {
 	hideImage: boolean | undefined;
 	isFavorite: boolean | undefined;
 	price: number | undefined;
 	openPrice: number | undefined;
 };
 
-export interface FinnhubStockQuote {
-	c: number; // current price
-	h: number; // high price
-	l: number; // low price
-	o: number; // open price
-	pc: number; // previous close price
+export interface StockQuote {
+	current: number;
+	high: number;
+	low: number;
+	open: number;
+	previpus_close: number;
 }
 
 export interface TransactionItem {
@@ -31,7 +31,8 @@ export interface TransactionItem {
 	comission: number;
 	type: string;
 	date: string;
-	transactionType: "buy" | "sell";
+	source?: string;
+	transactionType: "buy" | "sell" | "dividend" | "dividend-cash";
 }
 
 export interface PortfolioItem {
@@ -50,6 +51,7 @@ export interface PortfolioItem {
 export function symbolType2Image(from: string) {
 	switch (from.toUpperCase()) {
 		case "COMMON STOCK":
+		case "GDR":
 			return "symbol";
 		case "CRYPTO":
 			return "crypto";

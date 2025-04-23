@@ -1,4 +1,4 @@
-import type { FinnhubStockSymbolForDisplay, TransactionItem } from "./finnhub";
+import type { StockSymbolForDisplay, TransactionItem } from "./stock";
 
 export interface GoogleUser {
     name: string;
@@ -16,5 +16,5 @@ export interface FileData {
     version: number;
     settings: Settings;
     transactions: TransactionItem[];
-    watchlist: FinnhubStockSymbolForDisplay[];
+    watchlist: StockSymbolForDisplay[];
 }

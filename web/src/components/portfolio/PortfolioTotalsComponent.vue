@@ -1,8 +1,10 @@
 <template>
-	<section class="p-6 bg-gray-800 rounded-xl shadow-md grid grid-cols-2 md:grid-cols-4 gap-4 text-white">
+	<section class="p-6 bg-gray-800 rounded-xl shadow-md grid grid-cols-3 md:grid-cols-5 gap-4 text-white">
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Invested</h2>
-			<p class="text-lg font-semibold text-white">{{ formatCurrency(totalInvested, currency) }}</p>
+			<p class="text-lg font-semibold text-white">
+				{{ formatCurrency(totalInvested, currency) }}
+			</p>
 		</div>
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Current</h2>
@@ -14,6 +16,12 @@
 			<h2 class="text-sm font-medium text-gray-400">Closed</h2>
 			<p class="text-lg font-semibold" :class="magicClass(closedPositions)">
 				{{ formatCurrency(closedPositions, currency) }}
+			</p>
+		</div>
+		<div class="text-center">
+			<h2 class="text-sm font-medium text-gray-400">Dividends</h2>
+			<p class="text-lg font-semibold text-green-400">
+				{{ formatCurrency(cashDividends, currency) }}
 			</p>
 		</div>
 		<div class="text-center">
@@ -32,8 +40,8 @@ import { formatCurrency, magicClass } from "@/types/utils";
 import { storeToRefs } from "pinia";
 import { computed } from "vue";
 
-const { portfolio } = storeToRefs(usePortfolioStore());
 const { currency } = storeToRefs(useSettingsStore());
+const { portfolio, cashDividends } = storeToRefs(usePortfolioStore());
 
 const totalInvested = computed(() => {
 	return portfolio.value
@@ -49,7 +57,7 @@ const portfolioCurrentValue = computed(() => {
 
 const rentability = computed(() => {
 	return totalInvested.value
-		? ((portfolioCurrentValue.value + closedPositions.value - totalInvested.value) / totalInvested.value) * 100
+		? ((portfolioCurrentValue.value + closedPositions.value + cashDividends.value - totalInvested.value) / totalInvested.value) * 100
 		: 0;
 });
 

@@ -4,7 +4,7 @@
 			<SearchComponent @on-search="query = $event" />
 		</div>
 		<div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
-			<TransactionsListComponent :values="filteredTransactions" @on-remove="removeTransaction" />
+			<TransactionsListComponent :values="filteredTransactions" @remove="removeTransaction" />
 		</div>
 	</main>
 </template>

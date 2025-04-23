@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TransactionItem } from "@/types/finnhub";
+import type { TransactionItem } from "@/types/stock";
 
 const props = defineProps({
 	selectedOption: {

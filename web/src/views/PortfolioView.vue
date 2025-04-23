@@ -7,7 +7,6 @@
 			<LoadingSpinner />
 			<PortfolioListComponent />
 		</div>
-		<!-- TODO: Dividends -->
 	</main>
 </template>
 

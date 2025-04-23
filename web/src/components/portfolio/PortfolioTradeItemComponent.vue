@@ -17,7 +17,7 @@
 
 <script lang="ts" setup>
 import { useSettingsStore } from "@/stores/settings";
-import type { PortfolioItem } from "@/types/finnhub";
+import type { PortfolioItem } from "@/types/stock";
 import { formatCurrency, magicClass } from "@/types/utils";
 import { storeToRefs } from "pinia";
 import { computed } from "vue";

@@ -14,7 +14,7 @@
 
 				<div v-if="item.price" class="flex items-center space-x-4 text-sm">
 					<div class="text-right" :class="magicClass(item.price - item.openPrice!)">
-						<div class="font-semibold">{{ formatCurrency(item.price, currency) }}</div>
+						<div class="font-semibold">{{ formatCurrency(item.price, currency, conversionRate) }}</div>
 						<div class="text-xs">
 							{{ item.price - item.openPrice! > 0 ? '+' : '' }}
 							{{ ((item.price - item.openPrice!) / item.openPrice! * 100).toFixed(2) }}%
@@ -23,7 +23,7 @@
 				</div>
 
 				<div class="flex items-center space-x-2 relative">
-					<button @click.stop="emit('onFavorite', item)"
+					<button @click.stop="emit('favorite', item)"
 						class="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
 						:title="item.isFavorite ? 'Unfavorite' : 'Favorite'">
 						<svg v-if="item.isFavorite" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { symbolType2Image, type FinnhubStockSymbolForDisplay, type TransactionItem } from "@/types/finnhub";
+import { symbolType2Image, type StockSymbolForDisplay, type TransactionItem } from "@/types/stock";
 import { computed, ref } from "vue";
 import Observer from "./Observer.vue";
 import { storeToRefs } from "pinia";
@@ -77,13 +77,13 @@ const ITEMS_PER_PATE = 20;
 
 const props = defineProps({
 	values: {
-		type: Array as () => FinnhubStockSymbolForDisplay[],
+		type: Array as () => StockSymbolForDisplay[],
 		default: () => [],
 	},
 });
-const emit = defineEmits(["onFavorite", "onTransaction"]);
+const emit = defineEmits(["favorite", "transact"]);
 
-const { currency } = storeToRefs(useSettingsStore());
+const { currency, conversionRate } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());
 
 // pagination
@@ -94,7 +94,7 @@ const visibleItems = computed(() => props.values.slice(0, (currentPage.value + 1
 const isModalOpen = ref(false);
 const selectedOption = ref<TransactionItem | null>(null);
 
-function openContextModal(option: FinnhubStockSymbolForDisplay) {
+function openContextModal(option: StockSymbolForDisplay) {
 	isModalOpen.value = true;
 	selectedOption.value = {
 		symbol: option.symbol,
@@ -105,6 +105,7 @@ function openContextModal(option: FinnhubStockSymbolForDisplay) {
 		comission: 0,
 		date: new Date().toISOString().split("T")[0],
 		transactionType: "buy",
+		source: option.source,
 		currency: currency.value,
 	};
 }
@@ -114,7 +115,7 @@ function buy(option: TransactionItem) {
 		alert("Please enter a valid quantity and price.");
 		return;
 	}
-	emit("onTransaction", option);
+	emit("transact", option);
 	closeModal();
 }
 
@@ -124,7 +125,7 @@ function sell(option: TransactionItem) {
 		return;
 	}
 	option.transactionType = "sell";
-	emit("onTransaction", option);
+	emit("transact", option);
 	closeModal();
 }
 
@@ -132,7 +133,7 @@ function closeModal() {
 	isModalOpen.value = false;
 }
 
-function imageURLfor(result: FinnhubStockSymbolForDisplay) {
+function imageURLfor(result: StockSymbolForDisplay) {
 	return `https://assets.parqet.com/logos/${symbolType2Image(result.type)}/${result.symbol}`;
 }
 </script>

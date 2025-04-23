@@ -20,7 +20,9 @@
 		<div :class="magicClass(rentability)">
 			{{ formatCurrency(item.currentPrice * item.quantity, currency) }}
 		</div>
-		<div class="text-xs text-gray-400">({{ formatCurrency(item.currentInvested + item.comission, currency) }})</div>
+		<div class="text-xs text-gray-400">
+			({{ formatCurrency(item.currentInvested + item.comission, currency) }})
+		</div>
 	</div>
 	<div class="text-sm text-right" :class="magicClass(rentability)">
 		{{ rentability.toFixed(2) }} %
@@ -29,7 +31,7 @@
 
 <script lang="ts" setup>
 import { useSettingsStore } from "@/stores/settings";
-import type { PortfolioItem } from "@/types/finnhub";
+import type { PortfolioItem } from "@/types/stock";
 import { formatCurrency, magicClass } from "@/types/utils";
 import { storeToRefs } from "pinia";
 import { computed } from "vue";

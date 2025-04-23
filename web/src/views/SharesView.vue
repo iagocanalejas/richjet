@@ -16,15 +16,13 @@
 					</svg>
 				</button>
 				<div v-show="showFavorites">
-					<SharesListComponent :values="watchlist" @on-favorite="toggleFavorite"
-						@on-transaction="addTransaction" />
+					<SharesListComponent :values="watchlist" @favorite="toggleFavorite" @transact="addTransaction" />
 				</div>
 			</div>
 
 			<div class="w-full mt-4">
 				<h2 class="text-xl font-semibold mb-2">Shares</h2>
-				<SharesListComponent :values="filteredResults" @on-favorite="toggleFavorite"
-					@on-transaction="addTransaction" />
+				<SharesListComponent :values="filteredResults" @favorite="toggleFavorite" @transact="addTransaction" />
 			</div>
 		</div>
 	</main>
@@ -34,21 +32,21 @@
 import SearchComponent from "@/components/SearchComponent.vue";
 import SharesListComponent from "@/components/SharesListComponent.vue";
 import { ref, type Ref } from "vue";
-import { useFinnhubStore } from "@/stores/finnhub";
-import type { FinnhubStockSymbolForDisplay } from "@/types/finnhub";
+import { useStocksStore } from "@/stores/stocks";
+import type { StockSymbolForDisplay } from "@/types/stock";
 import { debounce } from "@/types/utils";
 import { useWatchlistStore } from "@/stores/watchlist";
 import { usePortfolioStore } from "@/stores/portfolio";
 import { storeToRefs } from "pinia";
 
-const finnhubStore = useFinnhubStore();
+const stockStore = useStocksStore();
 const { addTransaction } = usePortfolioStore();
 const watchlistStore = useWatchlistStore();
 const { watchlist } = storeToRefs(watchlistStore);
 const { isInWatchlist, addToWatchlist, removeFromWatchlist } = watchlistStore;
 
 const showFavorites = ref(true)
-const filteredResults: Ref<FinnhubStockSymbolForDisplay[]> = ref([]);
+const filteredResults: Ref<StockSymbolForDisplay[]> = ref([]);
 
 const debouncedFilterResults = debounce(_filterResults);
 async function _filterResults(query: string) {
@@ -56,9 +54,9 @@ async function _filterResults(query: string) {
 		filteredResults.value = [];
 		return;
 	}
-	const results = (await finnhubStore.symbolSearch(query.toUpperCase())) as FinnhubStockSymbolForDisplay[];
+	const results = (await stockStore.symbolSearch(query.toUpperCase())) as StockSymbolForDisplay[];
 	if (results) {
-		const res = results.filter((s) => !s.symbol.includes("."));
+		const res = results.filter((s) => s.type === "Common Stock" || s.type === "GDR");
 		res.forEach((s) => {
 			s.isFavorite = isInWatchlist(s);
 			s.hideImage = false;
@@ -67,7 +65,7 @@ async function _filterResults(query: string) {
 	}
 }
 
-function toggleFavorite(result: FinnhubStockSymbolForDisplay) {
+function toggleFavorite(result: StockSymbolForDisplay) {
 	result.isFavorite = !result.isFavorite;
 	result.isFavorite ? addToWatchlist(result) : removeFromWatchlist(result);
 }

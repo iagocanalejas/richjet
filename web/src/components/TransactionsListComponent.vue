@@ -4,7 +4,7 @@
 		<div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
 			<div>Asset</div>
 			<div class="text-right">Date</div>
-			<div class="text-right">Avg Price</div>
+			<div class="text-right">Buy Price</div>
 			<div class="text-right">Quantity</div>
 			<div class="text-right">Total</div>
 			<div class="text-right"></div>
@@ -12,7 +12,7 @@
 		<ul class="space-y-4">
 			<li v-for="(item, index) in visibleItems" :key="index"
 				class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4"
-				:class="[item.transactionType === 'buy' ? 'border-green-600 bg-gray-800' : 'border-red-600 bg-gray-800']">
+				:class="[classForType(item)]">
 				<div class="flex items-center space-x-3">
 					<img :src="item.image" alt="Icon" class="w-6 h-6 object-contain" />
 					<span class="text-sm font-medium tracking-wide text-white">
@@ -20,11 +20,14 @@
 					</span>
 				</div>
 				<div class="text-sm text-right">{{ new Date(item.date).toLocaleDateString() }}</div>
-				<div class="text-sm text-right">{{ formatCurrency(item.price, currency) }}</div>
-				<div class="text-sm text-right">{{ item.quantity }}</div>
-				<div class="text-sm text-right">{{ formatCurrency(item.quantity * item.price, currency) }}</div>
+				<div class="text-sm text-right">{{ item.price ? formatCurrency(item.price, currency) : '---' }}</div>
+				<div class="text-sm text-right">{{ item.quantity ? item.quantity : '---' }}</div>
+
+				<div v-if="isDividend(item)" class="text-sm text-right">---</div>
+				<div v-else class="text-sm text-right">{{ formatCurrency(item.quantity * item.price, currency) }}</div>
+
 				<div class="text-gray-400 text-right">
-					<button @click="emit('onRemove', item)" class="hover:text-red-500 transition-colors" title="Remove">
+					<button @click="emit('remove', item)" class="hover:text-red-500 transition-colors" title="Remove">
 						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
 							class="w-5 h-5">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -44,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { type TransactionItem } from "@/types/finnhub";
+import { type TransactionItem } from "@/types/stock";
 import { computed, ref } from "vue";
 import Observer from "./Observer.vue";
 import { formatCurrency } from "@/types/utils";
@@ -53,7 +56,7 @@ import { useSettingsStore } from "@/stores/settings";
 import { useLoadingStore } from "@/stores/loading";
 import LoadingSpinner from "./LoadingSpinner.vue";
 
-const emit = defineEmits(["onRemove"]);
+const emit = defineEmits(["remove"]);
 const { currency } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());
 
@@ -70,4 +73,22 @@ const currentPage = ref(0);
 const visibleItems = computed(() => {
 	return props.values.slice(0, (currentPage.value + 1) * ITEMS_PER_PATE);
 });
+
+function isDividend(item: TransactionItem) {
+	return item.transactionType === "dividend" || item.transactionType === "dividend-cash";
+}
+
+function classForType(item: TransactionItem) {
+	switch (item.transactionType) {
+		case "buy":
+			return "border-green-600 bg-gray-800";
+		case "sell":
+			return "border-red-600 bg-gray-800";
+		case "dividend":
+		case "dividend-cash":
+			return "border-blue-600 bg-gray-800";
+		default:
+			return "";
+	}
+}
 </script>
