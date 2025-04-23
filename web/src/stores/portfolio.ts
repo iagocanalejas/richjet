@@ -22,9 +22,11 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 		transactions.value = [...transactionsForPortfolio].reverse();
 		portfolio.value = [];
 
+		// prefetch stock quotes for all transactions and saves them in the cache
+		await _prefetchStockQuotes();
+
 		for (let transaction of transactionsForPortfolio) {
 			await _updatePortfolio(transaction);
-			console.log(transaction)
 		}
 
 		portfolio.value.sort((a, b) => {
@@ -72,6 +74,18 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 		} else if (transaction.transactionType === "dividend-cash") {
 			cashDividends.value -= transaction.price;
 		}
+	}
+
+	async function _prefetchStockQuotes() {
+		const symbols = [...new Set(transactions.value
+			.filter(t => t.source)
+			.map((transaction) => [transaction.source!, transaction.symbol])
+		)];
+		for (let i = 0; i < symbols.length; i += 5) {
+			const batch = symbols.slice(i, i + 5);
+			await Promise.all(batch.map(([source, symbol]) => stockStore.getStockQuote(source, symbol)));
+		}
+
 	}
 
 	async function _updatePortfolio(transaction: TransactionItem) {

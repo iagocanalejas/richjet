@@ -15,11 +15,20 @@ app.use(router);
 // monkey patch fetch to use loading store
 const loadingStore = useLoadingStore(pinia);
 const originalFetch = window.fetch;
-window.fetch = async (...args) => {
+
+// @ts-ignore
+window.fetch = async (resource: RequestInfo, options: RequestInit & { timeout?: number } = {}) => {
+	const { timeout = 5000, ...rest } = options;
+
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort('⏱️ Request timed out'), timeout);
+
 	loadingStore.start();
+
 	try {
-		return await originalFetch(...args);
+		return await originalFetch(resource, { ...rest, signal: controller.signal });
 	} finally {
+		clearTimeout(timeoutId);
 		loadingStore.stop();
 	}
 };
