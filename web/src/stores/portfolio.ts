@@ -25,7 +25,7 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 		// prefetch stock quotes for all transactions and saves them in the cache
 		await _prefetchStockQuotes();
 
-		for (let transaction of transactionsForPortfolio) {
+		for (const transaction of transactionsForPortfolio) {
 			await _updatePortfolio(transaction);
 		}
 
@@ -44,7 +44,7 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 	}
 
 	function removeTransaction(transaction: TransactionItem) {
-		let lastIndex = transactions.value.lastIndexOf(transaction);
+		const lastIndex = transactions.value.lastIndexOf(transaction);
 		if (lastIndex < 0) {
 			return;
 		}

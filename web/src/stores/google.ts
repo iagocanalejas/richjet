@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { FileData, GoogleUser } from "@/types/google";
+import type { FileData, FileMetadata, GoogleUser, TokenClient } from "@/types/google";
 import { usePortfolioStore } from "./portfolio";
 import { useWatchlistStore } from "./watchlist";
 import { useSettingsStore } from "./settings";
@@ -11,7 +11,7 @@ export const useGoogleStore = defineStore("google-store", () => {
 	const GOOGLE_FILE_ID_KEY = "google-file-id";
 	const GOOGLE_SETTINGS_KEY = "google-settings";
 
-	const client = ref<google.accounts.oauth2.TokenClient>();
+	const client = ref<TokenClient>();
 	const token = ref<google.accounts.oauth2.TokenResponse>();
 	const user = ref<GoogleUser>();
 
@@ -42,8 +42,6 @@ export const useGoogleStore = defineStore("google-store", () => {
 		}
 
 		localStorage.setItem(GOOGLE_SETTINGS_KEY, JSON.stringify({ token: token.value, user: user.value }));
-
-		// @ts-ignore : reset the callback to the original function
 		client.value!.callback = _clientCallback;
 	};
 
@@ -60,7 +58,7 @@ export const useGoogleStore = defineStore("google-store", () => {
 			client_id: CLIENT_ID,
 			scope: "openid profile email https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file",
 			callback: _clientCallback,
-		});
+		}) as TokenClient;
 
 		if (token.value?.access_token) {
 			return await downloadData();
@@ -101,7 +99,6 @@ export const useGoogleStore = defineStore("google-store", () => {
 		} catch (error) {
 			console.warn("Attempting token refresh:", error);
 			return new Promise<FileData | undefined>((resolve, reject) => {
-				// @ts-ignore
 				client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
 					try {
 						await _clientCallback(tokenResponse);
@@ -130,9 +127,8 @@ export const useGoogleStore = defineStore("google-store", () => {
 			watchlist: watchlistStore.watchlist,
 		};
 		const fileBlob = new Blob([JSON.stringify(data)], { type: "text/plain" });
-		const metadata = { name: FILE_NAME, mimeType: "text/plain" };
+		const metadata: FileMetadata = { name: FILE_NAME, mimeType: "text/plain" };
 		if (!fileId.value) {
-			// @ts-ignore
 			metadata.parents = ["appDataFolder"];
 		}
 
@@ -145,8 +141,9 @@ export const useGoogleStore = defineStore("google-store", () => {
 			const url = fileId.value
 				? `https://www.googleapis.com/upload/drive/v3/files/${fileId.value}?uploadType=multipart`
 				: "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
+			const method = fileId.value ? "PATCH" : "POST";
 			const res = await fetch(url, {
-				method: fileId.value ? "PATCH" : "POST",
+				method: method,
 				headers: new Headers({ Authorization: "Bearer " + token.value?.access_token }),
 				body: form,
 			});
@@ -162,7 +159,6 @@ export const useGoogleStore = defineStore("google-store", () => {
 		} catch (error) {
 			console.warn("Attempting token refresh:", error);
 			return new Promise<void>((resolve, reject) => {
-				// @ts-ignore
 				client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
 					try {
 						await _clientCallback(tokenResponse);
@@ -200,7 +196,6 @@ export const useGoogleStore = defineStore("google-store", () => {
 		} catch (error) {
 			console.warn("Attempting token refresh:", error);
 			return new Promise<void>((resolve, reject) => {
-				// @ts-ignore
 				client.value!.callback = async (tokenResponse: google.accounts.oauth2.TokenResponse) => {
 					try {
 						await _clientCallback(tokenResponse);

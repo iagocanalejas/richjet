@@ -2,7 +2,7 @@
 	<div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
 		<div class="w-full max-w-md bg-gray-900 text-white rounded-2xl shadow-2xl p-6 space-y-6 animate-fadeIn">
 			<div class="text-center space-y-1">
-				<h2 class="text-xl font-bold tracking-wide">Add Dividend for {{ selectedOption.symbol }}</h2>
+				<h2 class="text-xl font-bold tracking-wide">Add Dividend for {{ transactionCopy.symbol }}</h2>
 			</div>
 
 			<div class="flex justify-center space-x-4">
@@ -21,13 +21,13 @@
 			<div v-if="dividendType === 'cash'" class="space-y-4">
 				<div>
 					<label class="block text-sm font-medium text-gray-300 mb-1">Amount (Cash)</label>
-					<input v-model.number="selectedOption.price" type="number" min="0" step="0.01"
+					<input v-model.number="transactionCopy.price" type="number" min="0" step="0.01"
 						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 				</div>
 
 				<div>
 					<label class="block text-sm font-medium text-gray-300 mb-1">Date</label>
-					<input v-model="selectedOption.date" type="date"
+					<input v-model="transactionCopy.date" type="date"
 						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 				</div>
 			</div>
@@ -35,13 +35,13 @@
 			<div v-else class="space-y-4">
 				<div>
 					<label class="block text-sm font-medium text-gray-300 mb-1">Quantity (Shares)</label>
-					<input v-model.number="selectedOption.quantity" type="number" min="0" step="0.01"
+					<input v-model.number="transactionCopy.quantity" type="number" min="0" step="0.01"
 						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 				</div>
 
 				<div>
 					<label class="block text-sm font-medium text-gray-300 mb-1">Date</label>
-					<input v-model="selectedOption.date" type="date"
+					<input v-model="transactionCopy.date" type="date"
 						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
 				</div>
 			</div>
@@ -62,10 +62,10 @@
 
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/stock';
-import { ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 
 const props = defineProps({
-	selectedOption: {
+	transaction: {
 		type: Object as () => TransactionItem,
 		required: true
 	}
@@ -74,10 +74,21 @@ const props = defineProps({
 const emit = defineEmits(["add-dividend", "close"]);
 
 const dividendType = ref<"cash" | "stock">("cash");
+const transactionCopy = reactive({ ...props.transaction });
+
+watch(() => props.transaction, (newVal) => Object.assign(transactionCopy, newVal));
 
 function submit() {
-	props.selectedOption.transactionType = dividendType.value === "cash" ? "dividend-cash" : "dividend";
-	emit("add-dividend", props.selectedOption);
+	transactionCopy.transactionType = dividendType.value === "cash" ? "dividend-cash" : "dividend";
+	if (transactionCopy.transactionType === 'dividend-cash' && transactionCopy.price <= 0) {
+		alert("Please enter a valid price.");
+		return;
+	}
+	if (transactionCopy.transactionType === 'dividend' && transactionCopy.quantity <= 0) {
+		alert("Please enter a valid quantity.");
+		return;
+	}
+	emit("add-dividend", transactionCopy);
 }
 </script>
 

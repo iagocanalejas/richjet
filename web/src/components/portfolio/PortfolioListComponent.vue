@@ -20,9 +20,9 @@
 		<p class="text-sm">No results found.</p>
 	</div>
 
-	<div v-if="isModalOpen && selectedOption"
+	<div v-if="isModalOpen && transaction"
 		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
-		<DividendModal v-if="isModalOpen && selectedOption" :selectedOption="selectedOption" @add-dividend="addDividend"
+		<DividendModal v-if="isModalOpen && transaction" :transaction="transaction" @add-dividend="addDividend"
 			@close="closeModal" />
 	</div>
 </template>
@@ -35,7 +35,7 @@ import { usePortfolioStore } from "@/stores/portfolio";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import type { PortfolioItem, TransactionItem } from "@/types/stock";
-import DividendModal from "../DividendModal.vue";
+import DividendModal from "../modals/DividendModal.vue";
 import { useSettingsStore } from "@/stores/settings";
 
 const portfolioStore = usePortfolioStore();
@@ -45,11 +45,11 @@ const { isLoading } = storeToRefs(useLoadingStore());
 
 // modal
 const isModalOpen = ref(false);
-const selectedOption = ref<TransactionItem | null>(null);
+const transaction = ref<TransactionItem | null>(null);
 
 function openContextModal(option: PortfolioItem) {
 	isModalOpen.value = true;
-	selectedOption.value = {
+	transaction.value = {
 		symbol: option.symbol,
 		image: option.image,
 		type: option.type,
@@ -63,14 +63,6 @@ function openContextModal(option: PortfolioItem) {
 }
 
 function addDividend(transaction: TransactionItem) {
-	if (transaction.transactionType === 'dividend-cash' && transaction.price <= 0) {
-		alert("Please enter a valid price.");
-		return;
-	}
-	if (transaction.transactionType === 'dividend' && transaction.quantity <= 0) {
-		alert("Please enter a valid quantity.");
-		return;
-	}
 	portfolioStore.addTransaction(transaction);
 	closeModal();
 }

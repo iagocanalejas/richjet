@@ -38,7 +38,7 @@
 			</li>
 		</ul>
 
-		<Observer @intersect="currentPage++" />
+		<IntersectionObserver @intersect="currentPage++" />
 	</div>
 
 	<div v-else-if="!isLoading" class="mt-6 w-full text-center text-gray-500">
@@ -49,12 +49,12 @@
 <script setup lang="ts">
 import { type TransactionItem } from "@/types/stock";
 import { computed, ref } from "vue";
-import Observer from "./Observer.vue";
 import { formatCurrency } from "@/types/utils";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
 import { useLoadingStore } from "@/stores/loading";
 import LoadingSpinner from "./LoadingSpinner.vue";
+import IntersectionObserver from "./utils/IntersectionObserver.vue";
 
 const emit = defineEmits(["remove"]);
 const { currency } = storeToRefs(useSettingsStore());

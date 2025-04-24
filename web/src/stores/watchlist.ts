@@ -13,7 +13,7 @@ export const useWatchlistStore = defineStore("watchlist", () => {
 	async function init(watchlistSymbols?: StockSymbolForDisplay[]) {
 		const tempWatchlist = watchlistSymbols || [];
 
-		for (let item of tempWatchlist) {
+		for (const item of tempWatchlist) {
 			const quote = await stockStore.getStockQuote(item.source, item.symbol);
 			if (!quote) console.error(`Failed to fetch quote for ${item.symbol}`);
 			item.price = quote?.current;

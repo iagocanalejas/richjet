@@ -5,7 +5,7 @@
 			<p class="text-lg mb-6 text-gray-300">
 				Stay on top of your stocks, crypto, and assets — all in one place.
 			</p>
-			<button @click.stop="emit('signIn')"
+			<button @click.stop="emit('sign-in')"
 				class="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-500 transition">
 				Start Tracking with RichJet for Free
 			</button>

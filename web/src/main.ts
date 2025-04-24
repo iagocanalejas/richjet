@@ -16,7 +16,7 @@ app.use(router);
 const loadingStore = useLoadingStore(pinia);
 const originalFetch = window.fetch;
 
-// @ts-ignore
+// @ts-expect-error: unmatched function signature
 window.fetch = async (resource: RequestInfo, options: RequestInit & { timeout?: number } = {}) => {
 	const { timeout = 5000, ...rest } = options;
 

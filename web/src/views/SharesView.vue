@@ -67,6 +67,10 @@ async function _filterResults(query: string) {
 
 function toggleFavorite(result: StockSymbolForDisplay) {
 	result.isFavorite = !result.isFavorite;
-	result.isFavorite ? addToWatchlist(result) : removeFromWatchlist(result);
+	if (result.isFavorite) {
+		addToWatchlist(result)
+	} else {
+		removeFromWatchlist(result)
+	};
 }
 </script>

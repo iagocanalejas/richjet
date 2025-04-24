@@ -48,16 +48,16 @@
 			</li>
 		</ul>
 
-		<Observer @intersect="currentPage++" />
+		<IntersectionObserver @intersect="currentPage++" />
 	</div>
 
 	<div v-else-if="!isLoading" class="mt-6 w-full text-center text-gray-500">
 		<p class="text-sm">No results found.</p>
 	</div>
 
-	<div v-if="isModalOpen && selectedOption"
+	<div v-if="isModalOpen && transaction"
 		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
-		<TransactionModal v-if="isModalOpen && selectedOption" :selectedOption="selectedOption" @buy="buy" @sell="sell"
+		<TransactionModal v-if="isModalOpen && transaction" :transaction="transaction" @buy="buy" @sell="sell"
 			@close="closeModal" />
 	</div>
 </template>
@@ -65,13 +65,13 @@
 <script setup lang="ts">
 import { symbolType2Image, type StockSymbolForDisplay, type TransactionItem } from "@/types/stock";
 import { computed, ref } from "vue";
-import Observer from "./Observer.vue";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
 import { formatCurrency, magicClass } from "@/types/utils";
 import LoadingSpinner from "./LoadingSpinner.vue";
-import TransactionModal from "./TransactionModal.vue";
+import TransactionModal from "./modals/TransactionModal.vue";
 import { useLoadingStore } from "@/stores/loading";
+import IntersectionObserver from "./utils/IntersectionObserver.vue";
 
 const ITEMS_PER_PATE = 20;
 
@@ -92,11 +92,11 @@ const visibleItems = computed(() => props.values.slice(0, (currentPage.value + 1
 
 // modal
 const isModalOpen = ref(false);
-const selectedOption = ref<TransactionItem | null>(null);
+const transaction = ref<TransactionItem | null>(null);
 
 function openContextModal(option: StockSymbolForDisplay) {
 	isModalOpen.value = true;
-	selectedOption.value = {
+	transaction.value = {
 		symbol: option.symbol,
 		image: imageURLfor(option),
 		type: option.type,

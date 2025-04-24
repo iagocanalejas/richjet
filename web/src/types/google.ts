@@ -1,20 +1,29 @@
 import type { StockSymbolForDisplay, TransactionItem } from "./stock";
 
 export interface GoogleUser {
-    name: string;
-    givenName: string;
-    familyName: string;
-    email: string;
-    picture: string;
+	name: string;
+	givenName: string;
+	familyName: string;
+	email: string;
+	picture: string;
 }
 
 export type Settings = {
-    currency: string;
+	currency: string;
 };
 
 export interface FileData {
-    version: number;
-    settings: Settings;
-    transactions: TransactionItem[];
-    watchlist: StockSymbolForDisplay[];
+	version: number;
+	settings: Settings;
+	transactions: TransactionItem[];
+	watchlist: StockSymbolForDisplay[];
 }
+
+export interface FileMetadata {
+	name: string;
+	mimeType: string;
+	parents?: string[]
+}
+
+export type TokenClient = google.accounts.oauth2.TokenClient
+	& { callback: (tokenResponse: google.accounts.oauth2.TokenResponse) => Promise<void> };
