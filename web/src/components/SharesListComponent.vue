@@ -7,22 +7,23 @@
 				<div class="flex items-center space-x-3">
 					<img v-show="!item.hideImage" :src="imageURLfor(item)" alt="Icon" @error="item.hideImage = true"
 						class="w-6 h-6 object-contain" />
-					<span class="text-sm font-medium tracking-wide text-white">
-						{{ item.symbol }}
-					</span>
-				</div>
-
-				<div v-if="item.price" class="flex items-center space-x-4 text-sm">
-					<div class="text-right" :class="magicClass(item.price - item.openPrice!)">
-						<div class="font-semibold">{{ formatCurrency(item.price, currency, conversionRate) }}</div>
-						<div class="text-xs">
-							{{ item.price - item.openPrice! > 0 ? '+' : '' }}
-							{{ ((item.price - item.openPrice!) / item.openPrice! * 100).toFixed(2) }}%
-						</div>
+					<div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+						<span class="truncate font-medium text-white">{{ item.name }}</span>
+						<span class="text-xs text-gray-400">({{ item.symbol }})</span>
 					</div>
 				</div>
 
 				<div class="flex items-center space-x-2 relative">
+					<div v-if="item.price" class="flex items-center text-sm me-5">
+						<div class="text-right" :class="magicClass(item.price - item.openPrice!)">
+							<div class="font-semibold">{{ formatCurrency(item.price, currency, conversionRate) }}</div>
+							<div class="text-xs">
+								{{ item.price - item.openPrice! > 0 ? '+' : '' }}
+								{{ ((item.price - item.openPrice!) / item.openPrice! * 100).toFixed(2) }}%
+							</div>
+						</div>
+					</div>
+
 					<button @click.stop="emit('favorite', item)"
 						class="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
 						:title="item.isFavorite ? 'Unfavorite' : 'Favorite'">
@@ -134,6 +135,9 @@ function closeModal() {
 }
 
 function imageURLfor(result: StockSymbolForDisplay) {
+	if (result.isin) {
+		return `https://assets.parqet.com/logos/isin/${result.isin}`;
+	}
 	return `https://assets.parqet.com/logos/${symbolType2Image(result.type)}/${result.symbol}`;
 }
 </script>

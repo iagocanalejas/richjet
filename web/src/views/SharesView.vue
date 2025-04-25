@@ -56,12 +56,11 @@ async function _filterResults(query: string) {
 	}
 	const results = (await stockStore.symbolSearch(query.toUpperCase())) as StockSymbolForDisplay[];
 	if (results) {
-		const res = results.filter((s) => s.type === "Common Stock" || s.type === "GDR");
-		res.forEach((s) => {
+		results.forEach((s) => {
 			s.isFavorite = isInWatchlist(s);
 			s.hideImage = false;
 		});
-		filteredResults.value = res;
+		filteredResults.value = results;
 	}
 }
 

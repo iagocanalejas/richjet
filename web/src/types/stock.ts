@@ -2,6 +2,7 @@ export interface StockSymbol {
 	symbol: string;
 	name: string;
 	type: string;
+	isin?: string;
 	currency: string;
 	region: string;
 	source: string;
@@ -50,12 +51,14 @@ export interface PortfolioItem {
 
 export function symbolType2Image(from: string) {
 	switch (from.toUpperCase()) {
-		case "COMMON STOCK":
+		case "STOCK":
+		case "ETP":
 		case "GDR":
 			return "symbol";
 		case "CRYPTO":
 			return "crypto";
 		default:
+			console.error("Unknown symbol type", from);
 			break;
 	}
 }

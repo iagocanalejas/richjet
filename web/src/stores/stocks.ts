@@ -14,7 +14,13 @@ export const useStocksStore = defineStore("stocks", () => {
 			const data = await response.json();
 			if (data.errors?.length) throw new Error(data.errors);
 
-			return data.results as StockSymbol[];
+			const results = data.results as StockSymbol[];
+
+			if (results.some(s => !s.symbol.includes("."))) {
+				// filter out symbols with a dot
+				return results.filter(s => !s.symbol.includes("."));
+			}
+			return results;
 		} catch (error) {
 			console.error("Error fetching stock symbols:", error);
 		}

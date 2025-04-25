@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from fastapi import HTTPException
 
@@ -5,7 +7,7 @@ from clients._errors import (
     ERROR_FAILED_TO_FETCH_STOCK_DATA,
     ERROR_FAILED_TO_FETCH_STOCK_QUOTE,
 )
-from clients._types import StockQuote, StockSymbol
+from clients._types import StockQuote, StockSymbol, is_valid_isin, normalize_type
 
 
 class VantageClient:
@@ -19,7 +21,7 @@ class VantageClient:
         response = requests.get(
             f"{self.BASE_URL}/query",
             params={"function": "SYMBOL_SEARCH", "keywords": q, "apikey": self.api_key},
-            timeout=3,
+            timeout=5,
         )
 
         if response.status_code != 200:
@@ -29,16 +31,20 @@ class VantageClient:
             )
 
         results = response.json().get("bestMatches", [])
+        valid_results = [r for r in results if r["3. type"].upper() in ["EQUITY", "ETF"]]
+        logging.warning(f"vantage: discarding results={[r for r in results if r not in valid_results]}")
+
         return [
             StockSymbol(
                 symbol=result["1. symbol"],
                 name=result["2. name"],
-                type=result["3. type"],
+                type=normalize_type(result["3. type"]),
                 currency=result["8. currency"],
                 region=result["4. region"],
                 source=self.NAME,
+                isin=q if is_valid_isin(q) else None,
             )
-            for result in results
+            for result in valid_results
         ]
 
     def get_quote(self, symbol: str):
@@ -49,7 +55,7 @@ class VantageClient:
                 "symbol": symbol,
                 "apikey": self.api_key,
             },
-            timeout=3,
+            timeout=5,
         )
 
         if response.status_code != 200:

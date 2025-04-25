@@ -1,3 +1,4 @@
+import logging
 import os
 
 import requests
@@ -8,9 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 
 EXCHANGERATE_API_KEY = os.getenv("EXCHANGERATE_API_KEY")
-EXCHANGERATE_BASE_URL = "https://v6.exchangerate-api.com/v6"
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
+FINNHUB_ENABLED = os.getenv("FINNHUB_ENABLED", False) == "True"
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
+ALPHA_VANTAGE_ENABLED = os.getenv("ALPHA_VANTAGE_ENABLED", False) == "True"
 
 cors_origins = []
 if os.getenv("DEBUG", False):
@@ -22,14 +24,19 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET"],
     allow_headers=["*"],
 )
 
-clients = [
-    FinnhubClient(api_key=FINNHUB_API_KEY),
-    VantageClient(api_key=ALPHA_VANTAGE_API_KEY),
+clients = []
+services = [
+    ("Finnhub", FINNHUB_ENABLED, FinnhubClient, FINNHUB_API_KEY),
+    ("Alpha Vantage", ALPHA_VANTAGE_ENABLED, VantageClient, ALPHA_VANTAGE_API_KEY),
 ]
+for name, enabled, client_class, api_key in services:
+    if enabled:
+        logging.info(f"{name} enabled")
+        clients.append(client_class(api_key=api_key))
 
 
 @app.get("/exchangerate/{target}")
@@ -38,7 +45,7 @@ async def get_exchange_rate(target: str):
     Fetches the exchange rate for the given target currency.
     """
     response = requests.get(
-        f"{EXCHANGERATE_BASE_URL}/{EXCHANGERATE_API_KEY}/pair/USD/{target}",
+        f"{'https://v6.exchangerate-api.com/v6'}/{EXCHANGERATE_API_KEY}/pair/USD/{target}",
         timeout=3,
     )
 
@@ -73,6 +80,7 @@ async def search_stock(q: str | None):
             "currency": symbol.currency,
             "region": symbol.region,
             "source": symbol.source,
+            "isin": symbol.isin,
         }
         for symbol in results
     ]
