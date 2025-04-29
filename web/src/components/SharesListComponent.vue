@@ -100,7 +100,7 @@ function openContextModal(option: StockSymbolForDisplay) {
 	transaction.value = {
 		symbol: option.symbol,
 		image: imageURLfor(option),
-		type: option.type,
+		type: option.security_type,
 		price: 0,
 		quantity: 0,
 		comission: 0,
@@ -138,6 +138,6 @@ function imageURLfor(result: StockSymbolForDisplay) {
 	if (result.isin) {
 		return `https://assets.parqet.com/logos/isin/${result.isin}`;
 	}
-	return `https://assets.parqet.com/logos/${symbolType2Image(result.type)}/${result.symbol}`;
+	return `https://assets.parqet.com/logos/${symbolType2Image(result.security_type)}/${result.symbol}`;
 }
 </script>

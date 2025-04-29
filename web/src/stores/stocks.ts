@@ -12,7 +12,7 @@ export const useStocksStore = defineStore("stocks", () => {
 			if (!response.ok) throw new Error("Network response was not ok");
 
 			const data = await response.json();
-			if (data.errors?.length) throw new Error(data.errors);
+			if (data.errors?.length) throw new Error(data.errors.join(", "));
 
 			const results = data.results as StockSymbol[];
 
@@ -22,7 +22,7 @@ export const useStocksStore = defineStore("stocks", () => {
 			}
 			return results;
 		} catch (error) {
-			console.error("Error fetching stock symbols:", error);
+			console.error(error);
 		}
 	}
 
@@ -34,7 +34,7 @@ export const useStocksStore = defineStore("stocks", () => {
 			if (!response.ok) throw new Error("Network response was not ok");
 
 			let data = await response.json();
-			if (data.errors?.length) throw new Error(data.errors);
+			if (data.errors?.length) throw new Error(data.errors.join(", "));
 
 			data = {
 				current: data.current,
@@ -46,7 +46,7 @@ export const useStocksStore = defineStore("stocks", () => {
 			quoteCache.set(symbol, data);
 			return data as StockQuote;
 		} catch (error) {
-			console.error("Error fetching stock quote:", error);
+			console.error(error);
 		}
 	}
 
