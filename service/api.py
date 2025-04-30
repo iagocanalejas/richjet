@@ -3,9 +3,9 @@ import os
 
 import requests
 from clients import FinnhubClient, OpenFIGIClient, VantageClient
+from clients._types import StockQuote
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from clients._types import StockQuote
 from log import logger
 
 app = FastAPI()
@@ -32,9 +32,9 @@ app.add_middleware(
 )
 
 services = [
+    (OpenFIGIClient.NAME, OPENFIGI_ENABLED, OpenFIGIClient, None),
     (FinnhubClient.NAME, FINNHUB_ENABLED, FinnhubClient, FINNHUB_API_KEY),
     (VantageClient.NAME, ALPHA_VANTAGE_ENABLED, VantageClient, ALPHA_VANTAGE_API_KEY),
-    (OpenFIGIClient.NAME, OPENFIGI_ENABLED, OpenFIGIClient, None),
 ]
 
 clients = {}

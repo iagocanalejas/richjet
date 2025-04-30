@@ -27,11 +27,11 @@ function mapWeirdLocales(locale: string) {
 	}
 }
 
-export function magicClass(value: number) {
+export function colorClass(value: number, manual: boolean = false) {
 	return {
 		'text-green-400': value > 0,
 		'text-red-400': value < 0,
 		'text-white': value === 0,
-
+		'text-yellow-400': manual,
 	}
 }

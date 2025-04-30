@@ -8,18 +8,20 @@ import { useSettingsStore } from "./settings";
 export const usePortfolioStore = defineStore("portfolio", () => {
 	const portfolio: Ref<PortfolioItem[]> = ref([]);
 	const transactions = ref<TransactionItem[]>([]);
+	const manualPrices = ref<{ [k: string]: number }>({});
 	const cashDividends = ref(0);
 
 	const stockStore = useStocksStore();
 	const googleStore = useGoogleStore();
 	const { conversionRate } = storeToRefs(useSettingsStore());
 
-	async function init(loadedTransactions?: TransactionItem[]) {
+	async function init(loadedTransactions?: TransactionItem[], loadedManualPrices?: { [k: string]: number }) {
 		const transactionsForPortfolio = loadedTransactions ?? [];
 
 		// Sort once before assigning, avoids extra reactivity triggering if using Vue
 		transactionsForPortfolio.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 		transactions.value = [...transactionsForPortfolio].reverse();
+		manualPrices.value = loadedManualPrices ?? {};
 		portfolio.value = [];
 
 		// prefetch stock quotes for all transactions and saves them in the cache
@@ -76,9 +78,26 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 		}
 	}
 
+	function updateManualPrice(symbol: string, price: number | null) {
+		if (price === null) {
+			delete manualPrices.value[symbol];
+			return;
+		}
+		if (price < 0) throw new Error("Price cannot be negative");
+		for (const item of portfolio.value) {
+			if (item.symbol === symbol) {
+				item.currentPrice = price;
+				item.manualInputedPrice = true;
+				break;
+			}
+		}
+		manualPrices.value[symbol] = price;
+		googleStore.syncData();
+	}
+
 	async function _prefetchStockQuotes() {
 		const symbols = [...new Set(transactions.value
-			.filter(t => t.source)
+			.filter(t => t.source && !manualPrices.value[t.symbol])
 			.map((transaction) => [transaction.source!, transaction.symbol])
 		)];
 		for (let i = 0; i < symbols.length; i += 5) {
@@ -110,13 +129,17 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 				portfolio.value[idx].quantity += transaction.quantity;
 			}
 		} else {
-			if (!transaction.source) {
-				alert("A dividend was created before the stock was created, please create the stock first");
-				return;
-			}
+			if (!transaction.source) throw new Error("A dividend was created before the stock was created, please create the stock first");
 
-			const quote = await stockStore.getStockQuote(transaction.source, transaction.symbol);
-			if (!quote) console.error(`Failed to fetch quote for ${transaction.symbol}`);
+
+			let currentPrice: number;
+			if (manualPrices.value[transaction.symbol]) {
+				currentPrice = manualPrices.value[transaction.symbol]!;
+			} else {
+				const quote = await stockStore.getStockQuote(transaction.source, transaction.symbol);
+				if (!quote) console.error(`Failed to fetch quote for ${transaction.symbol}`);
+				currentPrice = (quote?.current || 0) * conversionRate.value;
+			}
 
 			portfolio.value.push({
 				symbol: transaction.symbol,
@@ -124,7 +147,8 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 				type: transaction.type,
 				currency: transaction.currency,
 				quantity: transaction.quantity,
-				currentPrice: (quote?.current || 0) * conversionRate.value,
+				currentPrice: currentPrice,
+				manualInputedPrice: !!manualPrices.value[transaction.symbol],
 				currentInvested: transaction.price * transaction.quantity,
 				totalInverted: transaction.price * transaction.quantity,
 				totalRetrieved: 0,
@@ -133,5 +157,14 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 		}
 	}
 
-	return { init, portfolio, transactions, cashDividends, addTransaction, removeTransaction };
+	return {
+		init,
+		portfolio,
+		transactions,
+		cashDividends,
+		addTransaction,
+		removeTransaction,
+		updateManualPrice,
+		manualPrices,
+	};
 });

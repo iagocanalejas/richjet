@@ -18,7 +18,12 @@ export const useStocksStore = defineStore("stocks", () => {
 
 			if (results.some(s => !s.symbol.includes("."))) {
 				// filter out symbols with a dot
-				return results.filter(s => !s.symbol.includes("."));
+				return results.filter(s =>
+					!s.symbol.includes(".") &&
+					!/^-?\d+X SHORT\b/.test(s.name) &&
+					!/^-?\d+X LONG\b/.test(s.name) &&
+					!/^LS \d+X\b/.test(s.name)
+				);
 			}
 			return results;
 		} catch (error) {

@@ -82,7 +82,8 @@ class SecurityType(enum.Enum):
 
 def normalize_security_type(security_type: str) -> SecurityType:
     match security_type.upper():
-        case "STOCK" | "COMMON STOCK":
+        case "STOCK" | "COMMON STOCK" | "EQUITY":
+            # alpha-vantage uses equity for stocks
             return SecurityType.COMMON_STOCK
         case "ETP" | "ETF":
             return SecurityType.ETP

@@ -125,6 +125,7 @@ export const useGoogleStore = defineStore("google-store", () => {
 			settings: settingsStore.settings,
 			transactions: portfolioStore.transactions,
 			watchlist: watchlistStore.watchlist,
+			manualPrices: portfolioStore.manualPrices,
 		};
 		const fileBlob = new Blob([JSON.stringify(data)], { type: "text/plain" });
 		const metadata: FileMetadata = { name: FILE_NAME, mimeType: "text/plain" };

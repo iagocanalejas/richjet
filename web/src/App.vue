@@ -100,6 +100,6 @@ onMounted(async () => {
 
 	await useSettingsStore().init(config?.settings);
 	await useWatchlistStore().init(config?.watchlist);
-	await usePortfolioStore().init(config?.transactions);
+	await usePortfolioStore().init(config?.transactions, config?.manualPrices);
 });
 </script>

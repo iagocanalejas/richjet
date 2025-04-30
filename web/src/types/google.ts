@@ -17,6 +17,7 @@ export interface FileData {
 	settings: Settings;
 	transactions: TransactionItem[];
 	watchlist: StockSymbolForDisplay[];
+	manualPrices: { [k: string]: number };
 }
 
 export interface FileMetadata {

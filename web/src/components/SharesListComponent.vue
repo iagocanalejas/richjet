@@ -7,15 +7,26 @@
 				<div class="flex items-center space-x-3">
 					<img v-show="!item.hideImage" :src="imageURLfor(item)" alt="Icon" @error="item.hideImage = true"
 						class="w-6 h-6 object-contain" />
-					<div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
-						<span class="truncate font-medium text-white">{{ item.name }}</span>
-						<span class="text-xs text-gray-400">({{ item.symbol }})</span>
+					<div class="flex flex-col">
+						<div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+							<span class="truncate font-medium text-white">{{ item.name }}</span>
+							<span class="text-xs text-gray-400">({{ item.symbol }})</span>
+						</div>
+						<div v-if="item.isin || item.figi"
+							class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+							<div v-if="item.isin" class="text-xs text-gray-300 sm:mt-0.5">
+								ISIN: {{ item.isin }}
+							</div>
+							<div v-if="item.figi" class="text-xs text-gray-300 sm:mt-0.5">
+								FIGI: {{ item.figi }}
+							</div>
+						</div>
 					</div>
 				</div>
 
 				<div class="flex items-center space-x-2 relative">
 					<div v-if="item.price" class="flex items-center text-sm me-5">
-						<div class="text-right" :class="magicClass(item.price - item.openPrice!)">
+						<div class="text-right" :class="colorClass(item.price - item.openPrice!)">
 							<div class="font-semibold">{{ formatCurrency(item.price, currency, conversionRate) }}</div>
 							<div class="text-xs">
 								{{ item.price - item.openPrice! > 0 ? '+' : '' }}
@@ -68,7 +79,7 @@ import { symbolType2Image, type StockSymbolForDisplay, type TransactionItem } fr
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
-import { formatCurrency, magicClass } from "@/types/utils";
+import { formatCurrency, colorClass } from "@/types/utils";
 import LoadingSpinner from "./LoadingSpinner.vue";
 import TransactionModal from "./modals/TransactionModal.vue";
 import { useLoadingStore } from "@/stores/loading";
