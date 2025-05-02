@@ -27,11 +27,16 @@ function mapWeirdLocales(locale: string) {
 	}
 }
 
-export function colorClass(value: number, manual: boolean = false) {
-	return {
-		'text-green-400': value > 0,
-		'text-red-400': value < 0,
-		'text-white': value === 0,
-		'text-yellow-400': manual,
+export function symbolType2Image(from: string) {
+	switch (from.toUpperCase()) {
+		case "STOCK":
+		case "ETP":
+		case "GDR":
+			return "symbol";
+		case "CRYPTO":
+			return "crypto";
+		default:
+			console.error("Unknown symbol type", from);
+			break;
 	}
 }

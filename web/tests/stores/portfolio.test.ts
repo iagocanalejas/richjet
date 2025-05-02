@@ -193,7 +193,6 @@ describe('usePortfolioStore', () => {
 		});
 
 		it('alerts on dividend before stock creation', async () => {
-			const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => { });
 			const dividend = {
 				symbol: 'NEW',
 				image: '',
@@ -206,9 +205,7 @@ describe('usePortfolioStore', () => {
 				date: baseDate,
 				source: undefined,
 			};
-			await store.init([dividend]);
-			expect(alertSpy).toHaveBeenCalled();
-			alertSpy.mockRestore();
+			await expect(() => store.init([dividend])).rejects.toThrow("A dividend was created before the stock was created, please create the stock first");
 		});
 	});
 });

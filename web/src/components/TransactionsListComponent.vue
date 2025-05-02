@@ -12,7 +12,7 @@
 		<ul class="space-y-4">
 			<li v-for="(item, index) in visibleItems" :key="index"
 				class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4"
-				:class="[classForType(item)]">
+				:class="[borderByTransactionType(item.transactionType)]">
 				<div class="flex items-center space-x-3">
 					<img :src="item.image" alt="Icon" class="w-6 h-6 object-contain" />
 					<span class="text-sm font-medium tracking-wide text-white">
@@ -23,7 +23,7 @@
 				<div class="text-sm text-right">{{ item.price ? formatCurrency(item.price, currency) : '---' }}</div>
 				<div class="text-sm text-right">{{ item.quantity ? item.quantity : '---' }}</div>
 
-				<div v-if="isDividend(item)" class="text-sm text-right">---</div>
+				<div v-if="isDividend(item.transactionType)" class="text-sm text-right">---</div>
 				<div v-else class="text-sm text-right">{{ formatCurrency(item.quantity * item.price, currency) }}</div>
 
 				<div class="text-gray-400 text-right">
@@ -47,14 +47,16 @@
 </template>
 
 <script setup lang="ts">
-import { type TransactionItem } from "@/types/stock";
+import { type TransactionItem } from "@/types/portfolio";
 import { computed, ref } from "vue";
-import { formatCurrency } from "@/types/utils";
+import { formatCurrency } from "@/utils/utils";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
 import { useLoadingStore } from "@/stores/loading";
 import LoadingSpinner from "./LoadingSpinner.vue";
 import IntersectionObserver from "./utils/IntersectionObserver.vue";
+import { isDividend } from "@/utils/rules";
+import { borderByTransactionType } from "@/utils/styles";
 
 const emit = defineEmits(["remove"]);
 const { currency } = storeToRefs(useSettingsStore());
@@ -73,22 +75,4 @@ const currentPage = ref(0);
 const visibleItems = computed(() => {
 	return props.values.slice(0, (currentPage.value + 1) * ITEMS_PER_PATE);
 });
-
-function isDividend(item: TransactionItem) {
-	return item.transactionType === "dividend" || item.transactionType === "dividend-cash";
-}
-
-function classForType(item: TransactionItem) {
-	switch (item.transactionType) {
-		case "buy":
-			return "border-green-600 bg-gray-800";
-		case "sell":
-			return "border-red-600 bg-gray-800";
-		case "dividend":
-		case "dividend-cash":
-			return "border-blue-600 bg-gray-800";
-		default:
-			return "";
-	}
-}
 </script>

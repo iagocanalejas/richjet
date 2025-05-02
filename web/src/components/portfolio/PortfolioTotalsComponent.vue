@@ -8,13 +8,13 @@
 		</div>
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Current</h2>
-			<p class="text-lg font-semibold" :class="colorClass(portfolioCurrentValue - totalInvested)">
+			<p class="text-lg font-semibold" :class="textColorByRentability(portfolioCurrentValue - totalInvested)">
 				{{ formatCurrency(portfolioCurrentValue, currency) }}
 			</p>
 		</div>
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Closed</h2>
-			<p class="text-lg font-semibold" :class="colorClass(closedPositions)">
+			<p class="text-lg font-semibold" :class="textColorByRentability(closedPositions)">
 				{{ formatCurrency(closedPositions, currency) }}
 			</p>
 		</div>
@@ -26,7 +26,7 @@
 		</div>
 		<div class="text-center">
 			<h2 class="text-sm font-medium text-gray-400">Rentability</h2>
-			<p class="text-lg font-semibold" :class="colorClass(rentability)">
+			<p class="text-lg font-semibold" :class="textColorByRentability(rentability)">
 				{{ rentability.toFixed(2) }}%
 			</p>
 		</div>
@@ -36,7 +36,8 @@
 <script lang="ts" setup>
 import { usePortfolioStore } from "@/stores/portfolio";
 import { useSettingsStore } from "@/stores/settings";
-import { formatCurrency, colorClass } from "@/types/utils";
+import { formatCurrency } from "@/utils/utils";
+import { textColorByRentability } from "@/utils/styles"
 import { storeToRefs } from "pinia";
 import { computed } from "vue";
 

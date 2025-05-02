@@ -8,18 +8,19 @@
 	</div>
 	<div class="text-sm text-right text-white">--</div>
 	<div class="text-sm text-right text-white">--</div>
-	<div class="text-sm text-right" :class="colorClass(winOrLoss, item.manualInputedPrice)">
+	<div class="text-sm text-right" :class="textColorByRentability(winOrLoss, item.manualInputedPrice)">
 		{{ formatCurrency(winOrLoss, currency) }}
 	</div>
-	<div class="text-sm text-right" :class="colorClass(rentability, item.manualInputedPrice)">
+	<div class="text-sm text-right" :class="textColorByRentability(rentability, item.manualInputedPrice)">
 		{{ rentability.toFixed(2) }} %
 	</div>
 </template>
 
 <script lang="ts" setup>
 import { useSettingsStore } from "@/stores/settings";
-import type { PortfolioItem } from "@/types/stock";
-import { formatCurrency, colorClass } from "@/types/utils";
+import type { PortfolioItem } from "@/types/portfolio";
+import { formatCurrency } from "@/utils/utils";
+import { textColorByRentability } from "@/utils/styles"
 import { storeToRefs } from "pinia";
 import { computed, ref } from "vue";
 

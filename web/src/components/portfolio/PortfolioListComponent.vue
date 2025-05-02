@@ -42,10 +42,10 @@ import PortfolioTradeItemComponent from "./PortfolioTradeItemComponent.vue";
 import { usePortfolioStore } from "@/stores/portfolio";
 import { storeToRefs } from "pinia";
 import { ref } from "vue";
-import type { PortfolioItem, TransactionItem } from "@/types/stock";
+import type { PortfolioItem, TransactionItem } from "@/types/portfolio";
 import DividendModal from "../modals/DividendModal.vue";
 import { useSettingsStore } from "@/stores/settings";
-import { isPortfolioItemWithManualPrice, isTradePortfolioItem } from "@/types/rules";
+import { isPortfolioItemWithManualPrice, isTradePortfolioItem } from "@/utils/rules";
 import ContextMenu from "../utils/ContextMenu.vue";
 import ManualPriceModal from "../modals/ManualPriceModal.vue";
 

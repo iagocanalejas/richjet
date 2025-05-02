@@ -1,6 +1,9 @@
-import type { PortfolioItem } from "./stock";
+import type { PortfolioItem, TransactionType } from "../types/portfolio";
 
-// TODO: move repated logic here
+
+export function isDividend(type: TransactionType): boolean {
+	return type === "dividend" || type === "dividend-cash";
+}
 
 export function isTradePortfolioItem(item: PortfolioItem): boolean {
 	return item.quantity === 0

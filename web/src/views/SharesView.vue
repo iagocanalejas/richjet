@@ -34,7 +34,7 @@ import SharesListComponent from "@/components/SharesListComponent.vue";
 import { ref, type Ref } from "vue";
 import { useStocksStore } from "@/stores/stocks";
 import type { StockSymbolForDisplay } from "@/types/stock";
-import { debounce } from "@/types/utils";
+import { debounce } from "@/utils/utils";
 import { useWatchlistStore } from "@/stores/watchlist";
 import { usePortfolioStore } from "@/stores/portfolio";
 import { storeToRefs } from "pinia";

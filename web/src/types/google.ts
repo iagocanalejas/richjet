@@ -1,4 +1,5 @@
-import type { StockSymbolForDisplay, TransactionItem } from "./stock";
+import type { TransactionItem } from "./portfolio";
+import type { StockSymbolForDisplay } from "./stock";
 
 export interface GoogleUser {
 	name: string;

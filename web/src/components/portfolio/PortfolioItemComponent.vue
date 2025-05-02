@@ -7,7 +7,7 @@
 		</span>
 	</div>
 	<div class="text-sm text-right">
-		<div :class="colorClass(rentability, item.manualInputedPrice)">
+		<div :class="textColorByRentability(rentability, item.manualInputedPrice)">
 			{{ formatCurrency(item.currentPrice, currency) }}
 		</div>
 		<div class="text-xs text-gray-400">
@@ -18,14 +18,14 @@
 		{{ item.quantity }}
 	</div>
 	<div class="text-sm text-right">
-		<div :class="colorClass(rentability, item.manualInputedPrice)">
+		<div :class="textColorByRentability(rentability, item.manualInputedPrice)">
 			{{ formatCurrency(item.currentPrice * item.quantity, currency) }}
 		</div>
 		<div class="text-xs text-gray-400">
 			({{ formatCurrency(item.currentInvested + item.comission, currency) }})
 		</div>
 	</div>
-	<div class="text-sm text-right" :class="colorClass(rentability, item.manualInputedPrice)">
+	<div class="text-sm text-right" :class="textColorByRentability(rentability, item.manualInputedPrice)">
 		{{ rentability.toFixed(2) }} %
 	</div>
 	<button class="text-gray-400 hover:text-white cursor-pointer" title="Options"> ⋮ </button>
@@ -33,8 +33,9 @@
 
 <script lang="ts" setup>
 import { useSettingsStore } from "@/stores/settings";
-import type { PortfolioItem } from "@/types/stock";
-import { formatCurrency, colorClass } from "@/types/utils";
+import type { PortfolioItem } from "@/types/portfolio";
+import { formatCurrency } from "@/utils/utils";
+import { textColorByRentability } from "@/utils/styles"
 import { storeToRefs } from "pinia";
 import { computed, ref } from "vue";
 

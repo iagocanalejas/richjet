@@ -1,5 +1,5 @@
 import { defineStore, storeToRefs } from "pinia";
-import { type PortfolioItem, type TransactionItem } from "@/types/stock";
+import { type PortfolioItem, type TransactionItem } from "@/types/portfolio";
 import { ref, type Ref } from "vue";
 import { useStocksStore } from "./stocks";
 import { useGoogleStore } from "./google";

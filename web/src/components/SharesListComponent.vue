@@ -26,7 +26,7 @@
 
 				<div class="flex items-center space-x-2 relative">
 					<div v-if="item.price" class="flex items-center text-sm me-5">
-						<div class="text-right" :class="colorClass(item.price - item.openPrice!)">
+						<div class="text-right" :class="textColorByRentability(item.price - item.openPrice!)">
 							<div class="font-semibold">{{ formatCurrency(item.price, currency, conversionRate) }}</div>
 							<div class="text-xs">
 								{{ item.price - item.openPrice! > 0 ? '+' : '' }}
@@ -75,15 +75,17 @@
 </template>
 
 <script setup lang="ts">
-import { symbolType2Image, type StockSymbolForDisplay, type TransactionItem } from "@/types/stock";
+import { type StockSymbolForDisplay } from "@/types/stock";
 import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useSettingsStore } from "@/stores/settings";
-import { formatCurrency, colorClass } from "@/types/utils";
+import { formatCurrency, symbolType2Image } from "@/utils/utils";
+import { textColorByRentability } from "@/utils/styles"
 import LoadingSpinner from "./LoadingSpinner.vue";
 import TransactionModal from "./modals/TransactionModal.vue";
 import { useLoadingStore } from "@/stores/loading";
 import IntersectionObserver from "./utils/IntersectionObserver.vue";
+import type { TransactionItem } from "@/types/portfolio";
 
 const ITEMS_PER_PATE = 20;
 

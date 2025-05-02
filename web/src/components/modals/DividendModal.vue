@@ -6,14 +6,12 @@
 			</div>
 
 			<div class="flex justify-center space-x-4">
-				<button class="px-4 py-2 rounded-md font-medium transition"
-					:class="[dividendType === 'cash' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600']"
+				<button class="px-4 py-2 rounded-md font-medium transition" :class="[tabClass(dividendType === 'cash')]"
 					@click="dividendType = 'cash'">
 					Cash Dividend
 				</button>
 				<button class="px-4 py-2 rounded-md font-medium transition"
-					:class="[dividendType === 'stock' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600']"
-					@click="dividendType = 'stock'">
+					:class="[tabClass(dividendType === 'stock')]" @click="dividendType = 'stock'">
 					Stock Dividend
 				</button>
 			</div>
@@ -61,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TransactionItem } from '@/types/stock';
+import type { TransactionItem } from '@/types/portfolio';
 import { reactive, ref, watch } from 'vue';
 
 const props = defineProps({
@@ -89,6 +87,10 @@ function submit() {
 		return;
 	}
 	emit("add-dividend", transactionCopy);
+}
+
+function tabClass(selected: boolean) {
+	return selected ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600';
 }
 </script>
 
