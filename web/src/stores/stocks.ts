@@ -4,11 +4,12 @@ import { type StockQuote, type StockSymbol } from "@/types/stock";
 export const useStocksStore = defineStore("stocks", () => {
 	const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 
-	const quoteCache = new Map<string, StockQuote>();
+	const _quoteCache = new Map<string, StockQuote>();
 
 	async function symbolSearch(query: string) {
 		try {
-			const response = await fetch(`${BASE_URL}/search?q=${query}`, { method: "GET" });
+			const opts = { method: "GET", timeout: 15000 };
+			const response = await fetch(`${BASE_URL}/search?q=${query}`, opts);
 			if (!response.ok) throw new Error("Network response was not ok");
 
 			const data = await response.json();
@@ -32,10 +33,11 @@ export const useStocksStore = defineStore("stocks", () => {
 	}
 
 	async function getStockQuote(source: string, symbol: string) {
-		if (quoteCache.has(symbol)) return quoteCache.get(symbol)!;
+		if (_quoteCache.has(symbol)) return _quoteCache.get(symbol)!;
 
 		try {
-			const response = await fetch(`${BASE_URL}/quote/${source}/${symbol}`, { method: "GET" });
+			const opts = { method: "GET", timeout: 15000 };
+			const response = await fetch(`${BASE_URL}/quote/${source}/${symbol}`, opts);
 			if (!response.ok) throw new Error("Network response was not ok");
 
 			let data = await response.json();
@@ -48,7 +50,7 @@ export const useStocksStore = defineStore("stocks", () => {
 				open: data.open,
 				previpus_close: data.previpus_close,
 			};
-			quoteCache.set(symbol, data);
+			_quoteCache.set(symbol, data);
 			return data as StockQuote;
 		} catch (error) {
 			console.error(error);

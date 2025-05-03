@@ -1,7 +1,7 @@
-import functools
 import os
 
-import requests
+import httpx
+from async_lru import alru_cache
 from clients import FinnhubClient, OpenFIGIClient, VantageClient
 from clients._types import StockQuote
 from fastapi import FastAPI, HTTPException
@@ -44,12 +44,11 @@ for name, enabled, client_class, api_key in services:
         clients[name] = client_class(api_key=api_key)
 
 
-@functools.lru_cache(maxsize=128)
-def _cached_get_exchange_rate(target: str):
-    response = requests.get(
-        f"{'https://v6.exchangerate-api.com/v6'}/{EXCHANGERATE_API_KEY}/pair/USD/{target}",
-        timeout=3,
-    )
+@alru_cache(maxsize=128)
+async def _cached_get_exchange_rate(target: str):
+    url = f"{'https://v6.exchangerate-api.com/v6'}/{EXCHANGERATE_API_KEY}/pair/USD/{target}"
+    async with httpx.AsyncClient(timeout=3) as client:
+        response = await client.get(url)
     if response.status_code != 200:
         raise HTTPException(status_code=response.status_code, detail="failed to fetch exchange rate")
     return response.json()
@@ -60,7 +59,7 @@ async def get_exchange_rate(target: str):
     """
     Fetches the exchange rate for the given target currency.
     """
-    return _cached_get_exchange_rate(target)
+    return await _cached_get_exchange_rate(target)
 
 
 @app.get("/search")
@@ -75,13 +74,11 @@ async def search_stock(q: str | None):
     errors = []
     for client in clients.values():
         try:
-            results = results.union(set(client.search_stock(q)))
-        except HTTPException as e:
+            results = results.union(set(await client.search_stock(q)))
+        except (HTTPException, httpx.TimeoutException) as e:
             errors.append(e)
 
-    if not results:
-        if not errors:
-            raise HTTPException(status_code=404, detail="results no found for query")
+    if not results and errors:
         raise HTTPException(status_code=400, detail=[e.detail for e in errors])
 
     results = [
@@ -104,24 +101,37 @@ async def search_stock(q: str | None):
     }
 
 
+async def _get_stock_quote_or_none(client, symbol: str) -> StockQuote | None:
+    try:
+        return await client.get_quote(symbol)
+    except HTTPException as e:
+        logger.error(f"{client.NAME}: {e.detail}")
+    except httpx.TimeoutException:
+        logger.error(f"{client.NAME}: timeout")
+    return None
+
+
 @app.get("/quote/{source}/{symbol}")
 async def get_quote(source: str, symbol: str):
     """
     Fetches the stock quote for the given symbol using the multiple APIs.
     """
+    if source not in [s[0] for s in services]:
+        raise HTTPException(status_code=400, detail=f"{source=} not supported")
+
     quote: StockQuote | None = None
-    if source == OpenFIGIClient.NAME:
+    if source != OpenFIGIClient.NAME:
+        quote = await _get_stock_quote_or_none(clients[source], symbol)
+
+    if not quote:
         # TODO: check a way of better retrieve the quotes
         for client in clients.values():
-            if client.NAME == OpenFIGIClient.NAME:
+            if client.NAME == source or client.NAME == OpenFIGIClient.NAME:
                 continue
-            try:
-                quote = client.get_quote(symbol)
+            quote = await _get_stock_quote_or_none(client, symbol)
+            if quote:
                 break
-            except HTTPException:
-                continue
-    else:
-        quote = clients[source].get_quote(symbol)
+
     if not quote:
         raise HTTPException(status_code=404, detail=f"{source}: no quote found for {symbol}")
 

@@ -18,10 +18,10 @@ const originalFetch = window.fetch;
 
 // @ts-expect-error: unmatched function signature
 window.fetch = async (resource: RequestInfo, options: RequestInit & { timeout?: number } = {}) => {
-	const { timeout = 5000, ...rest } = options;
+	const { timeout = 3000, ...rest } = options;
 
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort('⏱️ Request timed out'), timeout);
+	const timeoutId = setTimeout(() => controller.abort(`⏱️ Request ${resource} timed out`), timeout);
 
 	loadingStore.start();
 

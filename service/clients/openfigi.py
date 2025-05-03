@@ -1,6 +1,4 @@
-import json
-
-import requests
+import httpx
 from fastapi import HTTPException
 from log import logger
 
@@ -18,13 +16,13 @@ class OpenFIGIClient:
     def __init__(self, api_key=None):
         self.api_key = api_key
 
-    def search_stock(self, q: str) -> list[StockSymbol]:
-        response = requests.post(
-            f"{self.BASE_URL}/v3/search",
-            data=bytes(json.dumps({"query": q}), encoding="utf-8"),
-            headers={"Content-Type": "application/json"},
-            timeout=5,
-        )
+    async def search_stock(self, q: str) -> list[StockSymbol]:
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.post(
+                f"{self.BASE_URL}/v3/search",
+                json={"query": q},
+                headers={"Content-Type": "application/json"},
+            )
 
         if response.status_code != 200:
             raise HTTPException(

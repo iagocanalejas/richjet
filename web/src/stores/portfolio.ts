@@ -96,15 +96,15 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 	}
 
 	async function _prefetchStockQuotes() {
-		const symbols = [...new Set(transactions.value
-			.filter(t => t.source && !manualPrices.value[t.symbol])
-			.map((transaction) => [transaction.source!, transaction.symbol])
-		)];
+		const symbols = [
+			...new Set(transactions.value
+				.filter(t => t.source && !manualPrices.value[t.symbol])
+				.map(t => `${t.source}|${t.symbol}`))
+		].map(s => s.split('|') as [string, string]);
 		for (let i = 0; i < symbols.length; i += 5) {
 			const batch = symbols.slice(i, i + 5);
 			await Promise.all(batch.map(([source, symbol]) => stockStore.getStockQuote(source, symbol)));
 		}
-
 	}
 
 	async function _updatePortfolio(transaction: TransactionItem) {

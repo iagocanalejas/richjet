@@ -1,4 +1,5 @@
-import requests
+import httpx
+from async_lru import alru_cache
 from fastapi import HTTPException
 from log import logger
 
@@ -17,13 +18,15 @@ class FinnhubClient:
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def search_stock(self, q: str) -> list[StockSymbol]:
-        # adding the 'exchange' to the query improves the results
-        response = requests.get(
-            f"{self.BASE_URL}/search",
-            params={"q": q, "exchange": "US", "token": self.api_key},
-            timeout=5,
-        )
+    @alru_cache(maxsize=128)
+    async def search_stock(self, q: str) -> list[StockSymbol]:
+        async with httpx.AsyncClient(timeout=5) as client:
+            # adding the 'exchange' to the query improves the results
+            response = await client.get(
+                f"{self.BASE_URL}/search",
+                params={"q": q, "exchange": "US", "token": self.api_key},
+                timeout=5,
+            )
 
         if response.status_code != 200:
             raise HTTPException(
@@ -48,12 +51,14 @@ class FinnhubClient:
             for result in valid_results
         ]
 
-    def get_quote(self, symbol: str) -> StockQuote:
-        response = requests.get(
-            f"{self.BASE_URL}/quote",
-            params={"symbol": symbol, "token": self.api_key},
-            timeout=5,
-        )
+    @alru_cache(maxsize=128)
+    async def get_quote(self, symbol: str) -> StockQuote:
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.get(
+                f"{self.BASE_URL}/quote",
+                params={"symbol": symbol, "token": self.api_key},
+                timeout=5,
+            )
 
         if response.status_code != 200:
             raise HTTPException(

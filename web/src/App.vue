@@ -99,7 +99,7 @@ onMounted(async () => {
 	console.log("google client initialized", config);
 
 	await useSettingsStore().init(config?.settings);
-	await useWatchlistStore().init(config?.watchlist);
 	await usePortfolioStore().init(config?.transactions, config?.manualPrices);
+	await useWatchlistStore().init(config?.watchlist);
 });
 </script>
