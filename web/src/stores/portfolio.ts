@@ -1,6 +1,6 @@
 import { defineStore, storeToRefs } from "pinia";
 import { type PortfolioItem, type TransactionItem } from "@/types/portfolio";
-import { ref, type Ref } from "vue";
+import { computed, ref, type Ref } from "vue";
 import { useStocksStore } from "./stocks";
 import { useGoogleStore } from "./google";
 import { useSettingsStore } from "./settings";
@@ -64,7 +64,7 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 				return;
 			}
 			portfolio.value[idx].currentInvested -= transaction.price * transaction.quantity;
-			portfolio.value[idx].totalInverted -= transaction.price * transaction.quantity;
+			portfolio.value[idx].totalInvested -= transaction.price * transaction.quantity;
 			portfolio.value[idx].comission -= transaction.comission;
 		} else if (transaction.transactionType === "sell") {
 			portfolio.value[idx].quantity += transaction.quantity;
@@ -118,11 +118,12 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 			if (transaction.transactionType === "buy") {
 				portfolio.value[idx].quantity += transaction.quantity;
 				portfolio.value[idx].currentInvested += transaction.price * transaction.quantity;
-				portfolio.value[idx].totalInverted += transaction.price * transaction.quantity;
+				portfolio.value[idx].totalInvested += transaction.price * transaction.quantity;
 				portfolio.value[idx].comission += transaction.comission;
 			} else if (transaction.transactionType === "sell") {
+				const avgPrice = portfolio.value[idx].currentInvested / portfolio.value[idx].quantity;
 				portfolio.value[idx].quantity -= transaction.quantity;
-				portfolio.value[idx].currentInvested -= transaction.price * transaction.quantity;
+				portfolio.value[idx].currentInvested -= avgPrice * transaction.quantity;
 				portfolio.value[idx].totalRetrieved += transaction.price * transaction.quantity;
 				portfolio.value[idx].comission += transaction.comission;
 			} else if (transaction.transactionType === "dividend") {
@@ -150,12 +151,39 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 				currentPrice: currentPrice,
 				manualInputedPrice: !!manualPrices.value[transaction.symbol],
 				currentInvested: transaction.price * transaction.quantity,
-				totalInverted: transaction.price * transaction.quantity,
+				totalInvested: transaction.price * transaction.quantity,
 				totalRetrieved: 0,
 				comission: transaction.comission,
 			});
 		}
 	}
+
+	const totalInvested = computed(() => {
+		return portfolio.value
+			.filter((p) => p.quantity > 0)
+			.reduce((acc, item) => acc + item.currentInvested + item.comission, 0);
+	});
+
+	const portfolioCurrentValue = computed(() => {
+		return portfolio.value
+			.filter((p) => p.quantity > 0)
+			.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
+	});
+
+	const closedPositions = computed(() => {
+		return portfolio.value.reduce((total, item) => {
+			const { quantity, totalRetrieved, totalInvested, currentInvested, comission } = item;
+			const currentlyInvested = quantity === 0 ? totalInvested + comission : (totalInvested - currentInvested) + comission;
+			return total + (totalRetrieved - currentlyInvested);
+		}, 0);
+	});
+
+
+	const rentability = computed(() => {
+		return totalInvested.value
+			? ((portfolioCurrentValue.value + closedPositions.value + cashDividends.value - totalInvested.value) / totalInvested.value) * 100
+			: 0;
+	});
 
 	return {
 		init,
@@ -166,5 +194,9 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 		removeTransaction,
 		updateManualPrice,
 		manualPrices,
+		totalInvested,
+		portfolioCurrentValue,
+		closedPositions,
+		rentability,
 	};
 });

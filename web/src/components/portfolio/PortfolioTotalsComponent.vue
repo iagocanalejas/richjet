@@ -39,32 +39,7 @@ import { useSettingsStore } from "@/stores/settings";
 import { formatCurrency } from "@/utils/utils";
 import { textColorByRentability } from "@/utils/styles"
 import { storeToRefs } from "pinia";
-import { computed } from "vue";
 
 const { currency } = storeToRefs(useSettingsStore());
-const { portfolio, cashDividends } = storeToRefs(usePortfolioStore());
-
-const totalInvested = computed(() => {
-	return portfolio.value
-		.filter((p) => p.quantity > 0)
-		.reduce((acc, item) => acc + item.currentInvested + item.comission, 0);
-});
-
-const portfolioCurrentValue = computed(() => {
-	return portfolio.value
-		.filter((p) => p.quantity > 0)
-		.reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
-});
-
-const rentability = computed(() => {
-	return totalInvested.value
-		? ((portfolioCurrentValue.value + closedPositions.value + cashDividends.value - totalInvested.value) / totalInvested.value) * 100
-		: 0;
-});
-
-const closedPositions = computed(() => {
-	return portfolio.value
-		.filter((p) => p.quantity === 0)
-		.reduce((acc, item) => acc + (item.totalRetrieved - (item.totalInverted + item.comission)), 0);
-});
+const { cashDividends, totalInvested, portfolioCurrentValue, closedPositions, rentability } = storeToRefs(usePortfolioStore());
 </script>

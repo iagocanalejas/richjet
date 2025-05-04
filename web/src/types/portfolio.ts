@@ -21,7 +21,7 @@ export interface PortfolioItem {
 	currentPrice: number;
 	manualInputedPrice: boolean;
 	currentInvested: number;
-	totalInverted: number;
+	totalInvested: number;
 	totalRetrieved: number;
 	comission: number;
 }

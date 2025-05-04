@@ -50,7 +50,7 @@ describe('usePortfolioStore', () => {
 				symbol: 'AAPL',
 				quantity: 5,
 				currentInvested: 500,
-				totalInverted: 500,
+				totalInvested: 500,
 				comission: 1,
 			});
 		});
@@ -80,8 +80,9 @@ describe('usePortfolioStore', () => {
 			await store.init([buy, sell]);
 
 			expect(store.portfolio[0].quantity).toBe(6);
-			expect(store.portfolio[0].totalRetrieved).toBe(440); // 4 * 110
-			expect(store.portfolio[0].comission).toBe(3); // 1 + 2
+			expect(store.portfolio[0].totalRetrieved).toBe(440);
+			expect(store.portfolio[0].currentInvested).toBe(600);
+			expect(store.portfolio[0].comission).toBe(3);
 		});
 	});
 
@@ -208,4 +209,123 @@ describe('usePortfolioStore', () => {
 			await expect(() => store.init([dividend])).rejects.toThrow("A dividend was created before the stock was created, please create the stock first");
 		});
 	});
+
+	describe('totalInvested', () => {
+		it('returns 0 when portfolio is empty', () => {
+			expect(store.totalInvested).toBe(0);
+		});
+
+		it('sums currentInvested and comission for positions with quantity > 0', async () => {
+			const tx = {
+				symbol: 'AAPL',
+				image: '',
+				type: 'stock',
+				currency: 'USD',
+				quantity: 10,
+				price: 100,
+				comission: 10,
+				transactionType: 'buy',
+				date: baseDate,
+				source: 'nasdaq',
+			};
+			await store.init([tx]);
+			expect(store.totalInvested).toBe(1010); // 10 * 100 + 10
+		});
+	});
+
+	describe('portfolioCurrentValue', () => {
+		it('returns 0 when portfolio is empty', () => {
+			expect(store.portfolioCurrentValue).toBe(0);
+		});
+
+		it('sums currentPrice * quantity for all positions with quantity > 0', () => {
+			store.portfolio.push({
+				symbol: 'MSFT',
+				image: '',
+				type: 'stock',
+				currency: 'USD',
+				quantity: 5,
+				currentPrice: 300,
+				manualInputedPrice: false,
+				currentInvested: 1500,
+				totalInvested: 1500,
+				totalRetrieved: 0,
+				comission: 0,
+			});
+			expect(store.portfolioCurrentValue).toBe(1500); // 5 * 300
+		});
+	});
+
+	describe('closedPositions', () => {
+		it('returns 0 when no positions are closed', () => {
+			expect(store.closedPositions).toBe(0);
+		});
+
+		it('calculates profit/loss from fully closed positions', async () => {
+			const buy = {
+				symbol: 'TSLA',
+				image: '',
+				type: 'stock',
+				currency: 'USD',
+				quantity: 10,
+				price: 100,
+				comission: 0,
+				transactionType: 'buy',
+				date: baseDate,
+				source: 'nasdaq',
+			};
+			const sell = {
+				...buy,
+				transactionType: 'sell',
+				price: 150,
+				date: new Date().toISOString(),
+			};
+			await store.init([buy, sell]);
+			expect(store.closedPositions).toBe(500); // 1500 - 1000
+		});
+	});
+
+	describe('rentability', () => {
+		it('returns 0 if totalInvested is 0', () => {
+			expect(store.rentability).toBe(0);
+		});
+
+		it('calculates rentability with open, closed positions and cash dividends', async () => {
+			const buy = {
+				symbol: 'NFLX',
+				image: '',
+				type: 'stock',
+				currency: 'USD',
+				quantity: 10,
+				price: 100,
+				comission: 0,
+				transactionType: 'buy',
+				date: baseDate,
+				source: 'nasdaq',
+			};
+			const sell = {
+				...buy,
+				quantity: 5,
+				price: 150,
+				transactionType: 'sell',
+				date: new Date().toISOString(),
+			};
+			const dividend = {
+				...buy,
+				transactionType: 'dividend-cash',
+				price: 100,
+				quantity: 0,
+				date: new Date().toISOString(),
+			};
+			await store.init([buy, sell, dividend]);
+
+			const expected =
+				((store.portfolioCurrentValue + store.closedPositions + store.cashDividends - store.totalInvested) /
+					store.totalInvested) *
+				100;
+
+			expect(store.rentability).toBeCloseTo(expected, 2);
+		});
+	});
+
 });

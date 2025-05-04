@@ -4,7 +4,7 @@
 		<div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
 			<div>Asset</div>
 			<div class="text-right">Date</div>
-			<div class="text-right">Buy Price</div>
+			<div class="text-right">Price</div>
 			<div class="text-right">Quantity</div>
 			<div class="text-right">Total</div>
 			<div class="text-right"></div>

@@ -32,11 +32,11 @@ const { currency } = storeToRefs(useSettingsStore());
 const hideImage = ref(false);
 
 const winOrLoss = computed(() => {
-	return props.item.totalRetrieved - (props.item.totalInverted + props.item.comission);
+	return props.item.totalRetrieved - (props.item.totalInvested + props.item.comission);
 });
 
 const rentability = computed(() => {
-	const totalPayed = props.item.totalInverted + props.item.comission;
+	const totalPayed = props.item.totalInvested + props.item.comission;
 	return ((props.item.totalRetrieved - totalPayed) / totalPayed) * 100;
 });
 </script>
