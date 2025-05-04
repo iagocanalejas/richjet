@@ -66,11 +66,13 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 			portfolio.value[idx].currentInvested -= transaction.price * transaction.quantity;
 			portfolio.value[idx].totalInvested -= transaction.price * transaction.quantity;
 			portfolio.value[idx].comission -= transaction.comission;
+			portfolio.value[idx].sortedBuys = portfolio.value[idx].sortedBuys.filter((t) => t !== transaction);
 		} else if (transaction.transactionType === "sell") {
 			portfolio.value[idx].quantity += transaction.quantity;
 			portfolio.value[idx].currentInvested += transaction.price * transaction.quantity;
 			portfolio.value[idx].totalRetrieved -= transaction.price * transaction.quantity;
 			portfolio.value[idx].comission -= transaction.comission;
+			portfolio.value[idx].sortedSells = portfolio.value[idx].sortedSells.filter((t) => t !== transaction);
 		} else if (transaction.transactionType === "dividend") {
 			portfolio.value[idx].quantity -= transaction.quantity;
 		} else if (transaction.transactionType === "dividend-cash") {
@@ -120,12 +122,33 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 				portfolio.value[idx].currentInvested += transaction.price * transaction.quantity;
 				portfolio.value[idx].totalInvested += transaction.price * transaction.quantity;
 				portfolio.value[idx].comission += transaction.comission;
+				portfolio.value[idx].sortedBuys.push({ ...transaction });
 			} else if (transaction.transactionType === "sell") {
-				const avgPrice = portfolio.value[idx].currentInvested / portfolio.value[idx].quantity;
+				let remainingToSell = transaction.quantity;
+				let costBasis = 0;
+
+				// Apply FIFO: consume from earliest buys first
+				while (remainingToSell > 0 && portfolio.value[idx].sortedBuys.length > 0) {
+					const buy = portfolio.value[idx].sortedBuys[0];
+
+					if (buy.quantity <= remainingToSell) {
+						// Fully consume this buy
+						costBasis += buy.quantity * buy.price;
+						remainingToSell -= buy.quantity;
+						portfolio.value[idx].sortedBuys.shift();
+					} else {
+						// Partially consume this buy
+						costBasis += remainingToSell * buy.price;
+						buy.quantity -= remainingToSell;
+						remainingToSell = 0;
+					}
+				}
+
 				portfolio.value[idx].quantity -= transaction.quantity;
-				portfolio.value[idx].currentInvested -= avgPrice * transaction.quantity;
+				portfolio.value[idx].currentInvested -= costBasis;
 				portfolio.value[idx].totalRetrieved += transaction.price * transaction.quantity;
 				portfolio.value[idx].comission += transaction.comission;
+				portfolio.value[idx].sortedSells.push({ ...transaction, costBasis });
 			} else if (transaction.transactionType === "dividend") {
 				portfolio.value[idx].quantity += transaction.quantity;
 			}
@@ -154,6 +177,8 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 				totalInvested: transaction.price * transaction.quantity,
 				totalRetrieved: 0,
 				comission: transaction.comission,
+				sortedBuys: [transaction],
+				sortedSells: [],
 			});
 		}
 	}

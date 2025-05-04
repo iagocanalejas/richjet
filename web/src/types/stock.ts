@@ -17,6 +17,7 @@ export type StockSymbolForDisplay = StockSymbol & {
 	isFavorite: boolean | undefined;
 	price: number | undefined;
 	openPrice: number | undefined;
+	noPrice: boolean | undefined;
 };
 
 export interface StockQuote {

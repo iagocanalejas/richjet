@@ -84,6 +84,48 @@ describe('usePortfolioStore', () => {
 			expect(store.portfolio[0].currentInvested).toBe(600);
 			expect(store.portfolio[0].comission).toBe(3);
 		});
+
+		it('applies FIFO logic when selling shares from multiple buys', async () => {
+			const buy1 = {
+				symbol: 'GOOG',
+				image: '',
+				type: 'stock',
+				currency: 'USD',
+				quantity: 5,
+				price: 200, // $1000 total
+				comission: 0,
+				transactionType: 'buy',
+				date: baseDate,
+				source: 'nasdaq',
+			};
+
+			const buy2 = {
+				...buy1,
+				quantity: 5,
+				price: 300, // $1500 total
+				date: new Date(Date.now() + 1000).toISOString(), // later than buy1
+			};
+
+			const sell = {
+				...buy1,
+				quantity: 7,
+				price: 400,
+				comission: 5,
+				transactionType: 'sell',
+				date: new Date(Date.now() + 2000).toISOString(),
+			};
+
+			await store.init([buy1, buy2, sell]);
+
+			const position = store.portfolio[0];
+			expect(position.quantity).toBe(3);
+			expect(position.totalRetrieved).toBe(2800);
+			expect(position.totalInvested).toBe(2500);
+			expect(position.currentInvested).toBe(900);
+			expect(position.comission).toBe(5);
+			expect(position.sortedSells).toHaveLength(1);
+			expect(position.sortedSells[0].costBasis).toBe(5 * 200 + 2 * 300);
+		});
 	});
 
 	describe('dividend transaction', () => {

@@ -38,7 +38,10 @@ export const useStocksStore = defineStore("stocks", () => {
 		try {
 			const opts = { method: "GET", timeout: 15000 };
 			const response = await fetch(`${BASE_URL}/quote/${source}/${symbol}`, opts);
-			if (!response.ok) throw new Error("Network response was not ok");
+			if (!response.ok) {
+				if (response.status === 404) return;
+				throw new Error("Network response was not ok");
+			};
 
 			let data = await response.json();
 			if (data.errors?.length) throw new Error(data.errors.join(", "));

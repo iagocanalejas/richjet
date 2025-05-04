@@ -11,11 +11,14 @@ export const useWatchlistStore = defineStore("watchlist", () => {
 	const stockStore = useStocksStore();
 
 	async function init(watchlistSymbols?: StockSymbolForDisplay[]) {
-		const tempWatchlist = watchlistSymbols || [];
+		const tempWatchlist = watchlistSymbols?.map(w => ({ ...w, noPrice: false })) || [];
 
 		for (const item of tempWatchlist) {
 			const quote = await stockStore.getStockQuote(item.source, item.symbol);
-			if (!quote) console.error(`Failed to fetch quote for ${item.symbol}`);
+			if (!quote) {
+				item.noPrice = true;
+				continue;
+			}
 			item.price = quote?.current;
 			item.openPrice = quote?.open;
 		}

@@ -24,4 +24,8 @@ export interface PortfolioItem {
 	totalInvested: number;
 	totalRetrieved: number;
 	comission: number;
+
+	// should be use only for portfolio calculation
+	sortedBuys: TransactionItem[];
+	sortedSells: (TransactionItem & { costBasis: number })[];
 }
