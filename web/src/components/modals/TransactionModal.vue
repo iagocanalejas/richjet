@@ -15,8 +15,9 @@
 
 				<div>
 					<label class="block text-sm font-medium text-gray-300 mb-1">Price</label>
-					<input v-model="transactionCopy.price" type="number" min="0" step="0.01"
-						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					<input v-model="priceInput" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						@input="transactionCopy.price = normalizePriceInput(priceInput)" />
 				</div>
 
 				<div>
@@ -54,7 +55,8 @@
 
 <script setup lang="ts">
 import type { TransactionItem } from "@/types/portfolio";
-import { reactive, watch } from "vue";
+import { normalizePriceInput } from "@/utils/utils";
+import { reactive, ref, watch } from "vue";
 
 const props = defineProps({
 	transaction: {
@@ -65,6 +67,7 @@ const props = defineProps({
 
 const emit = defineEmits(["buy", "sell", "close"]);
 
+const priceInput = ref('');
 const transactionCopy = reactive({ ...props.transaction });
 watch(() => props.transaction, (newVal) => Object.assign(transactionCopy, newVal));
 

@@ -9,8 +9,9 @@
 			<div class="space-y-4">
 				<div>
 					<label class="block text-sm font-medium text-gray-300 mb-1">Price</label>
-					<input v-model="price" type="number" min="0" step="0.01"
-						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+					<input v-model="priceInput" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						@input="price = normalizePriceInput(priceInput)" />
 				</div>
 			</div>
 
@@ -30,6 +31,7 @@
 
 <script setup lang="ts">
 import type { PortfolioItem } from "@/types/portfolio";
+import { normalizePriceInput } from "@/utils/utils";
 import { ref } from "vue";
 
 const props = defineProps({
@@ -41,6 +43,7 @@ const props = defineProps({
 
 const emit = defineEmits(["set-price", "close"]);
 
+const priceInput = ref('');
 const price = ref(0);
 
 function setPrice() {

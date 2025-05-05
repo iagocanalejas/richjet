@@ -27,6 +27,13 @@ function mapWeirdLocales(locale: string) {
 	}
 }
 
+export function normalizePriceInput(value: string): number {
+	const normalized = value.replace(',', '.');
+	const parsed = parseFloat(normalized);
+	return isNaN(parsed) ? 0 : parsed;
+}
+
+
 export function symbolType2Image(from: string) {
 	switch (from.toUpperCase()) {
 		case "STOCK":
