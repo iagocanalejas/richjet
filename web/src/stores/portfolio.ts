@@ -31,11 +31,7 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 			await _updatePortfolio(transaction);
 		}
 
-		portfolio.value.sort((a, b) => {
-			if (a.quantity === 0 && b.quantity !== 0) return 1;
-			if (a.quantity !== 0 && b.quantity === 0) return -1;
-			return a.currentInvested - b.currentInvested;
-		});
+		portfolio.value.sort((a, b) => a.symbol.localeCompare(b.symbol));
 	}
 
 	function addTransaction(transaction: TransactionItem) {

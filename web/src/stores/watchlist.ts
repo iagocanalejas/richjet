@@ -38,6 +38,7 @@ export const useWatchlistStore = defineStore("watchlist", () => {
 		item.openPrice = quote?.open;
 
 		watchlist.value.push(item);
+		watchlist.value.sort((a, b) => a.symbol.localeCompare(b.symbol));
 		console.log("synced from addToWatchlist");
 		googleStore.syncData();
 	}
