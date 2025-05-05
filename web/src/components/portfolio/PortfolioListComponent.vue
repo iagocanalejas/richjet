@@ -22,9 +22,29 @@
 	</div>
 
 	<ContextMenu :visible="contextMenu.visible" :x="contextMenu.x" :y="contextMenu.y"
-		@add-dividends="openDividendsModal(contextMenu.item!)" @set-price="openManualPriceModal(contextMenu.item!)"
-		@close="contextMenu.visible = false" />
+		@close="contextMenu.visible = false">
+		<button
+			class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
+			@click="openTransactionsModal(contextMenu.item!)">
+			Record Buy/Sell
+		</button>
+		<button
+			class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
+			@click="openDividendsModal(contextMenu.item!)">
+			Add Dividend Payment
+		</button>
+		<button v-if="isPortfolioItemWithManualPrice(contextMenu.item!)"
+			class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
+			@click="openManualPriceModal(contextMenu.item!)">
+			Manually Set Current Price
+		</button>
+	</ContextMenu>
 
+	<div v-if="isTransactionModalOpen && transaction"
+		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
+		<TransactionModal v-if="isTransactionModalOpen && transaction" :transaction="transaction" @buy="buy"
+			@sell="sell" @close="isTransactionModalOpen = false" />
+	</div>
 	<div v-if="isDividendModalOpen && transaction"
 		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
 		<DividendModal :transaction="transaction" @add-dividend="addDividend" @close="isDividendModalOpen = false" />
@@ -48,8 +68,10 @@ import { useSettingsStore } from "@/stores/settings";
 import { isPortfolioItemWithManualPrice, isTradePortfolioItem } from "@/utils/rules";
 import ContextMenu from "../utils/ContextMenu.vue";
 import ManualPriceModal from "../modals/ManualPriceModal.vue";
+import TransactionModal from "../modals/TransactionModal.vue";
 
 const portfolioStore = usePortfolioStore();
+const { addTransaction } = portfolioStore
 const { portfolio } = storeToRefs(portfolioStore);
 const { currency } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());
@@ -57,6 +79,7 @@ const { isLoading } = storeToRefs(useLoadingStore());
 // modal
 const isDividendModalOpen = ref(false);
 const isPriceModalOpen = ref(false);
+const isTransactionModalOpen = ref(false);
 const transaction = ref<TransactionItem | null>(null);
 const selectedItem = ref<PortfolioItem | null>(null);
 
@@ -71,11 +94,6 @@ const contextMenu = ref<{ visible: boolean, x: number, y: number, item: Portfoli
 function showContextMenu(event: MouseEvent, item: PortfolioItem) {
 	event.preventDefault()
 	event.stopPropagation()
-
-	if (!isPortfolioItemWithManualPrice(item)) {
-		openDividendsModal(item);
-		return;
-	}
 
 	contextMenu.value = {
 		visible: true,
@@ -100,6 +118,21 @@ function openDividendsModal(item: PortfolioItem) {
 	isDividendModalOpen.value = true;
 }
 
+function openTransactionsModal(item: PortfolioItem) {
+	isTransactionModalOpen.value = true;
+	transaction.value = {
+		symbol: item.symbol,
+		image: item.image,
+		type: item.type,
+		price: 0,
+		quantity: 0,
+		comission: 0,
+		date: new Date().toISOString().split("T")[0],
+		transactionType: "buy",
+		currency: currency.value,
+	};
+}
+
 function openManualPriceModal(item: PortfolioItem) {
 	selectedItem.value = item;
 	isPriceModalOpen.value = true;
@@ -109,6 +142,25 @@ function addDividend(t: TransactionItem) {
 	portfolioStore.addTransaction(t);
 	transaction.value = null;
 	isDividendModalOpen.value = false;
+}
+
+function buy(t: TransactionItem) {
+	if (t.quantity <= 0 || t.price <= 0) {
+		alert("Please enter a valid quantity and price.");
+		return;
+	}
+	addTransaction(t);
+	isTransactionModalOpen.value = false;
+}
+
+function sell(t: TransactionItem) {
+	if (t.quantity <= 0 || t.price <= 0) {
+		alert("Please enter a valid quantity and price.");
+		return;
+	}
+	t.transactionType = "sell";
+	addTransaction(t);
+	isTransactionModalOpen.value = false;
 }
 
 function setPrice(item: { symbol: string, price: number }) {

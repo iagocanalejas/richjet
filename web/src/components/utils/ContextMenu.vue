@@ -1,16 +1,7 @@
 <template>
 	<div v-if="visible" ref="menuRef" :style="{ top: y + 'px', left: x + 'px' }"
-		class="absolute z-50 bg-gray-900 text-white shadow-lg rounded-lg p-2 w-40 border border-gray-700" @click.stop>
-		<button
-			class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
-			@click="$emit('add-dividends')">
-			Add Dividends
-		</button>
-		<button
-			class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
-			@click="$emit('set-price')">
-			Set Price
-		</button>
+		class="absolute z-50 bg-gray-900 text-white shadow-lg rounded-lg p-2 w-60 border border-gray-700" @click.stop>
+		<slot />
 	</div>
 </template>
 
@@ -23,7 +14,7 @@ const props = defineProps<{
 	y: number;
 }>()
 
-const emit = defineEmits(['add-dividends', 'set-price', 'close']);
+const emit = defineEmits(['close']);
 
 const menuRef = ref<HTMLElement | null>(null);
 

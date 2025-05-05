@@ -2,7 +2,7 @@
 	<LoadingSpinner />
 	<div v-if="values.length" class="mt-6 w-full">
 		<ul class="space-y-4">
-			<li v-for="(item, index) in visibleItems" :key="index" @click="openContextModal(item)"
+			<li v-for="(item, index) in visibleItems" :key="index" @click="openTransactionModal(item)"
 				class="flex items-center justify-between bg-gray-800 p-4 rounded-lg space-x-4 cursor-pointer">
 				<div class="flex items-center space-x-3">
 					<img v-show="!item.hideImage" :src="imageURLfor(item)" alt="Icon" @error="item.hideImage = true"
@@ -67,9 +67,9 @@
 		<p class="text-sm">No results found.</p>
 	</div>
 
-	<div v-if="isModalOpen && transaction"
+	<div v-if="isTransactionModalOpen && transaction"
 		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
-		<TransactionModal v-if="isModalOpen && transaction" :transaction="transaction" @buy="buy" @sell="sell"
+		<TransactionModal v-if="isTransactionModalOpen && transaction" :transaction="transaction" @buy="buy" @sell="sell"
 			@close="closeModal" />
 	</div>
 </template>
@@ -105,11 +105,11 @@ const currentPage = ref(0);
 const visibleItems = computed(() => props.values.slice(0, (currentPage.value + 1) * ITEMS_PER_PATE));
 
 // modal
-const isModalOpen = ref(false);
+const isTransactionModalOpen = ref(false);
 const transaction = ref<TransactionItem | null>(null);
 
-function openContextModal(option: StockSymbolForDisplay) {
-	isModalOpen.value = true;
+function openTransactionModal(option: StockSymbolForDisplay) {
+	isTransactionModalOpen.value = true;
 	transaction.value = {
 		symbol: option.symbol,
 		image: imageURLfor(option),
@@ -144,7 +144,7 @@ function sell(option: TransactionItem) {
 }
 
 function closeModal() {
-	isModalOpen.value = false;
+	isTransactionModalOpen.value = false;
 }
 
 function imageURLfor(result: StockSymbolForDisplay) {
