@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TransactionItem } from "@/types/stock";
+import type { TransactionItem } from "@/types/portfolio";
 import { reactive, watch } from "vue";
 
 const props = defineProps({

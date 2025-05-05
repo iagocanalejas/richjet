@@ -17,11 +17,9 @@ ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 ALPHA_VANTAGE_ENABLED = os.getenv("ALPHA_VANTAGE_ENABLED", False) == "True"
 OPENFIGI_ENABLED = os.getenv("OPENFIGI_ENABLED", False) == "True"
 
-cors_origins = []
+cors_origins = ["https://richjet-web.onrender.com", "https://iagocanalejas.com"]
 if os.getenv("DEBUG", False) == "True":
     cors_origins = ["http://localhost:5173"]
-if os.getenv("RENDER", False) == "True":
-    cors_origins = ["https://richjet-web.onrender.com", "https://iagocanalejas.com"]
 
 app.add_middleware(
     CORSMiddleware,

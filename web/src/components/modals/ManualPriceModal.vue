@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PortfolioItem } from "@/types/stock";
+import type { PortfolioItem } from "@/types/portfolio";
 import { ref } from "vue";
 
 const props = defineProps({
