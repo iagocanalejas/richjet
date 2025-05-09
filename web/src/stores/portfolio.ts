@@ -163,6 +163,7 @@ export const usePortfolioStore = defineStore("portfolio", () => {
 
 			portfolio.value.push({
 				symbol: transaction.symbol,
+				name: transaction.name,
 				image: transaction.image,
 				type: transaction.type,
 				currency: transaction.currency,

@@ -108,38 +108,39 @@ const visibleItems = computed(() => props.values.slice(0, (currentPage.value + 1
 const isTransactionModalOpen = ref(false);
 const transaction = ref<TransactionItem | null>(null);
 
-function openTransactionModal(option: StockSymbolForDisplay) {
+function openTransactionModal(item: StockSymbolForDisplay) {
 	isTransactionModalOpen.value = true;
 	transaction.value = {
-		symbol: option.symbol,
-		image: imageURLfor(option),
-		type: option.security_type,
+		symbol: item.symbol,
+		name: item.name,
+		image: imageURLfor(item),
+		type: item.security_type,
 		price: 0,
 		quantity: 0,
 		comission: 0,
 		date: new Date().toISOString().split("T")[0],
 		transactionType: "buy",
-		source: option.source,
+		source: item.source,
 		currency: currency.value,
 	};
 }
 
-function buy(option: TransactionItem) {
-	if (option.quantity <= 0 || option.price <= 0) {
+function buy(item: TransactionItem) {
+	if (item.quantity <= 0 || item.price <= 0) {
 		alert("Please enter a valid quantity and price.");
 		return;
 	}
-	emit("transact", option);
+	emit("transact", item);
 	closeModal();
 }
 
-function sell(option: TransactionItem) {
-	if (option.quantity <= 0 || option.price <= 0) {
+function sell(item: TransactionItem) {
+	if (item.quantity <= 0 || item.price <= 0) {
 		alert("Please enter a valid quantity and price.");
 		return;
 	}
-	option.transactionType = "sell";
-	emit("transact", option);
+	item.transactionType = "sell";
+	emit("transact", item);
 	closeModal();
 }
 

@@ -1,6 +1,7 @@
 import { setActivePinia, createPinia, StoreDefinition } from 'pinia';
 import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { usePortfolioStore } from '../../src/stores/portfolio';
+import { type TransactionItem } from '../../src/types/portfolio';
 import { ref } from 'vue';
 
 vi.mock('@/stores/google', () => ({
@@ -33,8 +34,9 @@ describe('usePortfolioStore', () => {
 
 	describe('buy transaction', () => {
 		it('adds a new stock to portfolio', async () => {
-			const tx = {
+			const tx: TransactionItem = {
 				symbol: 'AAPL',
+				name: 'Apple Inc.',
 				image: 'apple.png',
 				type: 'stock',
 				currency: 'USD',
@@ -48,6 +50,7 @@ describe('usePortfolioStore', () => {
 			await store.init([tx]);
 			expect(store.portfolio[0]).toMatchObject({
 				symbol: 'AAPL',
+				name: 'Apple Inc.',
 				quantity: 5,
 				currentInvested: 500,
 				totalInvested: 500,
@@ -58,8 +61,9 @@ describe('usePortfolioStore', () => {
 
 	describe('sell transaction', () => {
 		it('subtracts from quantity and adds to retrieved', async () => {
-			const buy = {
+			const buy: TransactionItem = {
 				symbol: 'AAPL',
+				name: 'Apple Inc.',
 				image: 'apple.png',
 				type: 'stock',
 				currency: 'USD',
@@ -70,7 +74,7 @@ describe('usePortfolioStore', () => {
 				date: baseDate,
 				source: 'nasdaq',
 			};
-			const sell = {
+			const sell: TransactionItem = {
 				...buy,
 				quantity: 4,
 				price: 110,
@@ -86,8 +90,9 @@ describe('usePortfolioStore', () => {
 		});
 
 		it('applies FIFO logic when selling shares from multiple buys', async () => {
-			const buy1 = {
+			const buy1: TransactionItem = {
 				symbol: 'GOOG',
+				name: 'Alphabet Inc.',
 				image: '',
 				type: 'stock',
 				currency: 'USD',
@@ -99,14 +104,14 @@ describe('usePortfolioStore', () => {
 				source: 'nasdaq',
 			};
 
-			const buy2 = {
+			const buy2: TransactionItem = {
 				...buy1,
 				quantity: 5,
 				price: 300, // $1500 total
 				date: new Date(Date.now() + 1000).toISOString(), // later than buy1
 			};
 
-			const sell = {
+			const sell: TransactionItem = {
 				...buy1,
 				quantity: 7,
 				price: 400,
@@ -130,8 +135,9 @@ describe('usePortfolioStore', () => {
 
 	describe('dividend transaction', () => {
 		it('adds to quantity only', async () => {
-			const buy = {
+			const buy: TransactionItem = {
 				symbol: 'T',
+				name: 'AT&T Inc.',
 				image: 't.png',
 				type: 'stock',
 				currency: 'USD',
@@ -142,7 +148,7 @@ describe('usePortfolioStore', () => {
 				date: baseDate,
 				source: 'nyse',
 			};
-			const dividend = {
+			const dividend: TransactionItem = {
 				...buy,
 				quantity: 2,
 				price: 0,
@@ -156,8 +162,9 @@ describe('usePortfolioStore', () => {
 
 	describe('dividend-cash transaction', () => {
 		it('adds to cashDividends', async () => {
-			const cashDividend = {
+			const cashDividend: TransactionItem = {
 				symbol: 'T',
+				name: 'AT&T Inc.',
 				image: 't.png',
 				type: 'stock',
 				currency: 'USD',
@@ -174,8 +181,9 @@ describe('usePortfolioStore', () => {
 
 	describe('removal logic', () => {
 		it('removes a buy transaction and deletes stock if quantity is zero', async () => {
-			const tx = {
+			const tx: TransactionItem = {
 				symbol: 'MSFT',
+				name: 'Microsoft Corp.',
 				image: 'msft.png',
 				type: 'stock',
 				currency: 'USD',
@@ -193,8 +201,9 @@ describe('usePortfolioStore', () => {
 		});
 
 		it('removes dividend-cash and subtracts from cashDividends', async () => {
-			const tx = {
+			const tx: TransactionItem = {
 				symbol: 'T',
+				name: 'AT&T Inc.',
 				image: 't.png',
 				type: 'stock',
 				currency: 'USD',
@@ -218,8 +227,9 @@ describe('usePortfolioStore', () => {
 				}),
 			}));
 
-			const tx = {
+			const tx: TransactionItem = {
 				symbol: 'ZZZ',
+				name: 'Unknown Corp.',
 				image: '',
 				type: 'stock',
 				currency: 'USD',
@@ -236,8 +246,9 @@ describe('usePortfolioStore', () => {
 		});
 
 		it('alerts on dividend before stock creation', async () => {
-			const dividend = {
+			const dividend: TransactionItem = {
 				symbol: 'NEW',
+				name: 'New Corp.',
 				image: '',
 				type: 'stock',
 				currency: 'USD',
@@ -258,8 +269,9 @@ describe('usePortfolioStore', () => {
 		});
 
 		it('sums currentInvested and comission for positions with quantity > 0', async () => {
-			const tx = {
+			const tx: TransactionItem = {
 				symbol: 'AAPL',
+				name: 'Apple Inc.',
 				image: '',
 				type: 'stock',
 				currency: 'USD',
@@ -283,6 +295,7 @@ describe('usePortfolioStore', () => {
 		it('sums currentPrice * quantity for all positions with quantity > 0', () => {
 			store.portfolio.push({
 				symbol: 'MSFT',
+				name: 'Microsoft Corp.',
 				image: '',
 				type: 'stock',
 				currency: 'USD',
@@ -304,8 +317,9 @@ describe('usePortfolioStore', () => {
 		});
 
 		it('calculates profit/loss from fully closed positions', async () => {
-			const buy = {
+			const buy: TransactionItem = {
 				symbol: 'TSLA',
+				name: 'Tesla Inc.',
 				image: '',
 				type: 'stock',
 				currency: 'USD',
@@ -316,7 +330,7 @@ describe('usePortfolioStore', () => {
 				date: baseDate,
 				source: 'nasdaq',
 			};
-			const sell = {
+			const sell: TransactionItem = {
 				...buy,
 				transactionType: 'sell',
 				price: 150,
@@ -333,8 +347,9 @@ describe('usePortfolioStore', () => {
 		});
 
 		it('calculates rentability with open, closed positions and cash dividends', async () => {
-			const buy = {
+			const buy: TransactionItem = {
 				symbol: 'NFLX',
+				name: 'Netflix Inc.',
 				image: '',
 				type: 'stock',
 				currency: 'USD',
@@ -345,14 +360,14 @@ describe('usePortfolioStore', () => {
 				date: baseDate,
 				source: 'nasdaq',
 			};
-			const sell = {
+			const sell: TransactionItem = {
 				...buy,
 				quantity: 5,
 				price: 150,
 				transactionType: 'sell',
 				date: new Date().toISOString(),
 			};
-			const dividend = {
+			const dividend: TransactionItem = {
 				...buy,
 				transactionType: 'dividend-cash',
 				price: 100,

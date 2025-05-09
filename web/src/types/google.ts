@@ -9,8 +9,14 @@ export interface GoogleUser {
 	picture: string;
 }
 
+export type Account = {
+	name: string;
+	type: "broker" | "bank";
+}
+
 export type Settings = {
 	currency: string;
+	accounts: Account[];
 };
 
 export interface FileData {

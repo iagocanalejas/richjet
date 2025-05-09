@@ -1,6 +1,7 @@
 export type TransactionType = "buy" | "sell" | "dividend" | "dividend-cash";
 export interface TransactionItem {
 	symbol: string;
+	name: string;
 	image: string;
 	quantity: number;
 	price: number;
@@ -14,6 +15,7 @@ export interface TransactionItem {
 
 export interface PortfolioItem {
 	symbol: string;
+	name: string;
 	image: string;
 	type: string;
 	currency: string;
