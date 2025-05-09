@@ -9,16 +9,22 @@
 			<div class="text-right">Total</div>
 			<div class="text-right"></div>
 		</div>
-		<ul class="space-y-4">
+		<ul class="mt-2 space-y-4">
 			<li v-for="(item, index) in visibleItems" :key="index"
-				class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4"
+				class="relative grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4"
 				:class="[borderByTransactionType(item.transactionType)]">
+
+				<div
+					class="absolute top-0 left-4 -translate-y-1/2 bg-gray-600 text-white text-xs px-2 py-0.5 rounded shadow">
+					{{ item.account?.name ?? 'N/A' }}
+				</div>
 				<div class="flex items-center space-x-3">
 					<img :src="item.image" alt="Icon" class="w-6 h-6 object-contain" />
 					<span class="text-sm font-medium tracking-wide text-white">
 						{{ item.symbol }}
 					</span>
 				</div>
+
 				<div class="text-sm text-right">{{ new Date(item.date).toLocaleDateString() }}</div>
 				<div class="text-sm text-right">{{ item.price ? formatCurrency(item.price, currency) : '---' }}</div>
 				<div class="text-sm text-right">{{ item.quantity ? item.quantity : '---' }}</div>

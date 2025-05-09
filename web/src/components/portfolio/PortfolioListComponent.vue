@@ -33,6 +33,11 @@
 			@click="openDividendsModal(contextMenu.item!)">
 			Add Dividend Payment
 		</button>
+		<button
+			class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
+			@click="openTransferStockModal(contextMenu.item!)">
+			Transfer to Another Account
+		</button>
 		<button v-if="isPortfolioItemWithManualPrice(contextMenu.item!)"
 			class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
 			@click="openManualPriceModal(contextMenu.item!)">
@@ -48,6 +53,11 @@
 	<div v-if="isDividendModalOpen && transaction"
 		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
 		<DividendModal :transaction="transaction" @add-dividend="addDividend" @close="isDividendModalOpen = false" />
+	</div>
+	<div v-if="isTransferStockModalOpen"
+		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
+		<TransferStockModal :item="selectedItem!" :selected-account="selectedAccount" @transfer="transfer"
+			@close="isTransferStockModalOpen = false" />
 	</div>
 	<div v-if="isPriceModalOpen" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
 		<ManualPriceModal :item="selectedItem!" @set-price="setPrice" @close="isPriceModalOpen = false" />
@@ -69,26 +79,28 @@ import { isPortfolioItemWithManualPrice, isTradePortfolioItem } from "@/utils/ru
 import ContextMenu from "../utils/ContextMenu.vue";
 import ManualPriceModal from "../modals/ManualPriceModal.vue";
 import TransactionModal from "../modals/TransactionModal.vue";
+import TransferStockModal from "../modals/TransferStockModal.vue";
+import type { Account } from "@/types/google";
 
 const portfolioStore = usePortfolioStore();
-const { addTransaction } = portfolioStore
 const { portfolio } = storeToRefs(portfolioStore);
-const { currency } = storeToRefs(useSettingsStore());
+const { currency, account: selectedAccount } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());
 
 // modal
 const isDividendModalOpen = ref(false);
 const isPriceModalOpen = ref(false);
 const isTransactionModalOpen = ref(false);
-const transaction = ref<TransactionItem | null>(null);
-const selectedItem = ref<PortfolioItem | null>(null);
+const isTransferStockModalOpen = ref(false);
+const transaction = ref<TransactionItem | undefined>();
+const selectedItem = ref<PortfolioItem | undefined>();
 
 // context menu
-const contextMenu = ref<{ visible: boolean, x: number, y: number, item: PortfolioItem | null }>({
+const contextMenu = ref<{ visible: boolean, x: number, y: number, item: PortfolioItem | undefined }>({
 	visible: false,
 	x: 0,
 	y: 0,
-	item: null,
+	item: undefined,
 });
 
 function showContextMenu(event: MouseEvent, item: PortfolioItem) {
@@ -105,6 +117,8 @@ function showContextMenu(event: MouseEvent, item: PortfolioItem) {
 
 function openDividendsModal(item: PortfolioItem) {
 	transaction.value = {
+		account: selectedAccount.value,
+		name: item.name,
 		symbol: item.symbol,
 		image: item.image,
 		type: item.type,
@@ -121,6 +135,8 @@ function openDividendsModal(item: PortfolioItem) {
 function openTransactionsModal(item: PortfolioItem) {
 	isTransactionModalOpen.value = true;
 	transaction.value = {
+		account: selectedAccount.value,
+		name: item.name,
 		symbol: item.symbol,
 		image: item.image,
 		type: item.type,
@@ -133,6 +149,11 @@ function openTransactionsModal(item: PortfolioItem) {
 	};
 }
 
+function openTransferStockModal(item: PortfolioItem) {
+	selectedItem.value = item;
+	isTransferStockModalOpen.value = true;
+}
+
 function openManualPriceModal(item: PortfolioItem) {
 	selectedItem.value = item;
 	isPriceModalOpen.value = true;
@@ -140,7 +161,7 @@ function openManualPriceModal(item: PortfolioItem) {
 
 function addDividend(t: TransactionItem) {
 	portfolioStore.addTransaction(t);
-	transaction.value = null;
+	transaction.value = undefined;
 	isDividendModalOpen.value = false;
 }
 
@@ -149,7 +170,8 @@ function buy(t: TransactionItem) {
 		alert("Please enter a valid quantity and price.");
 		return;
 	}
-	addTransaction(t);
+	portfolioStore.addTransaction(t);
+	transaction.value = undefined;
 	isTransactionModalOpen.value = false;
 }
 
@@ -159,12 +181,24 @@ function sell(t: TransactionItem) {
 		return;
 	}
 	t.transactionType = "sell";
-	addTransaction(t);
+	portfolioStore.addTransaction(t);
+	transaction.value = undefined;
 	isTransactionModalOpen.value = false;
+}
+
+function transfer(newAccount?: Account) {
+	portfolioStore.transferStock(
+		selectedItem.value!.symbol,
+		selectedAccount.value?.name,
+		newAccount?.name,
+	);
+	selectedItem.value = undefined;
+	isTransferStockModalOpen.value = false;
 }
 
 function setPrice(item: { symbol: string, price: number }) {
 	portfolioStore.updateManualPrice(item.symbol, item.price);
+	selectedItem.value = undefined;
 	isPriceModalOpen.value = false;
 }
 </script>

@@ -12,7 +12,11 @@ vi.mock('@/stores/google', () => ({
 
 vi.mock('@/stores/settings', () => {
 	return {
-		useSettingsStore: () => ({ conversionRate: ref(1) }),
+		useSettingsStore: () => ({
+			conversionRate: ref(1),
+			account: ref(),
+			accounts: ref([{ name: 'accountA' }, { name: 'accountB' }]),
+		}),
 		storeToRefs: (store: StoreDefinition) => store,
 	};
 });
@@ -385,4 +389,113 @@ describe('usePortfolioStore', () => {
 		});
 	});
 
+	describe('transferStock', () => {
+		let portfolioStore: ReturnType<typeof usePortfolioStore>;
+
+		beforeEach(() => {
+			setActivePinia(createPinia());
+			portfolioStore = usePortfolioStore();
+
+			// Seed transactions
+			portfolioStore.transactions = [
+				{
+					symbol: 'AAPL',
+					name: 'Apple',
+					source: 'nasdaq',
+					type: 'stock',
+					currency: 'USD',
+					quantity: 10,
+					price: 150,
+					comission: 5,
+					date: '2024-01-01',
+					transactionType: 'buy',
+					account: { name: 'accountA' },
+				},
+			];
+
+			// Seed portfolios
+			portfolioStore.portfolios = {
+				default: [],
+				all: [],
+				accountA: [{
+					symbol: 'AAPL',
+					name: 'Apple',
+					type: 'stock',
+					currency: 'USD',
+					quantity: 10,
+					currentPrice: 150,
+					manualInputedPrice: false,
+					currentInvested: 1500,
+					totalInvested: 1500,
+					totalRetrieved: 0,
+					comission: 5,
+					sortedBuys: [{
+						symbol: 'AAPL',
+						name: 'Apple',
+						source: 'nasdaq',
+						type: 'stock',
+						currency: 'USD',
+						quantity: 10,
+						price: 150,
+						comission: 5,
+						date: '2024-01-01',
+						transactionType: 'buy',
+						account: { name: 'accountA' },
+					}],
+					sortedSells: [],
+					image: undefined,
+				}],
+				accountB: [],
+			};
+		});
+
+		it('should transfer stock from one account to another', () => {
+			portfolioStore.transferStock('AAPL', 'accountA', 'accountB');
+
+			const accountA = portfolioStore.portfolios['accountA'];
+			const accountB = portfolioStore.portfolios['accountB'];
+
+			expect(accountA).toHaveLength(0);
+			expect(accountB).toHaveLength(1);
+			expect(accountB[0].symbol).toBe('AAPL');
+			expect(accountB[0].quantity).toBe(10);
+
+			// Verify transaction account updated
+			expect(portfolioStore.transactions[0].account?.name).toBe('accountB');
+		});
+
+		it('should do nothing if fromAccount and toAccount are the same', () => {
+			const snapshot = JSON.stringify(portfolioStore.portfolios);
+			portfolioStore.transferStock('AAPL', 'accountA', 'accountA');
+			expect(JSON.stringify(portfolioStore.portfolios)).toBe(snapshot);
+		});
+
+		it('should merge with existing symbol in destination portfolio', () => {
+			portfolioStore['portfolios']['accountB'] = [{
+				symbol: 'AAPL',
+				name: 'Apple',
+				type: 'stock',
+				currency: 'USD',
+				quantity: 5,
+				currentPrice: 150,
+				manualInputedPrice: false,
+				currentInvested: 750,
+				totalInvested: 750,
+				totalRetrieved: 0,
+				comission: 1,
+				sortedBuys: [],
+				sortedSells: [],
+				image: undefined,
+			}];
+
+			portfolioStore.transferStock('AAPL', 'accountA', 'accountB');
+			const accountB = portfolioStore.portfolios['accountB'];
+
+			expect(accountB).toHaveLength(1);
+			expect(accountB[0].quantity).toBe(15); // 10 from A + 5 existing
+			expect(accountB[0].totalInvested).toBe(2250); // 1500 + 750
+			expect(accountB[0].comission).toBe(6); // 5 + 1
+			expect(accountB[0].sortedBuys.length).toBe(1);
+		});
+	});
 });

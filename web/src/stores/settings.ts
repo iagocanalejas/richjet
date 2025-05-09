@@ -1,4 +1,4 @@
-import type { Settings } from "@/types/google";
+import type { Settings, Account } from "@/types/google";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useGoogleStore } from "./google";
@@ -7,8 +7,9 @@ export const useSettingsStore = defineStore("settings", () => {
 	const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL;
 	const googleStore = useGoogleStore();
 
-	const _settings = ref<Settings>({ currency: "USD" });
+	const _settings = ref<Settings>({ currency: "USD", accounts: [] });
 	const conversionRate = ref<number>(1.0);
+	const account = ref<Account | undefined>();
 
 	const currency = computed({
 		get() {
@@ -22,9 +23,20 @@ export const useSettingsStore = defineStore("settings", () => {
 		},
 	});
 
+	const accounts = computed({
+		get() {
+			return _settings.value.accounts;
+		},
+		set(accounts: Account[]) {
+			_settings.value.accounts = accounts;
+			console.log("synced from set accounts");
+			googleStore.syncData();
+		},
+	});
+
 	async function init(settings?: Settings) {
 		if (settings) {
-			_settings.value = settings;
+			_settings.value = { ..._settings.value, ...settings };
 		} else {
 			console.log("synced from init settings");
 			googleStore.syncData();
@@ -48,5 +60,5 @@ export const useSettingsStore = defineStore("settings", () => {
 		}
 	}
 
-	return { init, currency, conversionRate, settings: _settings };
+	return { init, currency, accounts, account, conversionRate, settings: _settings };
 });

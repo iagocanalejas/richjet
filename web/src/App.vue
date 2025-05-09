@@ -21,6 +21,9 @@
 				Transactions
 			</RouterLink>
 
+			<AccountSelector :is-logged="isLogged" :accounts="accounts" :selected="selectedAccount" @add="addAccount"
+				@select="selectedAccount = $event" />
+
 			<div v-if="isLogged" class="relative">
 				<select v-model="currency"
 					class="appearance-none bg-gray-700 text-white pl-8 py-2 rounded-lg pr-8 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer">
@@ -77,10 +80,13 @@ import { useWatchlistStore } from "./stores/watchlist";
 import { usePortfolioStore } from "./stores/portfolio";
 import LoadingBar from "./components/LoadingBar.vue";
 import LandingView from "./views/LandingView.vue";
+import AccountSelector from "./components/utils/AccountSelector.vue";
+import type { Account } from "./types/google";
 
 const googleStore = useGoogleStore();
+const settingsStore = useSettingsStore();
 const { client: googleClient, user: googleUser, isLogged } = storeToRefs(googleStore);
-const { currency } = storeToRefs(useSettingsStore());
+const { currency, accounts, account: selectedAccount } = storeToRefs(settingsStore);
 const currentYear = new Date().getFullYear()
 
 const showMenu = ref(false);
@@ -94,11 +100,20 @@ function signOut(): void {
 	showMenu.value = false;
 }
 
+function addAccount(account: Account) {
+	if (accounts.value.some((a) => a.name === account.name)) {
+		alert("Account already exists");
+		return;
+	}
+	accounts.value = [...accounts.value, account];
+	selectedAccount.value = account;
+}
+
 onMounted(async () => {
 	const config = await googleStore.init();
 	console.log("google client initialized", config);
 
-	await useSettingsStore().init(config?.settings);
+	await settingsStore.init(config?.settings);
 	await usePortfolioStore().init(config?.transactions, config?.manualPrices);
 	await useWatchlistStore().init(config?.watchlist);
 });

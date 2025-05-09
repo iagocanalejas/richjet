@@ -1,3 +1,5 @@
+import type { Account } from "./google";
+
 export type TransactionType = "buy" | "sell" | "dividend" | "dividend-cash";
 export interface TransactionItem {
 	symbol: string;
@@ -11,6 +13,7 @@ export interface TransactionItem {
 	date: string;
 	source?: string;
 	transactionType: TransactionType;
+	account?: Account;
 }
 
 export interface PortfolioItem {

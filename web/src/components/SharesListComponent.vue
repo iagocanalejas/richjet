@@ -69,8 +69,8 @@
 
 	<div v-if="isTransactionModalOpen && transaction"
 		class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50">
-		<TransactionModal v-if="isTransactionModalOpen && transaction" :transaction="transaction" @buy="buy" @sell="sell"
-			@close="closeModal" />
+		<TransactionModal v-if="isTransactionModalOpen && transaction" :transaction="transaction" @buy="buy"
+			@sell="sell" @close="closeModal" />
 	</div>
 </template>
 
@@ -97,7 +97,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["favorite", "transact"]);
 
-const { currency, conversionRate } = storeToRefs(useSettingsStore());
+const { currency, conversionRate, account: selectedAccount } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());
 
 // pagination
@@ -106,7 +106,7 @@ const visibleItems = computed(() => props.values.slice(0, (currentPage.value + 1
 
 // modal
 const isTransactionModalOpen = ref(false);
-const transaction = ref<TransactionItem | null>(null);
+const transaction = ref<TransactionItem | undefined>();
 
 function openTransactionModal(item: StockSymbolForDisplay) {
 	isTransactionModalOpen.value = true;
@@ -122,6 +122,7 @@ function openTransactionModal(item: StockSymbolForDisplay) {
 		transactionType: "buy",
 		source: item.source,
 		currency: currency.value,
+		account: selectedAccount.value,
 	};
 }
 

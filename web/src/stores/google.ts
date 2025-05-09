@@ -5,6 +5,8 @@ import { usePortfolioStore } from "./portfolio";
 import { useWatchlistStore } from "./watchlist";
 import { useSettingsStore } from "./settings";
 
+const VERSION = 0;
+
 export const useGoogleStore = defineStore("google-store", () => {
 	const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 	const FILE_NAME = import.meta.env.VITE_GOOGLE_FILE_NAME;
@@ -121,7 +123,7 @@ export const useGoogleStore = defineStore("google-store", () => {
 		const watchlistStore = useWatchlistStore();
 
 		const data: FileData = {
-			version: 0,
+			version: VERSION,
 			settings: settingsStore.settings,
 			transactions: portfolioStore.transactions,
 			watchlist: watchlistStore.watchlist,

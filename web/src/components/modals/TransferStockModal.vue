@@ -2,23 +2,27 @@
 	<div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
 		<div class="w-full max-w-md bg-gray-900 text-white rounded-2xl shadow-2xl p-6 space-y-6 animate-fadeIn">
 			<div class="text-center space-y-1">
-				<h2 class="text-xl font-bold tracking-wide">New price for {{ item.symbol }}</h2>
+				<h2 class="text-xl font-bold tracking-wide">New account for {{ item.symbol }}</h2>
 				<p class="text-sm text-gray-400">{{ item.type }}</p>
 			</div>
 
 			<div class="space-y-4">
-				<div>
-					<label class="block text-sm font-medium text-gray-300 mb-1">Price</label>
-					<input v-model="priceInput" type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
-						class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-						@input="price = normalizePriceInput(priceInput)" />
-				</div>
+				<label class="block text-sm font-medium text-gray-300">
+					Select Account
+					<select v-model="newAccount"
+						class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white">
+						<option :value="undefined">No account</option>
+						<option v-for="account in accounts" :key="account.name" :value="account">
+							{{ account.name }}
+						</option>
+					</select>
+				</label>
 			</div>
 
 			<div class="flex flex-col gap-2 pt-2">
-				<button @click="setPrice()"
+				<button @click="transfer()"
 					class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer">
-					Set Price
+					Transfer
 				</button>
 				<button @click="$emit('close')"
 					class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer">
@@ -30,28 +34,35 @@
 </template>
 
 <script setup lang="ts">
+import { useSettingsStore } from "@/stores/settings";
+import type { Account } from "@/types/google";
 import type { PortfolioItem } from "@/types/portfolio";
-import { normalizePriceInput } from "@/utils/utils";
+import { storeToRefs } from "pinia";
 import { ref } from "vue";
 
 const props = defineProps({
 	item: {
 		type: Object as () => PortfolioItem,
 		required: true
+	},
+	selectedAccount: {
+		type: Object as () => Account | undefined,
+		default: undefined
 	}
 });
 
-const emit = defineEmits(["set-price", "close"]);
+const emit = defineEmits(["transfer", "close"]);
 
-const priceInput = ref('');
-const price = ref(0);
+const { accounts } = storeToRefs(useSettingsStore())
 
-function setPrice() {
-	if (price.value <= 0) {
-		alert("Please enter a valid price.");
+const newAccount = ref<Account | undefined>();
+
+function transfer() {
+	if (props.selectedAccount?.name === newAccount?.value?.name) {
+		emit('close');
 		return;
 	}
-	emit('set-price', { symbol: props.item.symbol, price: price.value });
+	emit('transfer', newAccount?.value);
 }
 </script>
 

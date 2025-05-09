@@ -1,6 +1,6 @@
 <template>
 	<div v-if="visible" ref="menuRef" :style="{ top: y + 'px', left: x + 'px' }"
-		class="absolute z-50 bg-gray-900 text-white shadow-lg rounded-lg p-2 w-60 border border-gray-700" @click.stop>
+		class="absolute z-50 bg-gray-900 text-white shadow-lg rounded-lg p-2 w-65 border border-gray-700" @click.stop>
 		<slot />
 	</div>
 </template>
