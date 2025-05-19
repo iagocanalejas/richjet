@@ -7,8 +7,15 @@ from clients._types import StockQuote
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from log import logger
+from routers import accounts, auth, transactions, users, watchlist
 
 app = FastAPI()
+
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
+app.include_router(accounts.router, prefix="/accounts", tags=["accounts"])
+app.include_router(watchlist.router, prefix="/watchlist", tags=["watchlist"])
 
 EXCHANGERATE_API_KEY = os.getenv("EXCHANGERATE_API_KEY")
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
@@ -25,7 +32,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -68,7 +75,7 @@ async def search_stock(q: str | None):
     if not q:
         return {"count": 0, "results": []}
 
-    results = set([])
+    results = set()
     errors = []
     for client in clients.values():
         try:
@@ -81,7 +88,7 @@ async def search_stock(q: str | None):
 
     results = [
         {
-            "symbol": symbol.symbol,
+            "ticker": symbol.symbol,
             "name": symbol.name,
             "security_type": symbol.security_type.value,
             "currency": symbol.currency,
@@ -95,7 +102,7 @@ async def search_stock(q: str | None):
     ]
     return {
         "count": len(results),
-        "results": sorted(results, key=lambda x: x["symbol"]),
+        "results": sorted(results, key=lambda x: x["ticker"]),
     }
 
 

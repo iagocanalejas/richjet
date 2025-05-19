@@ -1,5 +1,4 @@
 import httpx
-import requests
 from async_lru import alru_cache
 from fastapi import HTTPException
 from log import logger

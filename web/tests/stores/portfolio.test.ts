@@ -1,501 +1,511 @@
-import { setActivePinia, createPinia, StoreDefinition } from 'pinia';
+import { setActivePinia, createPinia } from 'pinia';
 import { describe, it, beforeEach, expect, vi } from 'vitest';
 import { usePortfolioStore } from '../../src/stores/portfolio';
 import { type TransactionItem } from '../../src/types/portfolio';
 import { ref } from 'vue';
+import { StockSymbol } from '../../src/types/stock';
 
-vi.mock('@/stores/google', () => ({
-	useGoogleStore: () => ({
-		syncData: vi.fn(),
-	}),
+let getStockQuoteMock = vi.fn(() => Promise.resolve({ current: 100 }));
+vi.mock('@/stores/stocks', () => ({
+    useStocksStore: () => ({
+        getStockQuote: () => getStockQuoteMock(),
+    }),
 }));
 
-vi.mock('@/stores/settings', () => {
-	return {
-		useSettingsStore: () => ({
-			conversionRate: ref(1),
-			account: ref(),
-			accounts: ref([{ name: 'accountA' }, { name: 'accountB' }]),
-		}),
-		storeToRefs: (store: StoreDefinition) => store,
-	};
+vi.mock('@/stores/settings', () => ({
+    useSettingsStore: () => ({
+        conversionRate: ref(1),
+        account: ref({ name: 'default' }),
+        accounts: ref([{ name: 'default' }, { name: 'brokerage' }]),
+    }),
+}));
+
+vi.mock('@/stores/watchlist', () => {
+    return {
+        useWatchlistStore: () => ({
+            updateSymbolManualPrice: vi.fn((_, price) => Promise.resolve({ manual_price: price })),
+            manualPrices: ref({}),
+        }),
+    };
 });
 
+const mockSymbol: StockSymbol = {
+    id: 1,
+    ticker: 'AAPL',
+    name: 'Apple',
+    currency: 'USD',
+    source: 'NASDAQ',
+    security_type: 'STOCK',
+};
+
+async function mockTransaction(store: ReturnType<typeof usePortfolioStore>, overrides = {}) {
+    const tx: TransactionItem = {
+        id: 1,
+        user_id: 1,
+        symbol: mockSymbol,
+        quantity: 10,
+        price: 150,
+        commission: 1,
+        currency: 'USD',
+        transaction_type: 'BUY',
+        date: '2023-01-01',
+        ...overrides,
+    };
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => tx }));
+    await store.addTransaction(tx);
+    return tx;
+}
+
+async function mockEmptyStore() {
+    const store = usePortfolioStore();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [] }));
+    await store.init();
+    return store;
+}
+
 describe('usePortfolioStore', () => {
-	let store: ReturnType<typeof usePortfolioStore>;
-	const baseDate = new Date().toISOString();
+    let store: ReturnType<typeof usePortfolioStore>;
+    const baseDate = new Date().toISOString();
 
-	beforeEach(() => {
-		setActivePinia(createPinia());
-		store = usePortfolioStore();
-	});
+    beforeEach(async () => {
+        setActivePinia(createPinia());
+        store = await mockEmptyStore();
 
-	it('initializes with empty state', () => {
-		expect(store.portfolio).toEqual([]);
-		expect(store.transactions).toEqual([]);
-		expect(store.cashDividends).toBe(0);
-	});
+        getStockQuoteMock = vi.fn(() => Promise.resolve({ current: 100 }));
+    });
 
-	describe('buy transaction', () => {
-		it('adds a new stock to portfolio', async () => {
-			const tx: TransactionItem = {
-				symbol: 'AAPL',
-				name: 'Apple Inc.',
-				image: 'apple.png',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 5,
-				price: 100,
-				comission: 1,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nasdaq',
-			};
-			await store.init([tx]);
-			expect(store.portfolio[0]).toMatchObject({
-				symbol: 'AAPL',
-				name: 'Apple Inc.',
-				quantity: 5,
-				currentInvested: 500,
-				totalInvested: 500,
-				comission: 1,
-			});
-		});
-	});
+    it('initializes store with a buy transaction', async () => {
+        const tx: TransactionItem = {
+            id: 1,
+            user_id: 1,
+            symbol: mockSymbol,
+            quantity: 10,
+            price: 150,
+            commission: 1,
+            currency: 'USD',
+            transaction_type: 'BUY',
+            date: '2023-01-01',
+        };
+        const store = usePortfolioStore();
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [tx] }));
+        await store.init();
+        expect(store.transactions.length).toBe(1);
+        expect(store.portfolios.default.length).toBe(1);
+    });
 
-	describe('sell transaction', () => {
-		it('subtracts from quantity and adds to retrieved', async () => {
-			const buy: TransactionItem = {
-				symbol: 'AAPL',
-				name: 'Apple Inc.',
-				image: 'apple.png',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 10,
-				price: 100,
-				comission: 1,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nasdaq',
-			};
-			const sell: TransactionItem = {
-				...buy,
-				quantity: 4,
-				price: 110,
-				transactionType: 'sell',
-				comission: 2,
-			};
-			await store.init([buy, sell]);
+    it('initializes store with buy and sell transaction', async () => {
+        const tx1: TransactionItem = {
+            id: 1,
+            user_id: 1,
+            symbol: mockSymbol,
+            quantity: 10,
+            price: 150,
+            commission: 1,
+            currency: 'USD',
+            transaction_type: 'BUY',
+            date: '2023-01-01',
+        };
+        const tx2: TransactionItem = {
+            id: 2,
+            user_id: 1,
+            symbol: mockSymbol,
+            quantity: 5,
+            price: 200,
+            commission: 2,
+            currency: 'USD',
+            transaction_type: 'SELL',
+            date: '2023-01-02',
+        };
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [tx1, tx2] }));
+        await store.init();
+        expect(store.transactions.length).toBe(2);
+        expect(store.portfolios.default.length).toBe(1);
+    });
 
-			expect(store.portfolio[0].quantity).toBe(6);
-			expect(store.portfolio[0].totalRetrieved).toBe(440);
-			expect(store.portfolio[0].currentInvested).toBe(600);
-			expect(store.portfolio[0].comission).toBe(3);
-		});
+    describe('transactions', () => {
+        it('buys', async () => {
+            const tx = await mockTransaction(store);
+            expect(store.transactions[0]).toEqual(tx);
+            expect(store.portfolios.default[0].quantity).toBe(10);
+            expect(store.portfolios.default[0].totalRetrieved).toBe(0);
+            expect(store.portfolios.default[0].currentInvested).toBe(1500);
+            expect(store.portfolios.default[0].commission).toBe(1);
+        });
 
-		it('applies FIFO logic when selling shares from multiple buys', async () => {
-			const buy1: TransactionItem = {
-				symbol: 'GOOG',
-				name: 'Alphabet Inc.',
-				image: '',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 5,
-				price: 200, // $1000 total
-				comission: 0,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nasdaq',
-			};
+        it('sells', async () => {
+            const buyTx = await mockTransaction(store);
+            await mockTransaction(store, {
+                ...buyTx,
+                id: 2,
+                transaction_type: 'SELL',
+                quantity: 5,
+                price: 200,
+                commission: 2,
+                date: new Date().toISOString(),
+            });
 
-			const buy2: TransactionItem = {
-				...buy1,
-				quantity: 5,
-				price: 300, // $1500 total
-				date: new Date(Date.now() + 1000).toISOString(), // later than buy1
-			};
+            expect(store.transactions.length).toBe(2);
+            expect(store.portfolios.default[0].quantity).toBe(5);
+            expect(store.portfolios.default[0].totalRetrieved).toBe(1000);
+            expect(store.portfolios.default[0].currentInvested).toBe(750);
+            expect(store.portfolios.default[0].commission).toBe(3);
+        });
 
-			const sell: TransactionItem = {
-				...buy1,
-				quantity: 7,
-				price: 400,
-				comission: 5,
-				transactionType: 'sell',
-				date: new Date(Date.now() + 2000).toISOString(),
-			};
+        it('applies FIFO logic when selling shares from multiple buys', async () => {
+            const buy1 = await mockTransaction(store, {
+                id: 1,
+                user_id: 1,
+                symbol: { ...mockSymbol, ticker: 'GOOG', name: 'Alphabet Inc.' },
+                quantity: 5,
+                price: 200,
+                commission: 0,
+                currency: 'USD',
+                transaction_type: 'BUY',
+                date: baseDate,
+            });
 
-			await store.init([buy1, buy2, sell]);
+            await mockTransaction(store, {
+                ...buy1,
+                id: 2,
+                quantity: 5,
+                price: 300,
+                date: new Date(Date.now() + 1000).toISOString(), // later than buy1
+            });
 
-			const position = store.portfolio[0];
-			expect(position.quantity).toBe(3);
-			expect(position.totalRetrieved).toBe(2800);
-			expect(position.totalInvested).toBe(2500);
-			expect(position.currentInvested).toBe(900);
-			expect(position.comission).toBe(5);
-			expect(position.sortedSells).toHaveLength(1);
-			expect(position.sortedSells[0].costBasis).toBe(5 * 200 + 2 * 300);
-		});
-	});
+            await mockTransaction(store, {
+                ...buy1,
+                id: 3,
+                quantity: 7,
+                price: 400,
+                commission: 5,
+                transaction_type: 'SELL',
+                date: new Date(Date.now() + 2000).toISOString(),
+            });
 
-	describe('dividend transaction', () => {
-		it('adds to quantity only', async () => {
-			const buy: TransactionItem = {
-				symbol: 'T',
-				name: 'AT&T Inc.',
-				image: 't.png',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 10,
-				price: 20,
-				comission: 0,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nyse',
-			};
-			const dividend: TransactionItem = {
-				...buy,
-				quantity: 2,
-				price: 0,
-				transactionType: 'dividend',
-			};
-			await store.init([buy, dividend]);
+            const position = store.portfolios.default[0];
+            expect(position.quantity).toBe(3);
+            expect(position.totalRetrieved).toBe(2800);
+            expect(position.totalInvested).toBe(2500);
+            expect(position.currentInvested).toBe(900);
+            expect(position.commission).toBe(5);
+            expect(position.sortedSells).toHaveLength(1);
+            expect(position.sortedSells[0].costBasis).toBe(5 * 200 + 2 * 300);
+        });
 
-			expect(store.portfolio[0].quantity).toBe(12);
-		});
-	});
+        it('adds a dividend', async () => {
+            const buy1 = await mockTransaction(store, {
+                id: 1,
+                user_id: 1,
+                symbol: { ...mockSymbol, ticker: 'GOOG', name: 'Alphabet Inc.' },
+                quantity: 5,
+                price: 200,
+                commission: 0,
+                currency: 'USD',
+                transaction_type: 'BUY',
+                date: baseDate,
+            });
 
-	describe('dividend-cash transaction', () => {
-		it('adds to cashDividends', async () => {
-			const cashDividend: TransactionItem = {
-				symbol: 'T',
-				name: 'AT&T Inc.',
-				image: 't.png',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 0,
-				price: 100,
-				comission: 0,
-				transactionType: 'dividend-cash',
-				date: baseDate,
-			};
-			await store.init([cashDividend]);
-			expect(store.cashDividends).toBe(100);
-		});
-	});
+            await mockTransaction(store, {
+                ...buy1,
+                id: 2,
+                quantity: 2,
+                price: 0,
+                transaction_type: 'DIVIDEND',
+                date: new Date(Date.now() + 1000).toISOString(), // later than buy1
+            });
+            expect(store.portfolios.default[0].quantity).toBe(7); // 5 from buy + 2 from dividend
+        });
 
-	describe('removal logic', () => {
-		it('removes a buy transaction and deletes stock if quantity is zero', async () => {
-			const tx: TransactionItem = {
-				symbol: 'MSFT',
-				name: 'Microsoft Corp.',
-				image: 'msft.png',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 5,
-				price: 200,
-				comission: 2,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nasdaq',
-			};
-			await store.init([tx]);
-			store.removeTransaction(tx);
-			expect(store.transactions).toHaveLength(0);
-			expect(store.portfolio).toHaveLength(0); // stock removed
-		});
+        it('tries to add a dividend before stock creation', async () => {
+            const dividendTx: TransactionItem = {
+                id: 1,
+                user_id: 1,
+                symbol: { ...mockSymbol, ticker: 'NEW', name: 'New Corp.' },
+                quantity: 1,
+                price: 0,
+                commission: 0,
+                currency: 'USD',
+                transaction_type: 'DIVIDEND',
+                date: baseDate,
+            };
+            await expect(store.addTransaction(dividendTx)).rejects.toThrow(
+                'A dividend was created before the stock was created, please create the stock first'
+            );
+        });
 
-		it('removes dividend-cash and subtracts from cashDividends', async () => {
-			const tx: TransactionItem = {
-				symbol: 'T',
-				name: 'AT&T Inc.',
-				image: 't.png',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 0,
-				price: 50,
-				comission: 0,
-				transactionType: 'dividend-cash',
-				date: baseDate,
-			};
-			await store.init([tx]);
-			store.removeTransaction(tx);
-			expect(store.cashDividends).toBe(0);
-		});
-	});
+        it('adds a cash dividend', async () => {
+            const buy1 = await mockTransaction(store, {
+                id: 1,
+                user_id: 1,
+                symbol: { ...mockSymbol, ticker: 'GOOG', name: 'Alphabet Inc.' },
+                quantity: 5,
+                price: 200,
+                commission: 0,
+                currency: 'USD',
+                transaction_type: 'BUY',
+                date: baseDate,
+            });
 
-	describe('edge cases', () => {
-		it('handles missing quote gracefully', async () => {
-			vi.mock('@/stores/stocks', () => ({
-				useStocksStore: () => ({
-					getStockQuote: vi.fn().mockResolvedValue(null),
-				}),
-			}));
+            await mockTransaction(store, {
+                ...buy1,
+                id: 2,
+                quantity: 0,
+                price: 100,
+                commission: 0,
+                transaction_type: 'DIVIDEND-CASH',
+                date: new Date(Date.now() + 1000).toISOString(), // later than buy1
+            });
+            expect(store.cashDividends).toBe(100);
+        });
+    });
 
-			const tx: TransactionItem = {
-				symbol: 'ZZZ',
-				name: 'Unknown Corp.',
-				image: '',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 1,
-				price: 1,
-				comission: 0,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nasdaq',
-			};
-			await store.init([tx]);
+    describe('removal', () => {
+        it('removes a buy transaction and deletes stock if quantity is zero', async () => {
+            const tx = await mockTransaction(store);
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+            await store.removeTransaction(tx);
+            expect(store.transactions.length).toBe(0);
+            expect(store.portfolios.default.length).toBe(0);
+        });
 
-			expect(store.portfolio[0].currentPrice).toBe(0);
-		});
+        it('removes a dividend-cash transaction and updates cashDividends', async () => {
+            const buyTx = await mockTransaction(store);
+            const divTx = await mockTransaction(store, {
+                ...buyTx,
+                id: 2,
+                quantity: 0,
+                price: 100,
+                commission: 0,
+                transaction_type: 'DIVIDEND-CASH',
+                date: new Date().toISOString(),
+            });
+            expect(store.cashDividends).toBe(100);
 
-		it('alerts on dividend before stock creation', async () => {
-			const dividend: TransactionItem = {
-				symbol: 'NEW',
-				name: 'New Corp.',
-				image: '',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 1,
-				price: 0,
-				comission: 0,
-				transactionType: 'dividend',
-				date: baseDate,
-				source: undefined,
-			};
-			await expect(() => store.init([dividend])).rejects.toThrow("A dividend was created before the stock was created, please create the stock first");
-		});
-	});
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
+            await store.removeTransaction(divTx);
+            expect(store.cashDividends).toBe(0);
+        });
+    });
 
-	describe('totalInvested', () => {
-		it('returns 0 when portfolio is empty', () => {
-			expect(store.totalInvested).toBe(0);
-		});
+    describe('edge cases', () => {
+        it('handles missing quote gracefully', async () => {
+            getStockQuoteMock = vi.fn().mockResolvedValue(null);
+            await mockTransaction(store, {
+                symbol: { ...mockSymbol, ticker: 'ZZZ', name: 'Unknown Corp.' },
+                currency: 'USD',
+                quantity: 1,
+                price: 1,
+                commission: 0,
+                date: baseDate,
+            });
 
-		it('sums currentInvested and comission for positions with quantity > 0', async () => {
-			const tx: TransactionItem = {
-				symbol: 'AAPL',
-				name: 'Apple Inc.',
-				image: '',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 10,
-				price: 100,
-				comission: 10,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nasdaq',
-			};
-			await store.init([tx]);
-			expect(store.totalInvested).toBe(1010); // 10 * 100 + 10
-		});
-	});
+            expect(store.portfolio[0].currentPrice).toBe(0);
+        });
+    });
 
-	describe('portfolioCurrentValue', () => {
-		it('returns 0 when portfolio is empty', () => {
-			expect(store.portfolioCurrentValue).toBe(0);
-		});
+    describe('stock transfer', () => {
+        it('transfers a stock between accounts', async () => {
+            const tx = await mockTransaction(store, {
+                symbol: { ...mockSymbol, ticker: 'AAPL' },
+                account: { name: 'default' },
+            });
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    json: async () => ({ ...tx, account: { ...tx.account, name: 'brokerage' } }),
+                })
+            );
+            await store.transferStock('AAPL', 'default', 'brokerage');
+            expect(store.portfolios.brokerage[0].symbol.ticker).toBe('AAPL');
+            expect(store.portfolios.default.length).toBe(0);
+        });
 
-		it('sums currentPrice * quantity for all positions with quantity > 0', () => {
-			store.portfolio.push({
-				symbol: 'MSFT',
-				name: 'Microsoft Corp.',
-				image: '',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 5,
-				currentPrice: 300,
-				manualInputedPrice: false,
-				currentInvested: 1500,
-				totalInvested: 1500,
-				totalRetrieved: 0,
-				comission: 0,
-			});
-			expect(store.portfolioCurrentValue).toBe(1500); // 5 * 300
-		});
-	});
+        it('should not transfer stock if fromAccount and toAccount are the same', async () => {
+            await mockTransaction(store, {
+                symbol: { ...mockSymbol, ticker: 'AAPL' },
+                account: { name: 'default' },
+            });
+            await store.transferStock('AAPL', 'default', 'default');
+            expect(store.portfolios.default.length).toBe(1);
+            expect(store.portfolios.default[0].symbol.ticker).toBe('AAPL');
+        });
 
-	describe('closedPositions', () => {
-		it('returns 0 when no positions are closed', () => {
-			expect(store.closedPositions).toBe(0);
-		});
+        it('merges with existing stock in destination account', async () => {
+            store.portfolios['brokerage'] = [];
+            const tx = await mockTransaction(store, {
+                symbol: { ...mockSymbol, ticker: 'AAPL' },
+                account: { name: 'default' },
+            });
+            await mockTransaction(store, {
+                symbol: { ...mockSymbol, ticker: 'AAPL' },
+                account: { name: 'brokerage' },
+            });
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    json: async () => ({ ...tx, account: { ...tx.account, name: 'brokerage' } }),
+                })
+            );
+            await store.transferStock('AAPL', 'default', 'brokerage');
+            expect(store.portfolios.brokerage[0].quantity).toBe(20);
+            expect(store.portfolios.brokerage[0].totalInvested).toBe(3000);
+            expect(store.portfolios.brokerage[0].commission).toBe(2);
+        });
+    });
 
-		it('calculates profit/loss from fully closed positions', async () => {
-			const buy: TransactionItem = {
-				symbol: 'TSLA',
-				name: 'Tesla Inc.',
-				image: '',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 10,
-				price: 100,
-				comission: 0,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nasdaq',
-			};
-			const sell: TransactionItem = {
-				...buy,
-				transactionType: 'sell',
-				price: 150,
-				date: new Date().toISOString(),
-			};
-			await store.init([buy, sell]);
-			expect(store.closedPositions).toBe(500); // 1500 - 1000
-		});
-	});
+    describe('manual price updates', () => {
+        it('updates manual price', async () => {
+            await mockTransaction(store);
+            await store.updateManualPrice(mockSymbol.id, 200);
+            expect(store.portfolios.default[0].currentPrice).toBe(200);
+            expect(store.portfolios.default[0].manualInputedPrice).toBe(true);
+        });
+    });
 
-	describe('rentability', () => {
-		it('returns 0 if totalInvested is 0', () => {
-			expect(store.rentability).toBe(0);
-		});
+    describe('totalInvested', () => {
+        it('returns 0 when portfolio is empty', () => {
+            expect(usePortfolioStore().totalInvested).toBe(0);
+        });
 
-		it('calculates rentability with open, closed positions and cash dividends', async () => {
-			const buy: TransactionItem = {
-				symbol: 'NFLX',
-				name: 'Netflix Inc.',
-				image: '',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 10,
-				price: 100,
-				comission: 0,
-				transactionType: 'buy',
-				date: baseDate,
-				source: 'nasdaq',
-			};
-			const sell: TransactionItem = {
-				...buy,
-				quantity: 5,
-				price: 150,
-				transactionType: 'sell',
-				date: new Date().toISOString(),
-			};
-			const dividend: TransactionItem = {
-				...buy,
-				transactionType: 'dividend-cash',
-				price: 100,
-				quantity: 0,
-				date: new Date().toISOString(),
-			};
-			await store.init([buy, sell, dividend]);
+        it('sums currentInvested and commission for positions with quantity > 0', async () => {
+            await mockTransaction(store, {
+                id: 1,
+                user_id: 1,
+                symbol: {
+                    id: 1,
+                    name: 'Apple Inc.',
+                    picture: '',
+                    security_type: 'STOCK',
+                    ticker: 'AAPL',
+                    currency: 'USD',
+                    source: 'nasdaq',
+                },
+                currency: 'USD',
+                quantity: 10,
+                price: 100,
+                commission: 10,
+                transaction_type: 'BUY',
+                date: baseDate,
+            });
+            expect(store.totalInvested).toBe(1010); // 10 * 100 + 10
+        });
+    });
 
-			const expected =
-				((store.portfolioCurrentValue + store.closedPositions + store.cashDividends - store.totalInvested) /
-					store.totalInvested) *
-				100;
+    describe('portfolioCurrentValue', () => {
+        it('returns 0 when portfolio is empty', () => {
+            expect(usePortfolioStore().portfolioCurrentValue).toBe(0);
+        });
 
-			expect(store.rentability).toBeCloseTo(expected, 2);
-		});
-	});
+        it('sums currentPrice * quantity for all positions with quantity > 0', async () => {
+            store.portfolio.push({
+                symbol: {
+                    id: 1,
+                    ticker: 'MSFT',
+                    name: 'Microsoft Corp.',
+                    image: '',
+                    currency: 'USD',
+                    source: 'nasdaq',
+                    security_type: 'STOCK',
+                },
+                quantity: 5,
+                currentPrice: 300,
+                manualInputedPrice: false,
+                currentInvested: 1500,
+                totalInvested: 1500,
+                totalRetrieved: 0,
+                commission: 0,
+            });
+            expect(store.portfolioCurrentValue).toBe(1500); // 5 * 300
+        });
+    });
 
-	describe('transferStock', () => {
-		let portfolioStore: ReturnType<typeof usePortfolioStore>;
+    describe('closedPositions', () => {
+        it('returns 0 when no positions are closed', () => {
+            expect(usePortfolioStore().closedPositions).toBe(0);
+        });
 
-		beforeEach(() => {
-			setActivePinia(createPinia());
-			portfolioStore = usePortfolioStore();
+        it('calculates profit/loss from fully closed positions', async () => {
+            const buy = await mockTransaction(store, {
+                id: 1,
+                user_id: 1,
+                symbol: {
+                    id: 1,
+                    ticker: 'TSLA',
+                    name: 'Tesla Inc.',
+                    picture: '',
+                    security_type: 'STOCK',
+                    currency: 'USD',
+                    source: 'nasdaq',
+                },
+                currency: 'USD',
+                quantity: 10,
+                price: 100,
+                commission: 0,
+                transaction_type: 'BUY',
+                date: baseDate,
+            });
+            await mockTransaction(store, {
+                ...buy,
+                id: 2,
+                transaction_type: 'SELL',
+                price: 150,
+                date: new Date().toISOString(),
+            });
+            expect(store.closedPositions).toBe(500); // 1500 - 1000
+        });
+    });
 
-			// Seed transactions
-			portfolioStore.transactions = [
-				{
-					symbol: 'AAPL',
-					name: 'Apple',
-					source: 'nasdaq',
-					type: 'stock',
-					currency: 'USD',
-					quantity: 10,
-					price: 150,
-					comission: 5,
-					date: '2024-01-01',
-					transactionType: 'buy',
-					account: { name: 'accountA' },
-				},
-			];
+    describe('rentability', () => {
+        it('returns 0 if totalInvested is 0', () => {
+            expect(usePortfolioStore().rentability).toBe(0);
+        });
 
-			// Seed portfolios
-			portfolioStore.portfolios = {
-				default: [],
-				all: [],
-				accountA: [{
-					symbol: 'AAPL',
-					name: 'Apple',
-					type: 'stock',
-					currency: 'USD',
-					quantity: 10,
-					currentPrice: 150,
-					manualInputedPrice: false,
-					currentInvested: 1500,
-					totalInvested: 1500,
-					totalRetrieved: 0,
-					comission: 5,
-					sortedBuys: [{
-						symbol: 'AAPL',
-						name: 'Apple',
-						source: 'nasdaq',
-						type: 'stock',
-						currency: 'USD',
-						quantity: 10,
-						price: 150,
-						comission: 5,
-						date: '2024-01-01',
-						transactionType: 'buy',
-						account: { name: 'accountA' },
-					}],
-					sortedSells: [],
-					image: undefined,
-				}],
-				accountB: [],
-			};
-		});
+        it('calculates rentability with open, closed positions and cash dividends', async () => {
+            const buy = await mockTransaction(store, {
+                id: 1,
+                user_id: 1,
+                symbol: {
+                    id: 1,
+                    ticker: 'NFLX',
+                    name: 'Netflix Inc.',
+                    picture: '',
+                    security_type: 'STOCK',
+                    currency: 'USD',
+                    source: 'nasdaq',
+                },
+                currency: 'USD',
+                quantity: 10,
+                price: 100,
+                commission: 0,
+                transaction_type: 'BUY',
+                date: baseDate,
+            });
+            await mockTransaction(store, {
+                ...buy,
+                id: 2,
+                quantity: 5,
+                price: 150,
+                transaction_type: 'SELL',
+                date: new Date().toISOString(),
+            });
+            await mockTransaction(store, {
+                ...buy,
+                id: 3,
+                transaction_type: 'DIVIDEND-CASH',
+                price: 100,
+                quantity: 0,
+                date: new Date().toISOString(),
+            });
 
-		it('should transfer stock from one account to another', () => {
-			portfolioStore.transferStock('AAPL', 'accountA', 'accountB');
+            const expected =
+                ((store.portfolioCurrentValue + store.closedPositions + store.cashDividends - store.totalInvested) /
+                    store.totalInvested) *
+                100;
 
-			const accountA = portfolioStore.portfolios['accountA'];
-			const accountB = portfolioStore.portfolios['accountB'];
-
-			expect(accountA).toHaveLength(0);
-			expect(accountB).toHaveLength(1);
-			expect(accountB[0].symbol).toBe('AAPL');
-			expect(accountB[0].quantity).toBe(10);
-
-			// Verify transaction account updated
-			expect(portfolioStore.transactions[0].account?.name).toBe('accountB');
-		});
-
-		it('should do nothing if fromAccount and toAccount are the same', () => {
-			const snapshot = JSON.stringify(portfolioStore.portfolios);
-			portfolioStore.transferStock('AAPL', 'accountA', 'accountA');
-			expect(JSON.stringify(portfolioStore.portfolios)).toBe(snapshot);
-		});
-
-		it('should merge with existing symbol in destination portfolio', () => {
-			portfolioStore['portfolios']['accountB'] = [{
-				symbol: 'AAPL',
-				name: 'Apple',
-				type: 'stock',
-				currency: 'USD',
-				quantity: 5,
-				currentPrice: 150,
-				manualInputedPrice: false,
-				currentInvested: 750,
-				totalInvested: 750,
-				totalRetrieved: 0,
-				comission: 1,
-				sortedBuys: [],
-				sortedSells: [],
-				image: undefined,
-			}];
-
-			portfolioStore.transferStock('AAPL', 'accountA', 'accountB');
-			const accountB = portfolioStore.portfolios['accountB'];
-
-			expect(accountB).toHaveLength(1);
-			expect(accountB[0].quantity).toBe(15); // 10 from A + 5 existing
-			expect(accountB[0].totalInvested).toBe(2250); // 1500 + 750
-			expect(accountB[0].comission).toBe(6); // 5 + 1
-			expect(accountB[0].sortedBuys.length).toBe(1);
-		});
-	});
+            expect(store.rentability).toBeCloseTo(expected, 2);
+        });
+    });
 });

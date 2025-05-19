@@ -1,36 +1,40 @@
-import type { Account } from "./google";
+import type { Account } from './user';
+import type { StockSymbol } from './stock';
 
-export type TransactionType = "buy" | "sell" | "dividend" | "dividend-cash";
+export type TransactionType = 'BUY' | 'SELL' | 'DIVIDEND' | 'DIVIDEND-CASH';
 export interface TransactionItem {
-	symbol: string;
-	name: string;
-	image: string;
-	quantity: number;
-	price: number;
-	currency: string;
-	comission: number;
-	type: string;
-	date: string;
-	source?: string;
-	transactionType: TransactionType;
-	account?: Account;
+    id: number;
+    user_id: number;
+    symbol: StockSymbol;
+    account?: Account;
+    quantity: number;
+    price: number;
+    commission: number;
+    currency: string;
+    transaction_type: TransactionType;
+    date: string;
+    symbol_id?: string;
+    account_id?: string;
+
+    // used for display
+    hideImage?: boolean;
 }
 
 export interface PortfolioItem {
-	symbol: string;
-	name: string;
-	image: string;
-	type: string;
-	currency: string;
-	quantity: number;
-	currentPrice: number;
-	manualInputedPrice: boolean;
-	currentInvested: number;
-	totalInvested: number;
-	totalRetrieved: number;
-	comission: number;
+    symbol: StockSymbol;
+    currency: string;
+    quantity: number;
+    currentPrice: number;
+    manualInputedPrice: boolean;
+    currentInvested: number;
+    totalInvested: number;
+    totalRetrieved: number;
+    commission: number;
 
-	// should be use only for portfolio calculation
-	sortedBuys: TransactionItem[];
-	sortedSells: (TransactionItem & { costBasis: number })[];
+    // should be use only for portfolio calculation
+    sortedBuys: TransactionItem[];
+    sortedSells: (TransactionItem & { costBasis: number })[];
+
+    // used for display
+    hideImage?: boolean;
 }

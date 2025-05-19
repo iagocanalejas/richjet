@@ -1,5 +1,6 @@
-import enum
 from dataclasses import dataclass
+
+from models.symbol import MarketSector, SecurityType
 
 
 @dataclass
@@ -31,19 +32,6 @@ class StockQuote:
     previous_close: float
 
 
-class MarketSector(enum.Enum):
-    COMMODITY = "COMMODITY"
-    CORPORATE = "CORPORATE"
-    CURRENCY = "CURRENCY"
-    EQUITY = "EQUITY"
-    GOVERNMENT = "GOVERNMENT"
-    INDEX = "INDEX"
-    MONEY_MARKET = "MONEY_MARKET"
-    MORTGAGE = "MORTGAGE"
-    MUNICIPAL = "MUNICIPAL"
-    PREFERRED = "PREFERRED"
-
-
 def normalize_market_sector(market_sector: str) -> MarketSector:
     match market_sector.upper():
         case "COMDTY":
@@ -68,16 +56,6 @@ def normalize_market_sector(market_sector: str) -> MarketSector:
             return MarketSector.PREFERRED
         case _:
             raise ValueError(f"Unknown market sector: {market_sector}")
-
-
-class SecurityType(enum.Enum):
-    COMMON_STOCK = "STOCK"
-    ETP = "ETP"
-    EQUITY_INDEX = "EQUITY_INDEX"
-    COMMODITY_INDEX = "COMMODITY_INDEX"
-    GDR = "GDR"
-    CRYPTO = "CRYPTO"
-    BOND = "BOND"
 
 
 def normalize_security_type(security_type: str) -> SecurityType:

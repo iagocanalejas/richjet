@@ -1,0 +1,67 @@
+{
+    "version": 1,
+    "database": "postgres",
+    "migrations": [
+        {
+            "name": "0000_migrateit.sql",
+            "initial": true,
+            "parents": []
+        },
+        {
+            "name": "0001_user.sql",
+            "initial": false,
+            "parents": [
+                "0000_migrateit.sql"
+            ]
+        },
+        {
+            "name": "0002_session.sql",
+            "initial": false,
+            "parents": [
+                "0001_user.sql"
+            ]
+        },
+        {
+            "name": "0003_user_currency.sql",
+            "initial": false,
+            "parents": [
+                "0002_session.sql"
+            ]
+        },
+        {
+            "name": "0004_symbols.sql",
+            "initial": false,
+            "parents": [
+                "0003_user_currency.sql"
+            ]
+        },
+        {
+            "name": "0005_watchlist.sql",
+            "initial": false,
+            "parents": [
+                "0004_symbols.sql"
+            ]
+        },
+        {
+            "name": "0006_accounts.sql",
+            "initial": false,
+            "parents": [
+                "0005_watchlist.sql"
+            ]
+        },
+        {
+            "name": "0007_transactions.sql",
+            "initial": false,
+            "parents": [
+                "0006_accounts.sql"
+            ]
+        },
+        {
+            "name": "0008_manual_price.sql",
+            "initial": false,
+            "parents": [
+                "0007_transactions.sql"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,35 @@
+### version information
+
+```
+migrateit version: 0.5.0
+sys.version:
+    3.13.3 (main, Apr  9 2025, 07:44:25) [GCC 14.2.1 20250207]
+sys.executable: /media/data/Workspace/personal/richjet/venv/bin/python
+os.name: posix
+sys.platform: linux
+```
+
+### error information
+
+```
+An unexpected error has occurred: ValueError: Cannot update hash for the initial migration
+```
+
+```
+Traceback (most recent call last):
+  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/reporters/errors.py", line 22, in error_handler
+    yield
+  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/main.py", line 71, in main
+    return commands.cmd_run(
+           ~~~~~~~~~~~~~~~~^
+        client,
+        ^^^^^^^
+    ...<2 lines>...
+        is_hash_update=args.update_hash,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/cli.py", line 83, in cmd_run
+    raise ValueError("Cannot update hash for the initial migration")
+ValueError: Cannot update hash for the initial migration
+```

@@ -1,0 +1,23 @@
+from db import get_db
+from fastapi import APIRouter, Depends
+from models.settings import UserSettings, get_user_settings, update_user_settings
+
+from routers.auth import get_session
+
+router = APIRouter()
+
+
+@router.get("/settings")
+async def api_get_settings(db=Depends(get_db), session=Depends(get_session)):
+    return get_user_settings(db, session.user.id).to_dict()
+
+
+@router.put("/settings")
+async def api_update_settings(
+    settings_dict: dict,
+    db=Depends(get_db),
+    session=Depends(get_session),
+):
+    settings = UserSettings.from_dict(**settings_dict, user_id=session.user.id)
+    update_user_settings(db, settings)
+    return settings.to_dict()

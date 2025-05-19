@@ -1,11 +1,11 @@
-import "./assets/main.css";
+import './assets/main.css';
 
-import { createApp } from "vue";
-import { createPinia } from "pinia";
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 
-import App from "./App.vue";
-import router from "./router";
-import { useLoadingStore } from "./stores/loading";
+import App from './App.vue';
+import router from './router';
+import { useLoadingStore } from './stores/loading';
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -18,19 +18,19 @@ const originalFetch = window.fetch;
 
 // @ts-expect-error: unmatched function signature
 window.fetch = async (resource: RequestInfo, options: RequestInit & { timeout?: number } = {}) => {
-	const { timeout = 3000, ...rest } = options;
+    const { timeout = 30000, ...rest } = options;
 
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(`⏱️ Request ${resource} timed out`), timeout);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(`⏱️ Request ${resource} timed out`), timeout);
 
-	loadingStore.start();
+    loadingStore.start();
 
-	try {
-		return await originalFetch(resource, { ...rest, signal: controller.signal });
-	} finally {
-		clearTimeout(timeoutId);
-		loadingStore.stop();
-	}
+    try {
+        return await originalFetch(resource, { ...rest, signal: controller.signal });
+    } finally {
+        clearTimeout(timeoutId);
+        loadingStore.stop();
+    }
 };
 
-app.mount("#app");
+app.mount('#app');

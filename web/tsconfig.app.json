@@ -10,6 +10,11 @@
 	],
 	"compilerOptions": {
 		"tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+		"plugins": [
+			{
+				"name": "@vue/typescript-plugin"
+			}
+		],
 		"typeRoots": [
 			"./node_modules/@types",
 			"./src/types"
