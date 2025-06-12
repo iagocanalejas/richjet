@@ -7,14 +7,14 @@ from .symbol import MarketSector, SecurityType, Symbol, get_or_create_symbol
 
 @dataclass
 class WatchlistItem:
-    user_id: int
+    user_id: str
     symbol: Symbol
-    id: int = 0
+    id: str = ""
 
     @classmethod
     def from_dict(cls, **kwargs) -> "WatchlistItem":
         item = cls(**{k: v for k, v in kwargs.items() if k in cls.__dataclass_fields__})
-        if "symbol" in kwargs:
+        if "symbol" in kwargs and kwargs["symbol"]:
             item.symbol = Symbol.from_dict(**kwargs["symbol"])
         return item
 
@@ -26,7 +26,7 @@ class WatchlistItem:
         }
 
 
-def get_watchlist_by_user_id(db: Connection, user_id: int) -> list[Symbol]:
+def get_watchlist_by_user_id(db: Connection, user_id: str) -> list[Symbol]:
     """
     Retrieves a watchlist from the database by user ID.
     """
@@ -64,7 +64,7 @@ def get_watchlist_by_user_id(db: Connection, user_id: int) -> list[Symbol]:
         ]
 
 
-def create_watchlist_item(db, user_id: int, symbol: Symbol) -> Symbol:
+def create_watchlist_item(db, user_id: str, symbol: Symbol) -> Symbol:
     """
     Adds a symbol to the watchlist in the database.
     """
@@ -91,7 +91,7 @@ def create_watchlist_item(db, user_id: int, symbol: Symbol) -> Symbol:
         return symbol
 
 
-def update_watchlist_item(db, user_id: int, symbol_id: int, new_price: float | None) -> Symbol:
+def update_watchlist_item(db, user_id: str, symbol_id: str, new_price: float | None) -> Symbol:
     """
     Updates the price of a watchlist item in the database.
     """
@@ -117,7 +117,7 @@ def update_watchlist_item(db, user_id: int, symbol_id: int, new_price: float | N
         return next(w for w in get_watchlist_by_user_id(db, user_id) if w.id == result[0])
 
 
-def remove_watchlist_item(db, user_id: int, symbol_id: int) -> None:
+def remove_watchlist_item(db, user_id: str, symbol_id: str) -> None:
     """
     Removes a symbol from the watchlist in the database.
     """

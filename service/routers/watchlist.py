@@ -35,7 +35,7 @@ async def api_create_watchlist_item(
 
 @router.put("/{symbol_id}")
 async def api_update_watchlist_item(
-    symbol_id: int,
+    symbol_id: str,
     symbol_data: dict = Body(...),
     db=Depends(get_db),
     session=Depends(get_session),
@@ -47,7 +47,7 @@ async def api_update_watchlist_item(
 
 @router.delete("/{symbol_id}")
 async def api_remove_watchlist_item(
-    symbol_id: int,
+    symbol_id: str,
     db=Depends(get_db),
     session=Depends(get_session),
 ):

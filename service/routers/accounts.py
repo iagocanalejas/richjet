@@ -22,6 +22,7 @@ async def api_create_account(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    account = Account.from_dict(**account_data, user_id=session.user.id)
+    account_data["user_id"] = session.user.id
+    account = Account.from_dict(**account_data)
     account = create_account(db, session.user.id, account)
     return account.to_dict()

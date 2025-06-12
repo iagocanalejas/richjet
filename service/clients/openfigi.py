@@ -1,11 +1,12 @@
 import httpx
 from fastapi import HTTPException
 from log import logger
+from models.quote import StockQuote
+from models.symbol import MarketSector, SecurityType, Symbol
 
 from clients._errors import (
     ERROR_FAILED_TO_FETCH_STOCK_DATA,
 )
-from clients._types import StockQuote, StockSymbol, normalize_market_sector, normalize_security_type
 from pyutils.validators import is_valid_figi
 
 
@@ -16,7 +17,7 @@ class OpenFIGIClient:
     def __init__(self, api_key=None):
         self.api_key = api_key
 
-    async def search_stock(self, q: str) -> list[StockSymbol]:
+    async def search_stock(self, q: str) -> list[Symbol]:
         async with httpx.AsyncClient(timeout=5) as client:
             response = await client.post(
                 f"{self.BASE_URL}/v3/search",
@@ -35,14 +36,14 @@ class OpenFIGIClient:
         logger.warning(f"{self.NAME}: discarding results={[r for r in results if r not in valid_results]}")
 
         return [
-            StockSymbol(
-                symbol=result["ticker"],
+            Symbol(
+                ticker=result["ticker"],
                 name=result["name"],
-                security_type=normalize_security_type(result["securityType"]),
+                security_type=SecurityType.from_str(result["securityType"]),
                 currency="USD",
                 source=self.NAME,
                 region=result.get("exchCode", None),
-                market_sector=normalize_market_sector(result["marketSector"]),
+                market_sector=MarketSector.from_str(result["marketSector"]),
                 figi=result["figi"] if is_valid_figi(result["figi"]) else None,
             )
             for result in valid_results

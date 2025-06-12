@@ -2,10 +2,10 @@
 -- Created on 2025-05-22T09:58:46.282349
 
 CREATE TABLE IF NOT EXISTS transactions (
-	id SERIAL PRIMARY KEY,
-	user_id INT NOT NULL,
-	symbol_id INT NOT NULL,
-	account_id INT,
+	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+	user_id UUID NOT NULL,
+	symbol_id UUID NOT NULL,
+	account_id UUID,
 	quantity DECIMAL(10, 2) NOT NULL,
 	price DECIMAL(10, 2) NOT NULL,
 	commission DECIMAL(10, 2) NOT NULL,

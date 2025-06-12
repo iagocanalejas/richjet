@@ -17,7 +17,7 @@ class TransactionType(Enum):
 
 @dataclass
 class Transaction:
-    user_id: int
+    user_id: str
     symbol: Symbol
     quantity: float
     price: float
@@ -26,20 +26,20 @@ class Transaction:
     transaction_type: TransactionType
     date: str
 
-    id: int = 0
+    id: str = ""
     account: Account | None = None
-    symbol_id: int | None = None
-    account_id: int | None = None
+    symbol_id: str | None = None
+    account_id: str | None = None
     created_at: str | None = None
 
     @classmethod
     def from_dict(cls, **kwargs) -> "Transaction":
         item = cls(**{k: v for k, v in kwargs.items() if k in cls.__dataclass_fields__})
-        if "transaction_type" in kwargs:
+        if "transaction_type" in kwargs and kwargs["transaction_type"]:
             item.transaction_type = TransactionType(kwargs["transaction_type"])
-        if "symbol" in kwargs:
+        if "symbol" in kwargs and kwargs["symbol"]:
             item.symbol = Symbol.from_dict(**kwargs["symbol"])
-        if "account" in kwargs:
+        if "account" in kwargs and kwargs["account"]:
             item.account = Account.from_dict(**kwargs["account"])
         return item
 
@@ -63,7 +63,7 @@ class Transaction:
         }
 
 
-def get_transactions_by_user_id(db: Connection, user_id: int) -> list[Transaction]:
+def get_transactions_by_user_id(db: Connection, user_id: str) -> list[Transaction]:
     """
     Get all transactions for a user.
     """
@@ -117,11 +117,11 @@ def get_transactions_by_user_id(db: Connection, user_id: int) -> list[Transactio
         ]
 
 
-def _has_buy_transaction(transactions: list[Transaction], symbol_id: int) -> bool:
+def _has_buy_transaction(transactions: list[Transaction], symbol_id: str) -> bool:
     return any(t.transaction_type == TransactionType.BUY and t.symbol.id == symbol_id for t in transactions)
 
 
-def create_transaction(db: Connection, user_id: int, transaction: Transaction) -> Transaction:
+def create_transaction(db: Connection, user_id: str, transaction: Transaction) -> Transaction:
     """
     Creates a transaction in the database.
     """
@@ -178,9 +178,9 @@ def create_transaction(db: Connection, user_id: int, transaction: Transaction) -
 
 def update_transaction_account(
     db: Connection,
-    user_id: int,
-    transaction_id: int,
-    account_id: int | None,
+    user_id: str,
+    transaction_id: str,
+    account_id: str | None,
 ) -> Transaction:
     """
     Updates the account for a transaction.
@@ -209,7 +209,7 @@ def update_transaction_account(
         return next(t for t in get_transactions_by_user_id(db, user_id) if t.id == result[0])
 
 
-def remove_transaction_by_id(db: Connection, user_id: int, transaction_id: int) -> None:
+def remove_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> None:
     """
     Removes a transaction from the database.
     """

@@ -2,7 +2,7 @@
 -- Created on 2025-05-20T15:08:10.232015
 
 CREATE TABLE IF NOT EXISTS symbols (
-	id SERIAL PRIMARY KEY,
+	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	ticker TEXT NOT NULL,
 	name TEXT NOT NULL,
 	currency TEXT NOT NULL DEFAULT 'USD',
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS symbols (
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_symbols_symbol ON symbols (symbol);
+CREATE INDEX IF NOT EXISTS idx_symbols_ticker ON symbols (ticker);
 CREATE INDEX IF NOT EXISTS idx_symbols_isin ON symbols (isin);
 CREATE INDEX IF NOT EXISTS idx_symbols_figi ON symbols (figi);
 

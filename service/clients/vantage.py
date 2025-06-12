@@ -2,12 +2,13 @@ import httpx
 from async_lru import alru_cache
 from fastapi import HTTPException
 from log import logger
+from models.quote import StockQuote
+from models.symbol import SecurityType, Symbol
 
 from clients._errors import (
     ERROR_FAILED_TO_FETCH_STOCK_DATA,
     ERROR_FAILED_TO_FETCH_STOCK_QUOTE,
 )
-from clients._types import StockQuote, StockSymbol, normalize_security_type
 from pyutils.validators import is_valid_isin
 
 
@@ -19,7 +20,7 @@ class VantageClient:
         self.api_key = api_key
 
     @alru_cache(maxsize=128)
-    async def search_stock(self, q: str) -> list[StockSymbol]:
+    async def search_stock(self, q: str) -> list[Symbol]:
         async with httpx.AsyncClient(timeout=5) as client:
             response = await client.get(
                 f"{self.BASE_URL}/query",
@@ -38,10 +39,10 @@ class VantageClient:
         logger.warning(f"{self.NAME}: discarding results={[r for r in results if r not in valid_results]}")
 
         return [
-            StockSymbol(
-                symbol=result["1. symbol"],
+            Symbol(
+                ticker=result["1. symbol"],
                 name=result["2. name"],
-                security_type=normalize_security_type(result["3. type"]),
+                security_type=SecurityType.from_str(result["3. type"]),
                 currency=result["8. currency"],
                 region=result["4. region"],
                 source=self.NAME,

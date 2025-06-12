@@ -11,13 +11,12 @@ class User:
     given_name: str | None
     family_name: str | None
     picture: str | None
-    id: int = 0
+    id: str = ""
     created_at: str | None = None
 
     @classmethod
     def from_dict(cls, **kwargs) -> "User":
-        item = cls(**{k: v for k, v in kwargs.items() if k in cls.__dataclass_fields__})
-        return item
+        return cls(**{k: v for k, v in kwargs.items() if k in cls.__dataclass_fields__})
 
     def to_dict(self) -> dict:
         if isinstance(self.created_at, datetime):

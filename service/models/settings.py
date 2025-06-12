@@ -6,7 +6,7 @@ from psycopg2.extensions import connection as Connection
 
 @dataclass
 class UserSettings:
-    user_id: int
+    user_id: str
     currency: str
 
     @classmethod
@@ -20,7 +20,7 @@ class UserSettings:
         }
 
 
-def get_user_settings(db: Connection, user_id: int) -> UserSettings:
+def get_user_settings(db: Connection, user_id: str) -> UserSettings:
     """
     Retrieves user settings from the database by user ID.
     """

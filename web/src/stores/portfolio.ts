@@ -133,7 +133,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         portfolios.value[toAccount ?? 'default'] = [...toPortfolio];
     }
 
-    async function updateManualPrice(symbol_id: number, price?: number) {
+    async function updateManualPrice(symbol_id: string, price?: number) {
         const updatedSymbol = await updateSymbolManualPrice(symbol_id, price);
         const portfolio = portfolios.value[_accountKey.value];
         for (const item of portfolio) {
@@ -165,8 +165,11 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             return;
         }
 
-        const portfolio = portfolios.value[portfolioKey];
-        if (!portfolio) throw new Error('portfolio not found');
+        let portfolio = portfolios.value[portfolioKey];
+        if (!portfolio) {
+            portfolios.value[portfolioKey] = [];
+            portfolio = portfolios.value[portfolioKey];
+        }
 
         const idx = portfolio.findIndex((item) => item.symbol.ticker === transaction.symbol.ticker);
         if (idx >= 0) {

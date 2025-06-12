@@ -18,6 +18,7 @@ async def api_update_settings(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    settings = UserSettings.from_dict(**settings_dict, user_id=session.user.id)
+    settings_dict["user_id"] = session.user.id
+    settings = UserSettings.from_dict(**settings_dict)
     update_user_settings(db, settings)
     return settings.to_dict()

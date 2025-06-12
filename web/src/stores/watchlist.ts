@@ -80,7 +80,7 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         watchlist.value = watchlist.value.filter((s) => s.ticker !== item.ticker);
     }
 
-    async function updateSymbolManualPrice(symbol_id: number, price?: number) {
+    async function updateSymbolManualPrice(symbol_id: string, price?: number) {
         if (price && price < 0) throw new Error('Price cannot be negative');
         if (price && isNaN(price)) throw new Error('Price must be a number');
 

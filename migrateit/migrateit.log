@@ -12,7 +12,8 @@ sys.platform: linux
 ### error information
 
 ```
-An unexpected error has occurred: ValueError: Cannot update hash for the initial migration
+An unexpected error has occurred: UndefinedColumn: column "symbol" does not exist
+
 ```
 
 ```
@@ -29,7 +30,13 @@ Traceback (most recent call last):
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     )
     ^
-  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/cli.py", line 83, in cmd_run
-    raise ValueError("Cannot update hash for the initial migration")
-ValueError: Cannot update hash for the initial migration
+  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/cli.py", line 118, in cmd_run
+    client.apply_migration(migration, is_rollback=is_rollback)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/clients/psql.py", line 134, in apply_migration
+    raise e
+  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/clients/psql.py", line 121, in apply_migration
+    cursor.execute(migration_code if not is_rollback else reverse_migration_code)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column "symbol" does not exist
 ```

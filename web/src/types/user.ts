@@ -1,14 +1,14 @@
 export interface User {
-    id: number;
+    id: string;
     email: string;
     name: string;
     picture: string;
 }
 
 export type Account = {
-    id: number;
+    id: string;
     name: string;
-    user_id: number;
+    user_id: string;
     account_type: 'BROKER' | 'BANK';
 };
 

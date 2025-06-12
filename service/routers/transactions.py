@@ -28,14 +28,15 @@ async def api_create_transaction(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    transaction = Transaction.from_dict(**transaction_data, user_id=session.user.id)
+    transaction_data["user_id"] = session.user.id
+    transaction = Transaction.from_dict(**transaction_data)
     transaction = create_transaction(db, session.user.id, transaction)
     return transaction.to_dict()
 
 
 @router.put("/{transaction_id}")
 async def api_update_transaction(
-    transaction_id: int,
+    transaction_id: str,
     transaction_data: dict = Body(...),
     db=Depends(get_db),
     session=Depends(get_session),
@@ -47,7 +48,7 @@ async def api_update_transaction(
 
 @router.delete("/{transaction_id}")
 async def api_remove_transaction(
-    transaction_id: int,
+    transaction_id: str,
     db=Depends(get_db),
     session=Depends(get_session),
 ):

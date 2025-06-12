@@ -10,7 +10,7 @@ from models.user import User
 @dataclass
 class Session:
     session_id: str
-    user: User | int
+    user: User | str
     tokens: dict
     expires: float
 

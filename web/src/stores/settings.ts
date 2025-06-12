@@ -49,7 +49,7 @@ export const useSettingsStore = defineStore('settings', () => {
             method: 'PUT',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(_settings.value),
+            body: JSON.stringify({ currency: _settings.value.currency }),
         });
         if (!res.ok) throw new Error('Network response was not ok');
     }

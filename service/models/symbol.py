@@ -11,6 +11,27 @@ class SecurityType(Enum):
     CRYPTO = "CRYPTO"
     BOND = "BOND"
 
+    @classmethod
+    def from_str(cls, security_type: str) -> "SecurityType":
+        match security_type.upper():
+            case "STOCK" | "COMMON STOCK" | "EQUITY":
+                # alpha-vantage uses equity for stocks
+                return cls.COMMON_STOCK
+            case "ETP" | "ETF":
+                return cls.ETP
+            case "GDR":
+                return cls.GDR
+            case "EQUITY INDEX":
+                return cls.EQUITY_INDEX
+            case "COMMODITY INDEX":
+                return cls.COMMODITY_INDEX
+            case "CRYPTO":
+                return cls.CRYPTO
+            case "BOND":
+                return cls.BOND
+            case _:
+                raise ValueError(f"Unknown security type: {security_type}")
+
 
 class MarketSector(Enum):
     COMMODITY = "COMMODITY"
@@ -23,6 +44,32 @@ class MarketSector(Enum):
     MORTGAGE = "MORTGAGE"
     MUNICIPAL = "MUNICIPAL"
     PREFERRED = "PREFERRED"
+
+    @classmethod
+    def from_str(cls, market_sector: str) -> "MarketSector":
+        match market_sector.upper():
+            case "COMDTY":
+                return cls.COMMODITY
+            case "CORP":
+                return cls.CORPORATE
+            case "CURNCY":
+                return cls.CURRENCY
+            case "EQUITY":
+                return cls.EQUITY
+            case "GOVT":
+                return cls.GOVERNMENT
+            case "INDEX":
+                return cls.INDEX
+            case "M-MKT":
+                return cls.MONEY_MARKET
+            case "MTGE":
+                return cls.MORTGAGE
+            case "MUNI":
+                return cls.MUNICIPAL
+            case "PFD":
+                return cls.PREFERRED
+            case _:
+                raise ValueError(f"Unknown market sector: {market_sector}")
 
 
 def build_symbol_picture_url(item: "Symbol") -> str | None:
@@ -46,21 +93,28 @@ class Symbol:
     currency: str
     source: str
     security_type: SecurityType
-    id: int = 0
+    id: str = ""
     picture: str | None = None
     market_sector: MarketSector | None = None
     isin: str | None = None
     figi: str | None = None
+    region: str | None = None
     manual_price: float | None = None
+
+    def __eq__(self, value: object, /) -> bool:
+        return isinstance(value, Symbol) and self.ticker == value.ticker
+
+    def __hash__(self) -> int:
+        return hash(self.ticker)
 
     @classmethod
     def from_dict(cls, **kwargs) -> "Symbol":
         item = cls(**{k: v for k, v in kwargs.items() if k in cls.__dataclass_fields__})
-        if "security_type" in kwargs:
+        if "security_type" in kwargs and kwargs["security_type"]:
             item.security_type = SecurityType(kwargs["security_type"])
-        if "market_sector" in kwargs:
+        if "market_sector" in kwargs and kwargs["market_sector"]:
             item.market_sector = MarketSector(kwargs["market_sector"])
-        if "picture" not in kwargs:
+        if "picture" not in kwargs or not kwargs["picture"]:
             item.picture = kwargs.get("picture", build_symbol_picture_url(item))
         return item
 
@@ -76,6 +130,7 @@ class Symbol:
             "market_sector": self.market_sector.value if self.market_sector else None,
             "isin": self.isin,
             "figi": self.figi,
+            "region": self.region,
             "manual_price": self.manual_price,
         }
 
@@ -86,6 +141,9 @@ def get_or_create_symbol(db, symbol: Symbol) -> Symbol:
     """
     assert symbol, "Symbol object cannot be None"
     assert symbol.ticker, "Ticker cannot be None"
+
+    if not symbol.id:
+        return create_symbol(db, symbol)
 
     with db.cursor() as cursor:
         cursor.execute(

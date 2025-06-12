@@ -3,8 +3,8 @@ import type { StockSymbol } from './stock';
 
 export type TransactionType = 'BUY' | 'SELL' | 'DIVIDEND' | 'DIVIDEND-CASH';
 export interface TransactionItem {
-    id: number;
-    user_id: number;
+    id: string;
+    user_id: string;
     symbol: StockSymbol;
     account?: Account;
     quantity: number;

@@ -3,10 +3,11 @@ import os
 import httpx
 from async_lru import alru_cache
 from clients import FinnhubClient, OpenFIGIClient, VantageClient
-from clients._types import StockQuote
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from log import logger
+from models.quote import StockQuote
+from models.symbol import Symbol, build_symbol_picture_url
 from routers import accounts, auth, transactions, users, watchlist
 
 app = FastAPI()
@@ -75,30 +76,31 @@ async def search_stock(q: str | None):
     if not q:
         return {"count": 0, "results": []}
 
-    results = set()
+    result_set: set[Symbol] = set()
     errors = []
     for client in clients.values():
         try:
-            results = results.union(set(await client.search_stock(q)))
+            result_set = result_set.union(set(await client.search_stock(q)))
         except (HTTPException, httpx.TimeoutException) as e:
             errors.append(e)
 
-    if not results and errors:
+    if not result_set and errors:
         raise HTTPException(status_code=400, detail=[e.detail for e in errors])
 
     results = [
         {
-            "ticker": symbol.symbol,
+            "ticker": symbol.ticker,
             "name": symbol.name,
             "security_type": symbol.security_type.value,
             "currency": symbol.currency,
             "source": symbol.source,
             "region": symbol.region,
             "market_sector": symbol.market_sector.value if symbol.market_sector else None,
+            "picture": symbol.picture or build_symbol_picture_url(symbol),
             "isin": symbol.isin,
             "figi": symbol.figi,
         }
-        for symbol in results
+        for symbol in result_set
     ]
     return {
         "count": len(results),

@@ -219,7 +219,7 @@ async function transfer(newAccount?: Account) {
     isTransferStockModalOpen.value = false;
 }
 
-async function setPrice(item: { symbol_id: number; price: number }) {
+async function setPrice(item: { symbol_id: string; price: number }) {
     await portfolioStore.updateManualPrice(item.symbol_id, item.price);
     selectedItem.value = undefined;
     isPriceModalOpen.value = false;

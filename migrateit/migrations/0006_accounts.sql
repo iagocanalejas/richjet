@@ -2,8 +2,8 @@
 -- Created on 2025-05-21T11:17:30.779530
 
 CREATE TABLE IF NOT EXISTS accounts (
-	id SERIAL PRIMARY KEY,
-	user_id INT NOT NULL,
+	id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+	user_id UUID NOT NULL,
 	name TEXT NOT NULL,
 	account_type TEXT NOT NULL CHECK (account_type IN ('BROKER', 'BANK')),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

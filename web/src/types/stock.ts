@@ -13,7 +13,7 @@ export type MarketSector =
     | 'PREFERRED';
 
 export interface StockSymbol {
-    id: number;
+    id: string;
     ticker: string;
     name: string;
     currency: string;

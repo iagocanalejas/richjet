@@ -9,15 +9,15 @@ class AccountType(Enum):
 
 @dataclass
 class Account:
-    user_id: int
+    user_id: str
     name: str
     account_type: AccountType
-    id: int = 0
+    id: str = ""
 
     @classmethod
     def from_dict(cls, **kwargs) -> "Account":
         item = cls(**{k: v for k, v in kwargs.items() if k in cls.__dataclass_fields__})
-        if "account_type" in kwargs:
+        if "account_type" in kwargs and kwargs["account_type"]:
             item.account_type = AccountType(kwargs["account_type"])
         return item
 
@@ -30,7 +30,7 @@ class Account:
         }
 
 
-def get_accounts_by_user_id(db, user_id: int) -> list[Account]:
+def get_accounts_by_user_id(db, user_id: str) -> list[Account]:
     """
     Retrieves accounts from the database by user ID.
     """
@@ -60,7 +60,7 @@ def get_accounts_by_user_id(db, user_id: int) -> list[Account]:
         ]
 
 
-def create_account(db, user_id: int, account: Account) -> Account:
+def create_account(db, user_id: str, account: Account) -> Account:
     """
     Adds an account to the database.
     """
