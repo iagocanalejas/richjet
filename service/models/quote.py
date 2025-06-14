@@ -9,3 +9,4 @@ class StockQuote:
     low: float
     open: float
     previous_close: float
+    currency: str | None = None

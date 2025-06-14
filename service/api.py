@@ -2,7 +2,7 @@ import os
 
 import httpx
 from async_lru import alru_cache
-from clients import FinnhubClient, OpenFIGIClient, VantageClient
+from clients import CNBCClient, FinnhubClient, OpenFIGIClient, VantageClient
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from log import logger
@@ -24,6 +24,7 @@ FINNHUB_ENABLED = os.getenv("FINNHUB_ENABLED", False) == "True"
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 ALPHA_VANTAGE_ENABLED = os.getenv("ALPHA_VANTAGE_ENABLED", False) == "True"
 OPENFIGI_ENABLED = os.getenv("OPENFIGI_ENABLED", False) == "True"
+CNBC_ENABLED = os.getenv("CNBC_ENABLED", False) == "True"
 
 cors_origins = ["https://richjet-web.onrender.com", "https://iagocanalejas.com"]
 if os.getenv("DEBUG", False) == "True":
@@ -41,6 +42,7 @@ services = [
     (OpenFIGIClient.NAME, OPENFIGI_ENABLED, OpenFIGIClient, None),
     (FinnhubClient.NAME, FINNHUB_ENABLED, FinnhubClient, FINNHUB_API_KEY),
     (VantageClient.NAME, ALPHA_VANTAGE_ENABLED, VantageClient, ALPHA_VANTAGE_API_KEY),
+    (CNBCClient.NAME, CNBC_ENABLED, CNBCClient, None),
 ]
 
 clients = {}

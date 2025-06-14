@@ -5,8 +5,7 @@ from enum import Enum
 class SecurityType(Enum):
     COMMON_STOCK = "STOCK"
     ETP = "ETP"
-    EQUITY_INDEX = "EQUITY_INDEX"
-    COMMODITY_INDEX = "COMMODITY_INDEX"
+    INDEX = "INDEX"
     GDR = "GDR"
     CRYPTO = "CRYPTO"
     BOND = "BOND"
@@ -21,10 +20,8 @@ class SecurityType(Enum):
                 return cls.ETP
             case "GDR":
                 return cls.GDR
-            case "EQUITY INDEX":
-                return cls.EQUITY_INDEX
-            case "COMMODITY INDEX":
-                return cls.COMMODITY_INDEX
+            case "EQUITY INDEX" | "COMMODITY INDEX" | "INDEX":
+                return cls.INDEX
             case "CRYPTO":
                 return cls.CRYPTO
             case "BOND":
