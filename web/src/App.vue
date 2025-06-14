@@ -121,7 +121,7 @@ const currentYear = new Date().getFullYear();
 const showMenu = ref(false);
 
 function signIn() {
-    window.location.href = `${import.meta.env.VITE_BACKEND_BASE_URL}/auth/login`;
+    authStore.login();
 }
 
 function signOut(): void {

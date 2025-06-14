@@ -1,37 +1,41 @@
+import logging
 import os
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from urllib.parse import urljoin
 
 import httpx
 from db import get_db
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from models.session import Session, get_session_by_id, update_session
 from models.user import User, create_user_if_not_exists
 
+logger = logging.getLogger("richjet")
+
 router = APIRouter()
 
+IS_PROD = os.getenv("DEBUG", False) != "True"
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-REDIRECT_URI_BACKEND = os.getenv("REDIRECT_URI_BACKEND", "http://localhost:5173/auth/callback")
-REDIRECT_URI_FRONTEND = os.getenv("REDIRECT_URI_FRONTEND", "http://localhost:5173/")
-GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
-IS_PROD = os.getenv("DEBUG") != "True"
+FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://localhost:5173/")
+FRONTEND_AUTH_URL = urljoin(FRONTEND_BASE_URL.rstrip("/") + "/", "auth/callback")
 
 
 async def get_session(request: Request, db=Depends(get_db)) -> Session:
     session_id = request.cookies.get("session_id")
     if not session_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="No authentication session found")
 
     session = get_session_by_id(db, session_id)
     if not session or not session.user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Invalid session or user not found")
 
     try:
         if datetime.now(timezone.utc).timestamp() > float(session.expires):
+            logger.info("session expired, refreshing tokens")
             new_tokens = await _refresh_access_token(session.tokens.get("refresh_token", ""))
             if not new_tokens:
                 raise HTTPException(status_code=401, detail="Token refresh failed")
@@ -55,25 +59,30 @@ async def get_session(request: Request, db=Depends(get_db)) -> Session:
 @router.get("/login")
 def login():
     state = secrets.token_urlsafe(16)
-    response = RedirectResponse(
-        url=(
-            f"https://accounts.google.com/o/oauth2/v2/auth"
-            f"?client_id={GOOGLE_CLIENT_ID}"
-            f"&response_type=code"
-            f"&redirect_uri={REDIRECT_URI_BACKEND}"
-            f"&scope=openid%20email%20profile"
-            "&access_type=offline"
-            "&prompt=consent"
-            f"&state={state}"
-        )
+    url = (
+        f"https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={GOOGLE_CLIENT_ID}"
+        f"&response_type=code"
+        f"&redirect_uri={FRONTEND_AUTH_URL}"
+        f"&scope=openid%20email%20profile"
+        "&access_type=offline"
+        "&prompt=consent"
+        f"&state={state}"
     )
-    response.set_cookie("oauth_state", state, httponly=True, secure=IS_PROD, samesite="lax")
+    response = JSONResponse({"auth_url": url})
+    response.set_cookie(
+        "oauth_state",
+        state,
+        httponly=True,
+        secure=IS_PROD,
+        samesite="none",
+    )
     return response
 
 
 @router.get("/logout")
 def logout():
-    response = RedirectResponse(url=REDIRECT_URI_FRONTEND)
+    response = RedirectResponse(url=FRONTEND_BASE_URL)
     response.delete_cookie("session_id")
     return response
 
@@ -83,7 +92,7 @@ async def auth_callback(code: str, state: str, request: Request, db=Depends(get_
     # check CSRF
     state_cookie = request.cookies.get("oauth_state")
     if not state_cookie or state_cookie != state:
-        raise HTTPException(status_code=400, detail="Invalid or missing state parameter")
+        raise HTTPException(status_code=400, detail="Invalid state parameter")
 
     async with httpx.AsyncClient() as client:
         token_res = await client.post(
@@ -92,7 +101,7 @@ async def auth_callback(code: str, state: str, request: Request, db=Depends(get_
                 "code": code,
                 "client_id": GOOGLE_CLIENT_ID,
                 "client_secret": GOOGLE_CLIENT_SECRET,
-                "redirect_uri": REDIRECT_URI_BACKEND,
+                "redirect_uri": f"{FRONTEND_AUTH_URL}",
                 "grant_type": "authorization_code",
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
@@ -119,16 +128,17 @@ async def auth_callback(code: str, state: str, request: Request, db=Depends(get_
             ),
         )
 
-        response = RedirectResponse(url=REDIRECT_URI_FRONTEND)
+        response = JSONResponse({"redirect_url": FRONTEND_BASE_URL})
+        response.delete_cookie("oauth_state", path="/")
         response.set_cookie(
             key="session_id",
             value=session_id,
             httponly=True,
             secure=IS_PROD,
-            samesite="lax",
-            max_age=3600,
+            samesite="none",
+            max_age=604800 if IS_PROD else 3200,
+            expires=datetime.now(timezone.utc) + (timedelta(seconds=604800) if IS_PROD else timedelta(seconds=3200)),
         )
-        response.delete_cookie("oauth_state")
         return response
 
 

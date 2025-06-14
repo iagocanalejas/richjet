@@ -74,7 +74,7 @@ def update_session(db: Connection, session: Session) -> None:
                 tokens = EXCLUDED.tokens,
                 expires = EXCLUDED.expires,
                 updated_at = CURRENT_TIMESTAMP;
-                """,
+            """,
             (
                 session.session_id,
                 session.user.id if isinstance(session.user, User) else session.user,
