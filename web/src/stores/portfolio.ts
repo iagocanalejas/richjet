@@ -6,6 +6,8 @@ import { useSettingsStore } from './settings';
 import { useWatchlistStore } from './watchlist';
 
 export const usePortfolioStore = defineStore('portfolio', () => {
+    const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
+
     const portfolios: Ref<{ [key: string]: PortfolioItem[] }> = ref({ default: [], all: [] });
     const transactions = ref<TransactionItem[]>([]);
     const cashDividends = ref(0);
@@ -20,7 +22,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     const portfolio = computed(() => portfolios.value[_accountKey.value] ?? []);
 
     async function init() {
-        const res = await fetch('/api/transactions', { method: 'GET', credentials: 'include' });
+        const res = await fetch(`${BASE_URL}/transactions`, { method: 'GET', credentials: 'include' });
         if (!res.ok) throw new Error('Failed to fetch transactions');
         const transactionsForPortfolio: TransactionItem[] = await res.json();
 
@@ -54,7 +56,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             throw 'A dividend was created before the stock was created, please create the stock first';
         }
 
-        const res = await fetch('/api/transactions', {
+        const res = await fetch(`${BASE_URL}/transactions`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -72,7 +74,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             return;
         }
 
-        const res = await fetch(`/api/transactions/${transaction.id}`, {
+        const res = await fetch(`${BASE_URL}/transactions/${transaction.id}`, {
             method: 'DELETE',
             credentials: 'include',
         });
@@ -88,7 +90,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         const newAccount = toAccount ? accounts.value.find((a) => a.name === toAccount) : undefined;
         for (const transaction of transactions.value) {
             if (transaction.symbol.ticker === symbol && transaction.account?.name === fromAccount) {
-                const updated_transaction = await fetch(`/api/transactions/${transaction.id}`, {
+                const updated_transaction = await fetch(`${BASE_URL}/transactions/${transaction.id}`, {
                     method: 'PUT',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },

@@ -4,13 +4,15 @@ import { ref } from 'vue';
 import { useStocksStore } from './stocks';
 
 export const useWatchlistStore = defineStore('watchlist', () => {
+    const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
+
     const watchlist = ref<StockSymbolForDisplay[]>([]);
     const manualPrices = ref<{ [x: string]: number }>({});
 
     const stockStore = useStocksStore();
 
     async function init() {
-        const res = await fetch('/api/watchlist', { method: 'GET', credentials: 'include' });
+        const res = await fetch(`${BASE_URL}/watchlist`, { method: 'GET', credentials: 'include' });
         if (!res.ok) throw new Error('Failed to fetch watchlist');
         const data = await res.json();
 
@@ -54,7 +56,7 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         const quote = await stockStore.getStockQuote(item.source, item.ticker);
         if (!quote) console.error(`Failed to fetch quote for ${item.ticker}`);
 
-        const res = await fetch('/api/watchlist', {
+        const res = await fetch(`${BASE_URL}/watchlist`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -72,7 +74,7 @@ export const useWatchlistStore = defineStore('watchlist', () => {
     }
 
     async function removeFromWatchlist(item: StockSymbolForDisplay) {
-        const res = await fetch(`/api/watchlist/${item.id!}`, {
+        const res = await fetch(`${BASE_URL}/watchlist/${item.id!}`, {
             method: 'DELETE',
             credentials: 'include',
         });
@@ -84,7 +86,7 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         if (price && price < 0) throw new Error('Price cannot be negative');
         if (price && isNaN(price)) throw new Error('Price must be a number');
 
-        const res = await fetch(`/api/watchlist/${symbol_id}`, {
+        const res = await fetch(`${BASE_URL}/watchlist/${symbol_id}`, {
             method: 'PUT',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },

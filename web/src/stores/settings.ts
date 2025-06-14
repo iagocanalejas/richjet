@@ -3,6 +3,8 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 
 export const useSettingsStore = defineStore('settings', () => {
+    const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
+
     const _settings = ref<Settings>({ currency: 'USD', accounts: [] });
     const conversionRate = ref<number>(1.0);
     const account = ref<Account | undefined>();
@@ -22,8 +24,8 @@ export const useSettingsStore = defineStore('settings', () => {
 
     async function init() {
         const [settings, accounts] = await Promise.all([
-            fetch('/api/users/settings', { method: 'GET', credentials: 'include' }),
-            fetch('/api/accounts', { method: 'GET', credentials: 'include' }),
+            fetch(`${BASE_URL}/users/settings`, { method: 'GET', credentials: 'include' }),
+            fetch(`${BASE_URL}/accounts`, { method: 'GET', credentials: 'include' }),
         ]);
         if (!settings.ok) throw new Error('Error fetching settings');
         if (!accounts.ok) throw new Error('Error fetching accounts');
@@ -32,7 +34,7 @@ export const useSettingsStore = defineStore('settings', () => {
     }
 
     async function createAccount(a: Account) {
-        const res = await fetch('/api/accounts', {
+        const res = await fetch(`${BASE_URL}/accounts`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -45,7 +47,7 @@ export const useSettingsStore = defineStore('settings', () => {
     }
 
     async function _updateCurrency() {
-        const res = await fetch('/api/users/settings', {
+        const res = await fetch(`${BASE_URL}/users/settings`, {
             method: 'PUT',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -60,7 +62,7 @@ export const useSettingsStore = defineStore('settings', () => {
             return;
         }
         try {
-            const response = await fetch(`/api/exchangerate/${currency}`, { method: 'GET' });
+            const response = await fetch(`${BASE_URL}/exchangerate/${currency}`, { method: 'GET' });
             if (!response.ok) throw new Error('Network response was not ok');
 
             const data = await response.json();

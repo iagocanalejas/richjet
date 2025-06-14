@@ -24,11 +24,11 @@ IS_PROD = os.getenv("DEBUG") != "True"
 async def get_session(request: Request, db=Depends(get_db)) -> Session:
     session_id = request.cookies.get("session_id")
     if not session_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="No authentication session found")
 
     session = get_session_by_id(db, session_id)
     if not session or not session.user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Invalid session or user not found")
 
     try:
         if datetime.now(timezone.utc).timestamp() > float(session.expires):
