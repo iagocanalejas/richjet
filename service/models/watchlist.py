@@ -133,4 +133,11 @@ def remove_watchlist_item(db, user_id: str, symbol_id: str) -> None:
             """,
             (user_id, symbol_id),
         )
+        cursor.execute(
+            """
+            DELETE FROM symbols
+            WHERE id = %s::uuid AND user_created AND NOT EXISTS(SELECT 1 FROM watchlist WHERE symbol_id = %s::uuid)
+            """,
+            (symbol_id, symbol_id),
+        )
         db.commit()
