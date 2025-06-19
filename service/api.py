@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from log import logger
 from models.quote import StockQuote
 from models.symbol import Symbol, build_symbol_picture_url
-from routers import accounts, auth, transactions, users, watchlist
+from routers import accounts, auth, symbols, transactions, users, watchlist
 
 app = FastAPI()
 
@@ -17,6 +17,7 @@ app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
 app.include_router(accounts.router, prefix="/accounts", tags=["accounts"])
 app.include_router(watchlist.router, prefix="/watchlist", tags=["watchlist"])
+app.include_router(symbols.router, prefix="/symbols", tags=["symbols"])
 
 EXCHANGERATE_API_KEY = os.getenv("EXCHANGERATE_API_KEY")
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
@@ -39,10 +40,10 @@ app.add_middleware(
 )
 
 services = [
-    (OpenFIGIClient.NAME, OPENFIGI_ENABLED, OpenFIGIClient, None),
-    (FinnhubClient.NAME, FINNHUB_ENABLED, FinnhubClient, FINNHUB_API_KEY),
     (VantageClient.NAME, ALPHA_VANTAGE_ENABLED, VantageClient, ALPHA_VANTAGE_API_KEY),
+    (FinnhubClient.NAME, FINNHUB_ENABLED, FinnhubClient, FINNHUB_API_KEY),
     (CNBCClient.NAME, CNBC_ENABLED, CNBCClient, None),
+    (OpenFIGIClient.NAME, OPENFIGI_ENABLED, OpenFIGIClient, None),
 ]
 
 clients = {}
@@ -78,16 +79,28 @@ async def search_stock(q: str | None):
     if not q:
         return {"count": 0, "results": []}
 
-    result_set: set[Symbol] = set()
+    result_set: list[Symbol] = []
     errors = []
     for client in clients.values():
         try:
-            result_set = result_set.union(set(await client.search_stock(q)))
+            symbols = await client.search_stock(q)
+            for symbol in symbols:
+                existing_symbol = next((s for s in result_set if s.ticker == symbol.ticker), None)
+                if existing_symbol is not None:
+                    symbol = existing_symbol.merge(symbol)
+                    result_set.remove(existing_symbol)
+                result_set.append(symbol)
         except (HTTPException, httpx.TimeoutException) as e:
             errors.append(e)
 
     if not result_set and errors:
         raise HTTPException(status_code=400, detail=[e.detail for e in errors])
+
+    client_priority = [s[0] for s in services]
+    sorted_result_set = sorted(
+        result_set,
+        key=lambda s: (client_priority.index(s.source), not s.ticker.isalpha(), len(s.ticker), s.ticker.lower()),
+    )
 
     results = [
         {
@@ -102,11 +115,11 @@ async def search_stock(q: str | None):
             "isin": symbol.isin,
             "figi": symbol.figi,
         }
-        for symbol in result_set
+        for symbol in sorted_result_set
     ]
     return {
         "count": len(results),
-        "results": sorted(results, key=lambda x: x["ticker"]),
+        "results": results,
     }
 
 

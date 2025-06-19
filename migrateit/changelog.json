@@ -62,6 +62,13 @@
             "parents": [
                 "0007_transactions.sql"
             ]
+        },
+        {
+            "name": "0009_constraints.sql",
+            "initial": false,
+            "parents": [
+                "0008_manual_price.sql"
+            ]
         }
     ]
 }

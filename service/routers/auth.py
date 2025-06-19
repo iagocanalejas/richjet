@@ -75,7 +75,7 @@ def login():
         state,
         httponly=True,
         secure=IS_PROD,
-        samesite="none",
+        samesite="none" if IS_PROD else "lax",
     )
     return response
 
@@ -91,7 +91,7 @@ def logout():
 async def auth_callback(code: str, state: str, request: Request, db=Depends(get_db)):
     # check CSRF
     state_cookie = request.cookies.get("oauth_state")
-    if not state_cookie or state_cookie != state:
+    if IS_PROD and (not state_cookie or state_cookie != state):
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
     async with httpx.AsyncClient() as client:
@@ -135,7 +135,7 @@ async def auth_callback(code: str, state: str, request: Request, db=Depends(get_
             value=session_id,
             httponly=True,
             secure=IS_PROD,
-            samesite="none",
+            samesite="none" if IS_PROD else "lax",
             max_age=604800 if IS_PROD else 3200,
             expires=datetime.now(timezone.utc) + (timedelta(seconds=604800) if IS_PROD else timedelta(seconds=3200)),
         )

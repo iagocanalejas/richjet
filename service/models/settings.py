@@ -31,7 +31,7 @@ def get_user_settings(db: Connection, user_id: str) -> UserSettings:
             """
             SELECT id, currency
             FROM users
-            WHERE id = %s
+            WHERE id = %s::uuid
             """,
             (user_id,),
         )
@@ -57,7 +57,7 @@ def update_user_settings(db: Connection, user_settings: UserSettings) -> None:
             """
             UPDATE users
             SET currency = %s
-            WHERE id = %s
+            WHERE id = %s::uuid
             """,
             (user_settings.currency, user_settings.user_id),
         )

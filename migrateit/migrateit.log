@@ -1,7 +1,7 @@
 ### version information
 
 ```
-migrateit version: 0.5.0
+migrateit version: 0.6.0
 sys.version:
     3.13.3 (main, Apr  9 2025, 07:44:25) [GCC 14.2.1 20250207]
 sys.executable: /media/data/Workspace/personal/richjet/venv/bin/python
@@ -12,8 +12,7 @@ sys.platform: linux
 ### error information
 
 ```
-An unexpected error has occurred: UndefinedColumn: column "symbol" does not exist
-
+An unexpected error has occurred: ValueError: Migration 0002_session.sql has a different hash in the database: found=bc610c05a1f607fc1ef0aca0b5882d2f986f1f7aa46c40f5382c58e2e5826f75 existing=48749390cc2c95516cde7b87a200c10b3fc35ad80e06b4338e7ae876a88c7ea8
 ```
 
 ```
@@ -30,13 +29,12 @@ Traceback (most recent call last):
         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     )
     ^
-  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/cli.py", line 118, in cmd_run
-    client.apply_migration(migration, is_rollback=is_rollback)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/clients/psql.py", line 134, in apply_migration
-    raise e
-  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/clients/psql.py", line 121, in apply_migration
-    cursor.execute(migration_code if not is_rollback else reverse_migration_code)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-psycopg2.errors.UndefinedColumn: column "symbol" does not exist
+  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/cli.py", line 102, in cmd_run
+    client.validate_migrations(statuses)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/media/data/Workspace/personal/richjet/venv/lib/python3.13/site-packages/migrateit/clients/psql.py", line 182, in validate_migrations
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: Migration 0002_session.sql has a different hash in the database: found=bc610c05a1f607fc1ef0aca0b5882d2f986f1f7aa46c40f5382c58e2e5826f75 existing=48749390cc2c95516cde7b87a200c10b3fc35ad80e06b4338e7ae876a88c7ea8
 ```

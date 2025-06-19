@@ -3,7 +3,7 @@ from async_lru import alru_cache
 from fastapi import HTTPException
 from log import logger
 from models.quote import StockQuote
-from models.symbol import SecurityType, Symbol
+from models.symbol import SecurityType, Symbol, is_supported_ticker
 
 from clients._errors import (
     ERROR_FAILED_TO_FETCH_STOCK_DATA,
@@ -36,7 +36,7 @@ class FinnhubClient:
             )
 
         results = response.json().get("result", [])
-        valid_results = [r for r in results if r["type"].upper() in ["COMMON STOCK", "ETF", "ETP"]]
+        valid_results = [r for r in results if self._is_valid_result(r)]
         logger.warning(f"{self.NAME}: discarding results={[r for r in results if r not in valid_results]}")
 
         return [
@@ -51,6 +51,9 @@ class FinnhubClient:
             )
             for result in valid_results
         ]
+
+    def _is_valid_result(self, r):
+        return r["type"].upper() in ["COMMON STOCK", "ETF", "ETP"] and is_supported_ticker(r["symbol"])
 
     @alru_cache(maxsize=128)
     async def get_quote(self, symbol: str) -> StockQuote:

@@ -2,7 +2,7 @@ import httpx
 from fastapi import HTTPException
 from log import logger
 from models.quote import StockQuote
-from models.symbol import MarketSector, SecurityType, Symbol
+from models.symbol import MarketSector, SecurityType, Symbol, is_supported_ticker
 
 from clients._errors import (
     ERROR_FAILED_TO_FETCH_STOCK_DATA,
@@ -54,6 +54,7 @@ class OpenFIGIClient:
             r["marketSector"].upper() in ["EQUITY"]
             and r["securityType"].upper() in ["COMMON STOCK", "ETP", "ETF", "GDR"]
             and not any(r[k] == "None" for k in ["ticker", "name", "exchCode", "marketSector", "figi", "securityType"])
+            and is_supported_ticker(r["ticker"])
         )
 
     def get_quote(self, *args, **kwargs) -> StockQuote:

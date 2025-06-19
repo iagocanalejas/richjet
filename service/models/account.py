@@ -41,7 +41,7 @@ def get_accounts_by_user_id(db, user_id: str) -> list[Account]:
             """
             SELECT id, name, account_type
             FROM accounts
-            WHERE user_id = %s
+            WHERE user_id = %s::uuid
             """,
             (user_id,),
         )

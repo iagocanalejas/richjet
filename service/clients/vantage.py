@@ -3,7 +3,7 @@ from async_lru import alru_cache
 from fastapi import HTTPException
 from log import logger
 from models.quote import StockQuote
-from models.symbol import SecurityType, Symbol
+from models.symbol import SecurityType, Symbol, is_supported_ticker
 
 from clients._errors import (
     ERROR_FAILED_TO_FETCH_STOCK_DATA,
@@ -50,6 +50,9 @@ class VantageClient:
             )
             for result in valid_results
         ]
+
+    def _is_valid_result(self, r):
+        return r["3. type"].upper() in ["EQUITY", "ETF"] and is_supported_ticker(r["1. symbol"])
 
     @alru_cache(maxsize=128)
     async def get_quote(self, symbol: str):

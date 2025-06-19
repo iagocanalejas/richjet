@@ -51,4 +51,5 @@ async def api_remove_watchlist_item(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
+    # TODO: remove symbol if no watchlist items reference it and it's a user-created symbol
     remove_watchlist_item(db, session.user.id, symbol_id)

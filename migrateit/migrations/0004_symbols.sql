@@ -21,7 +21,7 @@ CREATE INDEX IF NOT EXISTS idx_symbols_figi ON symbols (figi);
 
 -- Rollback migration
 
-DROP TABLE IF EXISTS symbols;
 DROP INDEX IF EXISTS idx_symbols_symbol;
 DROP INDEX IF EXISTS idx_symbols_isin;
 DROP INDEX IF EXISTS idx_symbols_figi;
+DROP TABLE IF EXISTS symbols;

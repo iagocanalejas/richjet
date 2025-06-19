@@ -3,7 +3,7 @@ from async_lru import alru_cache
 from fastapi import HTTPException
 from log import logger
 from models.quote import StockQuote
-from models.symbol import SecurityType, Symbol
+from models.symbol import SecurityType, Symbol, is_supported_ticker
 
 from clients._errors import (
     ERROR_FAILED_TO_FETCH_STOCK_DATA,
@@ -37,8 +37,10 @@ class CNBCClient:
             return []
 
         results = results[1:]
-        valid_results = [r for r in results]
+        valid_results = [r for r in results if is_supported_ticker(r["symbolName"])]
         logger.warning(f"{self.NAME}: discarding results={[r for r in results if r not in valid_results]}")
+
+        print(valid_results)
 
         return [
             Symbol(

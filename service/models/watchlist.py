@@ -36,9 +36,9 @@ def get_watchlist_by_user_id(db: Connection, user_id: str) -> list[Symbol]:
         cursor.execute(
             """
             SELECT s.id, s.ticker, s.name, s.currency, s.source, s.security_type, s.market_sector,
-                    s.isin, s.figi, s.picture, w.manual_price
+                    s.isin, s.figi, s.picture, w.manual_price, s.user_created
             FROM watchlist w JOIN symbols s ON w.symbol_id = s.id
-            WHERE w.user_id = %s
+            WHERE w.user_id = %s::uuid
             """,
             (user_id,),
         )
@@ -59,6 +59,7 @@ def get_watchlist_by_user_id(db: Connection, user_id: str) -> list[Symbol]:
                 figi=row[8],
                 picture=row[9],
                 manual_price=row[10],
+                is_user_created=row[11],
             )
             for row in result
         ]
@@ -104,7 +105,7 @@ def update_watchlist_item(db, user_id: str, symbol_id: str, new_price: float | N
             UPDATE watchlist w
             SET manual_price = %s
             FROM symbols s
-            WHERE w.symbol_id = s.id AND w.user_id = %s AND s.id = %s
+            WHERE w.symbol_id = s.id AND w.user_id = %s::uuid AND s.id = %s::uuid
             RETURNING s.id
             """,
             (new_price, user_id, symbol_id),
@@ -128,7 +129,7 @@ def remove_watchlist_item(db, user_id: str, symbol_id: str) -> None:
         cursor.execute(
             """
             DELETE FROM watchlist
-            WHERE user_id = %s AND symbol_id = %s
+            WHERE user_id = %s::uuid AND symbol_id = %s::uuid
             """,
             (user_id, symbol_id),
         )

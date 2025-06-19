@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from enum import Enum
 
@@ -13,7 +14,7 @@ class SecurityType(Enum):
     @classmethod
     def from_str(cls, security_type: str) -> "SecurityType":
         match security_type.upper():
-            case "STOCK" | "COMMON STOCK" | "EQUITY":
+            case "STOCK" | "COMMON STOCK" | "EQUITY" | "CSRT":
                 # alpha-vantage uses equity for stocks
                 return cls.COMMON_STOCK
             case "ETP" | "ETF":
@@ -83,6 +84,22 @@ def build_symbol_picture_url(item: "Symbol") -> str | None:
             return f"https://assets.parqet.com/logos/{ttype}/{item.ticker}"
 
 
+def is_supported_ticker(ticker: str) -> bool:
+    """
+    Checks if the ticker is supported by the system.
+    """
+    if not ticker:
+        return False
+    ticker = ticker.strip().upper()
+
+    is_supported = "." not in ticker[1:]
+    is_supported &= not re.search(r"^-?\d+X SHORT\b", ticker)
+    is_supported &= not re.search(r"^-?\d+X LONG\b", ticker)
+    is_supported &= not re.search(r"^LS \d+X\b", ticker)
+
+    return is_supported
+
+
 @dataclass
 class Symbol:
     ticker: str
@@ -97,12 +114,30 @@ class Symbol:
     figi: str | None = None
     region: str | None = None
     manual_price: float | None = None
+    is_user_created: bool = False
 
     def __eq__(self, value: object, /) -> bool:
         return isinstance(value, Symbol) and self.ticker == value.ticker
 
     def __hash__(self) -> int:
         return hash(self.ticker)
+
+    def merge(self, other: "Symbol") -> "Symbol":
+        return Symbol(
+            id=self.id,
+            ticker=self.ticker or other.ticker,
+            name=self.name or other.name,
+            currency=self.currency or other.currency,
+            source=self.source or other.source,
+            security_type=self.security_type or other.security_type,
+            picture=self.picture or other.picture,
+            market_sector=self.market_sector or other.market_sector,
+            isin=self.isin or other.isin,
+            figi=self.figi or other.figi,
+            region=self.region or other.region,
+            manual_price=self.manual_price or other.manual_price,
+            is_user_created=self.is_user_created or other.is_user_created,
+        )
 
     @classmethod
     def from_dict(cls, **kwargs) -> "Symbol":
@@ -129,28 +164,34 @@ class Symbol:
             "figi": self.figi,
             "region": self.region,
             "manual_price": self.manual_price,
+            "is_user_created": self.is_user_created,
         }
 
 
-def get_or_create_symbol(db, symbol: Symbol) -> Symbol:
+def get_or_create_symbol(db, symbol: Symbol, user_created: bool = False) -> Symbol:
     """
     Gets a symbol from the database or creates it if it doesn't exist.
     """
     assert symbol, "Symbol object cannot be None"
     assert symbol.ticker, "Ticker cannot be None"
 
-    if not symbol.id:
-        return create_symbol(db, symbol)
-
     with db.cursor() as cursor:
         cursor.execute(
             """
-            SELECT id, name, currency, source, security_type, market_sector, isin, figi, picture
+            SELECT id, name, currency, source, security_type, market_sector, isin, figi, picture, user_created
             FROM symbols
-            WHERE id = %s
-                OR (ticker = %s AND (isin IS NULL OR isin = %s) AND (figi IS NULL OR figi = %s))
+            WHERE (
+                id = %s::uuid OR
+                (ticker = %s AND (isin IS NULL OR isin = %s) AND (figi IS NULL OR figi = %s))
+            ) AND user_created = %s
             """,
-            (symbol.id, symbol.ticker, symbol.isin, symbol.figi),
+            (
+                symbol.id or "00000000-0000-0000-0000-000000000000",
+                symbol.ticker,
+                symbol.isin,
+                symbol.figi,
+                user_created,
+            ),
         )
         result = cursor.fetchone()
 
@@ -166,7 +207,7 @@ def get_or_create_symbol(db, symbol: Symbol) -> Symbol:
                 isin=result[6],
                 figi=result[7],
                 picture=result[8],
-                manual_price=result[9],
+                is_user_created=result[9],
             )
 
         return create_symbol(db, symbol)
@@ -186,8 +227,9 @@ def create_symbol(db, symbol: Symbol) -> Symbol:
     with db.cursor() as cursor:
         cursor.execute(
             """
-            INSERT INTO symbols (ticker, name, currency, source, security_type, market_sector, isin, figi, picture)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO symbols (
+                ticker, name, currency, source, security_type, market_sector, isin, figi, picture, user_created
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -200,6 +242,7 @@ def create_symbol(db, symbol: Symbol) -> Symbol:
                 symbol.isin,
                 symbol.figi,
                 symbol.picture if symbol.picture else build_symbol_picture_url(symbol),
+                symbol.is_user_created,
             ),
         )
         result = cursor.fetchone()

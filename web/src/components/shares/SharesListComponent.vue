@@ -1,0 +1,108 @@
+<template>
+    <LoadingSpinner />
+    <div v-if="values.length" class="mt-6 w-full">
+        <ul class="space-y-4">
+            <li
+                v-for="(item, index) in visibleItems"
+                :key="index"
+                @click="openTransactionModal(item)"
+                class="flex items-center justify-between bg-gray-800 p-4 rounded-lg space-x-4 cursor-pointer"
+            >
+                <SharesItemComponent :item="item" @favorite="$emit('favorite', item)" />
+            </li>
+        </ul>
+
+        <IntersectionObserver @intersect="currentPage++" />
+    </div>
+
+    <div v-else-if="!isLoading" class="mt-6 w-full text-center text-gray-500">
+        <p class="text-sm">No results found.</p>
+    </div>
+
+    <div
+        v-if="isTransactionModalOpen && transaction"
+        class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50"
+    >
+        <TransactionModal
+            v-if="isTransactionModalOpen && transaction"
+            :transaction="transaction"
+            @buy="buy"
+            @sell="sell"
+            @close="closeModal"
+        />
+    </div>
+</template>
+
+<script setup lang="ts">
+import { type StockSymbolForDisplay } from '@/types/stock';
+import { computed, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '@/stores/settings';
+import { useLoadingStore } from '@/stores/loading';
+import SharesItemComponent from './SharesItemComponent.vue';
+import LoadingSpinner from '@/components/LoadingSpinner.vue';
+import TransactionModal from '@/components/modals/TransactionModal.vue';
+import IntersectionObserver from '@/components/utils/IntersectionObserver.vue';
+import type { TransactionItem } from '@/types/portfolio';
+
+const ITEMS_PER_PATE = 20;
+
+const props = defineProps({
+    values: {
+        type: Array as () => StockSymbolForDisplay[],
+        default: () => [],
+    },
+});
+const emit = defineEmits(['favorite', 'transact']);
+
+const { currency, account: selectedAccount } = storeToRefs(useSettingsStore());
+const { isLoading } = storeToRefs(useLoadingStore());
+
+// pagination
+const currentPage = ref(0);
+const visibleItems = computed(() => props.values.slice(0, (currentPage.value + 1) * ITEMS_PER_PATE));
+
+// modal
+const isTransactionModalOpen = ref(false);
+const transaction = ref<Omit<TransactionItem, 'id' | 'user_id'> | undefined>();
+
+function openTransactionModal(item: StockSymbolForDisplay) {
+    if (!item.isFavorite) return;
+    isTransactionModalOpen.value = true;
+    transaction.value = {
+        symbol: item,
+        symbol_id: item.id,
+        quantity: 0,
+        price: 0,
+        commission: 0,
+        currency: currency.value,
+        transaction_type: 'BUY',
+        date: new Date().toISOString().split('T')[0],
+        account: selectedAccount.value,
+        account_id: selectedAccount.value?.id ?? undefined,
+    };
+}
+
+function buy(item: TransactionItem) {
+    if (item.quantity <= 0 || item.price <= 0) {
+        alert('Please enter a valid quantity and price.');
+        return;
+    }
+    emit('transact', item);
+    closeModal();
+}
+
+function sell(item: TransactionItem) {
+    if (item.quantity <= 0 || item.price <= 0) {
+        alert('Please enter a valid quantity and price.');
+        return;
+    }
+    item.transaction_type = 'SELL';
+    emit('transact', item);
+    closeModal();
+}
+
+function closeModal() {
+    isTransactionModalOpen.value = false;
+}
+</script>

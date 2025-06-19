@@ -74,7 +74,7 @@ def get_transactions_by_user_id(db: Connection, user_id: str) -> list[Transactio
                     t.date, t.created_at, s.id, s.name, s.ticker, s.currency, s.source, s.security_type,
                     s.market_sector, s.isin, s.figi, s.picture, a.id, a.name, a.account_type
             FROM transactions t JOIN symbols s ON t.symbol_id = s.id LEFT JOIN accounts a ON t.account_id = a.id
-            WHERE t.user_id = %s
+            WHERE t.user_id = %s::uuid
             """,
             (user_id,),
         )
@@ -196,8 +196,8 @@ def update_transaction_account(
         cursor.execute(
             """
             UPDATE transactions
-            SET account_id = %s
-            WHERE user_id = %s AND id = %s
+            SET account_id = %s::uuid
+            WHERE user_id = %s::uuid AND id = %s::uuid
             RETURNING id
             """,
             (account_id, user_id, transaction_id),
@@ -220,7 +220,7 @@ def remove_transaction_by_id(db: Connection, user_id: str, transaction_id: str) 
         cursor.execute(
             """
             DELETE FROM transactions
-            WHERE user_id = %s AND id = %s
+            WHERE user_id = %s::uuid AND id = %s::uuid
             """,
             (user_id, transaction_id),
         )

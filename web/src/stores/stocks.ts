@@ -14,20 +14,7 @@ export const useStocksStore = defineStore('stocks', () => {
 
             const data = await response.json();
             if (data.errors?.length) throw new Error(data.errors.join(', '));
-
-            const results = data.results as StockSymbol[];
-
-            if (results.some((s) => !s.ticker.includes('.'))) {
-                // filter out symbols with a dot
-                return results.filter(
-                    (s) =>
-                        !s.ticker.includes('.') &&
-                        !/^-?\d+X SHORT\b/.test(s.name) &&
-                        !/^-?\d+X LONG\b/.test(s.name) &&
-                        !/^LS \d+X\b/.test(s.name)
-                );
-            }
-            return results;
+            return data.results as StockSymbol[];
         } catch (error) {
             console.error(error);
         }
