@@ -36,7 +36,13 @@
 
             <div class="w-full mt-4">
                 <h2 class="text-xl font-semibold mb-2">Shares</h2>
-                <SharesListComponent :values="filteredResults" @favorite="toggleFavorite" @transact="addTransaction" />
+                <SharesListComponent
+                    :values="filteredResults"
+                    :show-load-more="showLoadMore"
+                    @favorite="toggleFavorite"
+                    @load-more="debouncedFilterResults('', true)"
+                    @transact="addTransaction"
+                />
             </div>
         </div>
     </main>
@@ -70,14 +76,22 @@ const { isInWatchlist, addToWatchlist, removeFromWatchlist } = watchlistStore;
 const { currency } = storeToRefs(useSettingsStore());
 
 const showFavorites = ref(true);
+const showLoadMore = ref(false);
 const filteredResults: Ref<StockSymbolForDisplay[]> = ref([]);
 
 // modal
 const isShareModalOpen = ref(false);
 const share = ref<Omit<StockSymbol, 'id'> | undefined>();
 
+let _query: string | undefined = undefined;
 const debouncedFilterResults = debounce(_filterResults);
-async function _filterResults(query: string) {
+async function _filterResults(query: string, is_load_more: boolean = false) {
+    showLoadMore.value = !is_load_more;
+    if (is_load_more) {
+        query = _query ?? '';
+    }
+
+    _query = query;
     if (!query) {
         filteredResults.value = [];
         return;
@@ -89,7 +103,7 @@ async function _filterResults(query: string) {
         openPrice: undefined,
         noPrice: false,
     };
-    const results = (await stockStore.symbolSearch(query.toUpperCase())) as StockSymbolForDisplay[];
+    const results = (await stockStore.symbolSearch(query.toUpperCase(), is_load_more)) as StockSymbolForDisplay[];
     filteredResults.value = results.map((s) => ({
         ...s,
         ...extraProperties,

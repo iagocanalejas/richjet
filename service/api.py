@@ -3,11 +3,12 @@ import os
 import httpx
 from async_lru import alru_cache
 from clients import CNBCClient, FinnhubClient, OpenFIGIClient, VantageClient
-from fastapi import FastAPI, HTTPException
+from db import get_db
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from log import logger
 from models.quote import StockQuote
-from models.symbol import Symbol, build_symbol_picture_url
+from models.symbol import Symbol, build_symbol_picture_url, search_symbol
 from routers import accounts, auth, symbols, transactions, users, watchlist
 
 app = FastAPI()
@@ -72,7 +73,11 @@ async def get_exchange_rate(target: str):
 
 
 @app.get("/search")
-async def search_stock(q: str | None):
+async def search_stock(
+    q: str | None,
+    load_more: bool = False,
+    db=Depends(get_db),
+):
     """
     Searches for a stock symbol using multipla APIs.
     """
@@ -81,19 +86,21 @@ async def search_stock(q: str | None):
 
     result_set: list[Symbol] = []
     errors = []
-    # TODO: search in the database first
-    # TODO: add a "search_more" parameter to enable searching in all APIs
-    for client in clients.values():
-        try:
-            symbols = await client.search_stock(q)
-            for symbol in symbols:
-                existing_symbol = next((s for s in result_set if s.ticker == symbol.ticker), None)
-                if existing_symbol is not None:
-                    symbol = existing_symbol.merge(symbol)
-                    result_set.remove(existing_symbol)
-                result_set.append(symbol)
-        except (HTTPException, httpx.TimeoutException) as e:
-            errors.append(e)
+
+    if load_more:  # load more results from the APIs
+        for client in clients.values():
+            try:
+                symbols = await client.search_stock(q)
+                for symbol in symbols:
+                    existing_symbol = next((s for s in result_set if s.ticker == symbol.ticker), None)
+                    if existing_symbol is not None:
+                        symbol = existing_symbol.merge(symbol)
+                        result_set.remove(existing_symbol)
+                    result_set.append(symbol)
+            except (HTTPException, httpx.TimeoutException) as e:
+                errors.append(e)
+    else:
+        result_set = search_symbol(db, q)
 
     if not result_set and errors:
         raise HTTPException(status_code=400, detail=[e.detail for e in errors])

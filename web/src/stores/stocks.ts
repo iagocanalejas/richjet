@@ -6,10 +6,10 @@ export const useStocksStore = defineStore('stocks', () => {
 
     const _quoteCache = new Map<string, StockQuote>();
 
-    async function symbolSearch(query: string) {
+    async function symbolSearch(query: string, is_load_more: boolean) {
         try {
             const opts = { method: 'GET', timeout: 15000 };
-            const response = await fetch(`${BASE_URL}/search?q=${query}`, opts);
+            const response = await fetch(`${BASE_URL}/search?q=${query}&load_more=${is_load_more}`, opts);
             if (!response.ok) throw new Error('Network response was not ok');
 
             const data = await response.json();
@@ -21,6 +21,7 @@ export const useStocksStore = defineStore('stocks', () => {
     }
 
     async function getStockQuote(source: string, symbol: string) {
+        // TODO: avoid to do requests for "user_created" symbols and symbols with manual price set
         if (!source || !symbol) return;
         if (_quoteCache.has(symbol)) return _quoteCache.get(symbol)!;
 

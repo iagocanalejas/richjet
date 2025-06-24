@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from psycopg2.extensions import connection as Connection
 
-from .symbol import MarketSector, SecurityType, Symbol, get_or_create_symbol
+from .symbol import MarketSector, SecurityType, Symbol, create_symbol, get_symbol_by_ticker
 
 
 @dataclass
@@ -72,7 +72,8 @@ def create_watchlist_item(db, user_id: str, symbol: Symbol) -> Symbol:
     assert user_id, "User ID cannot be None"
     assert symbol, "Symbol object cannot be None"
 
-    symbol = get_or_create_symbol(db, symbol)
+    db_symbol = get_symbol_by_ticker(db, symbol.ticker)
+    symbol = db_symbol if db_symbol else create_symbol(db, symbol)
     assert symbol.id, "Symbol ID cannot be None"
 
     with db.cursor() as cursor:

@@ -2,6 +2,8 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+from psycopg2.extras import RealDictCursor
+
 
 class SecurityType(Enum):
     COMMON_STOCK = "STOCK"
@@ -166,51 +168,79 @@ class Symbol:
         }
 
 
-def get_or_create_symbol(db, symbol: Symbol, user_created: bool = False) -> Symbol:
+def search_symbol(db, query: str) -> list[Symbol]:
+    like_query = f"%{query}%"
+    sql = """
+        SELECT id, ticker, name, currency, source, security_type, market_sector,
+               isin, figi, picture, user_created
+        FROM symbols
+        WHERE NOT user_created AND (
+            ticker ILIKE %s OR
+            name ILIKE %s OR
+            isin ILIKE %s OR
+            figi ILIKE %s
+        )
     """
-    Gets a symbol from the database or creates it if it doesn't exist.
+
+    with db.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(sql, (like_query,) * 4)
+        rows = cursor.fetchall()
+
+    return [
+        Symbol(
+            id=row["id"],
+            ticker=row["ticker"],
+            name=row["name"],
+            currency=row["currency"],
+            source=row["source"],
+            security_type=SecurityType(row["security_type"]),
+            market_sector=MarketSector(row["market_sector"]) if row["market_sector"] else None,
+            isin=row["isin"],
+            figi=row["figi"],
+            picture=row["picture"],
+            is_user_created=False,
+        )
+        for row in rows
+    ]
+
+
+def get_symbol_by_ticker(db, ticker: str) -> Symbol | None:
     """
-    assert symbol, "Symbol object cannot be None"
-    assert symbol.ticker, "Ticker cannot be None"
+    Gets a symbol by its ticker from the database.
+    """
+    assert ticker, "Ticker cannot be None or empty"
 
-    if symbol.id:
-        return symbol
-
-    with db.cursor() as cursor:
+    with db.cursor(cursor_factory=RealDictCursor) as cursor:
         cursor.execute(
             """
-            SELECT id, name, currency, source, security_type, market_sector, isin, figi, picture, user_created
+            SELECT id, ticker, name, currency, source, security_type, market_sector,
+                   isin, figi, picture, user_created
             FROM symbols
-            WHERE (ticker = %s AND (isin IS NULL OR isin = %s) AND (figi IS NULL OR figi = %s)) AND user_created = %s
+            WHERE NOT user_created AND ticker = %s
             """,
-            (
-                symbol.ticker,
-                symbol.isin,
-                symbol.figi,
-                user_created,
-            ),
+            (ticker,),
         )
-        result = cursor.fetchone()
+        row = cursor.fetchone()
 
-        if result:
-            return Symbol(
-                id=result[0],
-                ticker=symbol.ticker,
-                name=result[1],
-                currency=result[2],
-                source=result[3],
-                security_type=SecurityType(result[4]),
-                market_sector=MarketSector(result[5]) if result[5] else None,
-                isin=result[6],
-                figi=result[7],
-                picture=result[8],
-                is_user_created=result[9],
-            )
+    if not row:
+        return None
 
-        return create_symbol(db, symbol, user_created=user_created)
+    return Symbol(
+        id=row["id"],
+        ticker=row["ticker"],
+        name=row["name"],
+        currency=row["currency"],
+        source=row["source"],
+        security_type=SecurityType(row["security_type"]),
+        market_sector=MarketSector(row["market_sector"]) if row["market_sector"] else None,
+        isin=row["isin"],
+        figi=row["figi"],
+        picture=row["picture"],
+        is_user_created=row["user_created"],
+    )
 
 
-def create_symbol(db, symbol: Symbol, user_created: bool = False) -> Symbol:
+def create_symbol(db, symbol: Symbol) -> Symbol:
     """
     Creates a symbol in the database.
     """
@@ -239,7 +269,7 @@ def create_symbol(db, symbol: Symbol, user_created: bool = False) -> Symbol:
                 symbol.isin,
                 symbol.figi,
                 symbol.picture,
-                user_created,
+                symbol.is_user_created,
             ),
         )
         result = cursor.fetchone()

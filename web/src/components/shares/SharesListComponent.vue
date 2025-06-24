@@ -23,6 +23,15 @@
         <p class="text-sm">No results found.</p>
     </div>
 
+    <div v-if="showLoadMore" class="mt-6 w-full text-center">
+        <button
+            @click="$emit('load-more')"
+            class="bg-gray-800 cursor-pointer text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+        >
+            Load more
+        </button>
+    </div>
+
     <div
         v-if="isTransactionModalOpen && transaction"
         class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50"
@@ -56,8 +65,12 @@ const props = defineProps({
         type: Array as () => StockSymbolForDisplay[],
         default: () => [],
     },
+    showLoadMore: {
+        type: Boolean,
+        default: false,
+    },
 });
-const emit = defineEmits(['favorite', 'transact']);
+const emit = defineEmits(['favorite', 'transact', 'load-more']);
 
 const { currency, account: selectedAccount } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());

@@ -14,7 +14,7 @@ async def api_create_symbol(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    symbol = Symbol.from_dict(**symbol_data)
-    symbol = create_symbol(db, symbol, user_created=True)
+    symbol = Symbol.from_dict(**symbol_data, is_user_created=True)
+    symbol = create_symbol(db, symbol)
     create_watchlist_item(db, session.user.id, symbol)
     return symbol.to_dict()
