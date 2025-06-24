@@ -15,9 +15,6 @@ export interface TransactionItem {
     date: string;
     symbol_id?: string;
     account_id?: string;
-
-    // used for display
-    hideImage?: boolean;
 }
 
 export interface PortfolioItem {
@@ -34,7 +31,4 @@ export interface PortfolioItem {
     // should be use only for portfolio calculation
     sortedBuys: TransactionItem[];
     sortedSells: (TransactionItem & { costBasis: number })[];
-
-    // used for display
-    hideImage?: boolean;
 }

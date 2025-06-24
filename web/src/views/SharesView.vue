@@ -1,7 +1,15 @@
 <template>
     <main class="justify-center min-h-[calc(100vh-72px)] bg-gray-900 text-white p-6">
         <div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
-            <SearchComponent @on-search="debouncedFilterResults" />
+            <div class="flex items-center justify-center w-full gap-4">
+                <SearchComponent @on-search="debouncedFilterResults" />
+                <button
+                    @click="openShareModal()"
+                    class="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition"
+                >
+                    Create
+                </button>
+            </div>
         </div>
         <div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
             <div v-if="watchlist.length" class="w-full mt-4">
@@ -32,6 +40,13 @@
             </div>
         </div>
     </main>
+
+    <div
+        v-if="isShareModalOpen && share"
+        class="fixed inset-0 bg-gray-800 bg-opacity-75 flex justify-center items-center z-50"
+    >
+        <ShareModal v-if="isShareModalOpen && share" :share="share" @save="save" @close="closeModal" />
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -44,15 +59,22 @@ import { debounce } from '@/utils/utils';
 import { useWatchlistStore } from '@/stores/watchlist';
 import { usePortfolioStore } from '@/stores/portfolio';
 import { storeToRefs } from 'pinia';
+import ShareModal from '@/components/modals/ShareModal.vue';
+import { useSettingsStore } from '@/stores/settings';
 
 const stockStore = useStocksStore();
 const { addTransaction } = usePortfolioStore();
 const watchlistStore = useWatchlistStore();
 const { watchlist } = storeToRefs(watchlistStore);
 const { isInWatchlist, addToWatchlist, removeFromWatchlist } = watchlistStore;
+const { currency } = storeToRefs(useSettingsStore());
 
 const showFavorites = ref(true);
 const filteredResults: Ref<StockSymbolForDisplay[]> = ref([]);
+
+// modal
+const isShareModalOpen = ref(false);
+const share = ref<Omit<StockSymbol, 'id'> | undefined>();
 
 const debouncedFilterResults = debounce(_filterResults);
 async function _filterResults(query: string) {
@@ -62,7 +84,6 @@ async function _filterResults(query: string) {
     }
 
     const extraProperties: Omit<StockSymbolForDisplay, keyof StockSymbol> = {
-        hideImage: false,
         isFavorite: true,
         price: undefined,
         openPrice: undefined,
@@ -83,5 +104,21 @@ function toggleFavorite(result: StockSymbolForDisplay) {
     } else {
         removeFromWatchlist(result);
     }
+}
+
+function openShareModal() {
+    isShareModalOpen.value = true;
+    share.value = { source: 'created', currency: currency.value, manual_price: 0.0 } as Omit<StockSymbol, 'id'>;
+}
+
+function save(shareData: Omit<StockSymbol, 'id'>) {
+    watchlistStore.addToWatchlistCreatingSymbol(shareData);
+    isShareModalOpen.value = false;
+    share.value = undefined;
+}
+
+function closeModal() {
+    isShareModalOpen.value = false;
+    share.value = undefined;
 }
 </script>

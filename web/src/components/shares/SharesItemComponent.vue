@@ -1,10 +1,9 @@
 <template>
     <div class="flex items-center space-x-3">
         <img
-            v-show="!hideImage"
+            v-show="item.picture"
             :src="item.picture"
-            :key="hideImage ? 'error' : 'ok'"
-            @error="hideImage = true"
+            @error="$emit('image-error')"
             class="w-6 h-6 object-contain"
             alt="Share icon"
         />
@@ -81,14 +80,12 @@ import { type StockSymbolForDisplay } from '@/types/stock';
 import { formatCurrency } from '@/utils/utils';
 import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
 
 defineProps({
     item: { type: Object as () => StockSymbolForDisplay, required: true },
 });
 
-const emit = defineEmits(['favorite']);
+const emit = defineEmits(['favorite', 'image-error']);
 
 const { currency, conversionRate } = storeToRefs(useSettingsStore());
-const hideImage = ref(false);
 </script>

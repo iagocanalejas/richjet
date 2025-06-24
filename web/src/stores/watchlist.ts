@@ -17,7 +17,6 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         const data = await res.json();
 
         const extraProperties: Omit<StockSymbolForDisplay, keyof StockSymbol> = {
-            hideImage: false,
             isFavorite: true,
             price: undefined,
             openPrice: undefined,
@@ -73,6 +72,25 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         watchlist.value.sort((a, b) => a.ticker.localeCompare(b.ticker));
     }
 
+    async function addToWatchlistCreatingSymbol(symbol: Omit<StockSymbol, 'id'>) {
+        const res = await fetch(`${BASE_URL}/symbols`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(symbol),
+        });
+        if (!res.ok) throw new Error('Failed to add symbol to watchlist');
+        const newSymbol = (await res.json()) as StockSymbol;
+        watchlist.value.push({
+            ...newSymbol,
+            isFavorite: true,
+            price: undefined,
+            openPrice: undefined,
+            noPrice: true,
+        });
+        watchlist.value.sort((a, b) => a.ticker.localeCompare(b.ticker));
+    }
+
     async function removeFromWatchlist(item: StockSymbolForDisplay) {
         const res = await fetch(`${BASE_URL}/watchlist/${item.id!}`, {
             method: 'DELETE',
@@ -109,6 +127,7 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         manualPrices,
         isInWatchlist,
         addToWatchlist,
+        addToWatchlistCreatingSymbol,
         removeFromWatchlist,
         updateSymbolManualPrice,
     };

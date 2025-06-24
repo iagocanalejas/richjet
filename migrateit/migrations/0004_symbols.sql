@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS symbols (
 	name TEXT NOT NULL,
 	currency TEXT NOT NULL DEFAULT 'USD',
 	source TEXT NOT NULL,
-	security_type TEXT NOT NULL CHECK (security_type IN ('STOCK', 'ETP', 'EQUITY_INDEX', 'COMMODITY_INDEX', 'GDR', 'CRYPTO', 'BOND')),
+	security_type TEXT NOT NULL CHECK (security_type IN ('STOCK', 'ETP', 'INDEX', 'GDR', 'CRYPTO', 'BOND')),
 	picture TEXT,
 	market_sector TEXT CHECK (market_sector IN ('COMMODITY', 'CORPORATE', 'CURRENCY', 'EQUITY', 'GOVERNMENT','INDEX', 'MONEY_MARKET', 'MORTGAGE', 'MUNICIPAL', 'PREFERRED')),
 	isin TEXT,

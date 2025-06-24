@@ -146,8 +146,6 @@ class Symbol:
             item.security_type = SecurityType(kwargs["security_type"])
         if "market_sector" in kwargs and kwargs["market_sector"]:
             item.market_sector = MarketSector(kwargs["market_sector"])
-        if "picture" not in kwargs or not kwargs["picture"]:
-            item.picture = kwargs.get("picture", build_symbol_picture_url(item))
         return item
 
     def to_dict(self) -> dict:
@@ -175,18 +173,17 @@ def get_or_create_symbol(db, symbol: Symbol, user_created: bool = False) -> Symb
     assert symbol, "Symbol object cannot be None"
     assert symbol.ticker, "Ticker cannot be None"
 
+    if symbol.id:
+        return symbol
+
     with db.cursor() as cursor:
         cursor.execute(
             """
             SELECT id, name, currency, source, security_type, market_sector, isin, figi, picture, user_created
             FROM symbols
-            WHERE (
-                id = %s::uuid OR
-                (ticker = %s AND (isin IS NULL OR isin = %s) AND (figi IS NULL OR figi = %s))
-            ) AND user_created = %s
+            WHERE (ticker = %s AND (isin IS NULL OR isin = %s) AND (figi IS NULL OR figi = %s)) AND user_created = %s
             """,
             (
-                symbol.id or "00000000-0000-0000-0000-000000000000",
                 symbol.ticker,
                 symbol.isin,
                 symbol.figi,
@@ -210,10 +207,10 @@ def get_or_create_symbol(db, symbol: Symbol, user_created: bool = False) -> Symb
                 is_user_created=result[9],
             )
 
-        return create_symbol(db, symbol)
+        return create_symbol(db, symbol, user_created=user_created)
 
 
-def create_symbol(db, symbol: Symbol) -> Symbol:
+def create_symbol(db, symbol: Symbol, user_created: bool = False) -> Symbol:
     """
     Creates a symbol in the database.
     """
@@ -241,8 +238,8 @@ def create_symbol(db, symbol: Symbol) -> Symbol:
                 symbol.market_sector.value if symbol.market_sector else None,
                 symbol.isin,
                 symbol.figi,
-                symbol.picture if symbol.picture else build_symbol_picture_url(symbol),
-                symbol.is_user_created,
+                symbol.picture,
+                user_created,
             ),
         )
         result = cursor.fetchone()

@@ -8,7 +8,11 @@
                 @click="openTransactionModal(item)"
                 class="flex items-center justify-between bg-gray-800 p-4 rounded-lg space-x-4 cursor-pointer"
             >
-                <SharesItemComponent :item="item" @favorite="$emit('favorite', item)" />
+                <SharesItemComponent
+                    :item="item"
+                    @favorite="$emit('favorite', item)"
+                    @image-error="item.picture = undefined"
+                />
             </li>
         </ul>
 
@@ -104,5 +108,6 @@ function sell(item: TransactionItem) {
 
 function closeModal() {
     isTransactionModalOpen.value = false;
+    transaction.value = undefined;
 }
 </script>

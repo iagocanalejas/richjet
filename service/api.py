@@ -81,6 +81,8 @@ async def search_stock(q: str | None):
 
     result_set: list[Symbol] = []
     errors = []
+    # TODO: search in the database first
+    # TODO: add a "search_more" parameter to enable searching in all APIs
     for client in clients.values():
         try:
             symbols = await client.search_stock(q)
