@@ -2,31 +2,17 @@ import { defineStore } from 'pinia';
 import { type StockSymbol, type StockSymbolForDisplay } from '@/types/stock';
 import { ref } from 'vue';
 import { useStocksStore } from './stocks';
+import WatchlistService from './api/watchlist';
 
 export const useWatchlistStore = defineStore('watchlist', () => {
-    const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
-
     const watchlist = ref<StockSymbolForDisplay[]>([]);
-    const manualPrices = ref<{ [x: string]: number }>({});
-
     const stockStore = useStocksStore();
 
     async function init() {
-        const res = await fetch(`${BASE_URL}/watchlist`, { method: 'GET', credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to fetch watchlist');
-        const data = await res.json();
-
-        const extraProperties: Omit<StockSymbolForDisplay, keyof StockSymbol> = {
-            isFavorite: true,
-            price: undefined,
-            openPrice: undefined,
-            noPrice: false,
-        };
-        const tempWatchlist: StockSymbolForDisplay[] =
-            data.map((w: StockSymbol) => ({ ...w, ...extraProperties })) || [];
+        const tempWatchlist = await WatchlistService.retrieveWatchlist();
 
         for (const item of tempWatchlist) {
-            const quote = await stockStore.getStockQuote(item.source, item.ticker);
+            const quote = await stockStore.getStockQuote(item);
             if (!quote) {
                 item.noPrice = true;
                 continue;
@@ -36,15 +22,6 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         }
 
         watchlist.value = tempWatchlist;
-        manualPrices.value = tempWatchlist
-            .filter((w) => !!w.manual_price)
-            .reduce(
-                (acc, w) => {
-                    acc[w.ticker] = w.manual_price!;
-                    return acc;
-                },
-                {} as { [x: string]: number }
-            );
     }
 
     function isInWatchlist(symbol: StockSymbolForDisplay) {
@@ -52,18 +29,14 @@ export const useWatchlistStore = defineStore('watchlist', () => {
     }
 
     async function addToWatchlist(item: StockSymbolForDisplay) {
-        const quote = await stockStore.getStockQuote(item.source, item.ticker);
-        if (!quote) console.error(`Failed to fetch quote for ${item.ticker}`);
+        const newSymbol = await WatchlistService.addToWatchlist(item);
+        if (!newSymbol) return;
 
-        const res = await fetch(`${BASE_URL}/watchlist`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item),
-        });
-        if (!res.ok) throw new Error('Failed to add to watchlist');
+        const quote = await stockStore.getStockQuote(item);
+        if (!quote) return;
+
         watchlist.value.push({
-            ...(await res.json()),
+            ...newSymbol,
             price: quote?.current,
             openPrice: quote?.open,
             isFavorite: true,
@@ -73,14 +46,8 @@ export const useWatchlistStore = defineStore('watchlist', () => {
     }
 
     async function addToWatchlistCreatingSymbol(symbol: Omit<StockSymbol, 'id'>) {
-        const res = await fetch(`${BASE_URL}/symbols`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(symbol),
-        });
-        if (!res.ok) throw new Error('Failed to add symbol to watchlist');
-        const newSymbol = (await res.json()) as StockSymbol;
+        const newSymbol = await WatchlistService.addToWatchlistCreatingSymbol(symbol);
+        if (!newSymbol) return;
         watchlist.value.push({
             ...newSymbol,
             isFavorite: true,
@@ -92,39 +59,21 @@ export const useWatchlistStore = defineStore('watchlist', () => {
     }
 
     async function removeFromWatchlist(item: StockSymbolForDisplay) {
-        const res = await fetch(`${BASE_URL}/watchlist/${item.id!}`, {
-            method: 'DELETE',
-            credentials: 'include',
-        });
-        if (!res.ok) throw new Error('Failed to remove from watchlist');
+        const isRemoved = await WatchlistService.removeFromWatchlist(item);
+        if (!isRemoved) return;
         watchlist.value = watchlist.value.filter((s) => s.ticker !== item.ticker);
     }
 
-    async function updateSymbolManualPrice(symbol_id: string, price?: number) {
+    function updateSymbolManualPrice(symbol_id: string, price?: number) {
         if (price && price < 0) throw new Error('Price cannot be negative');
         if (price && isNaN(price)) throw new Error('Price must be a number');
 
-        const res = await fetch(`${BASE_URL}/watchlist/${symbol_id}`, {
-            method: 'PUT',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ price }),
-        });
-        if (!res.ok) throw new Error('Failed to update manual price');
-        const updatedSymbol = (await res.json()) as StockSymbol;
-
-        if (!updatedSymbol.manual_price) {
-            delete manualPrices.value[updatedSymbol.ticker];
-            return updatedSymbol;
-        }
-        manualPrices.value[updatedSymbol.ticker] = updatedSymbol.manual_price;
-        return updatedSymbol;
+        return WatchlistService.updateWatchlistSymbolPrice(symbol_id, price);
     }
 
     return {
         init,
         watchlist,
-        manualPrices,
         isInWatchlist,
         addToWatchlist,
         addToWatchlistCreatingSymbol,

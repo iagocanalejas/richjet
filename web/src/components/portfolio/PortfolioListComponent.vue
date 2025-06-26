@@ -50,7 +50,7 @@
             Transfer to Another Account
         </button>
         <button
-            v-if="isPortfolioItemWithManualPrice(contextMenu.item!)"
+            v-if="!!contextMenu.item?.symbol?.manual_price"
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
             @click="openManualPriceModal(contextMenu.item!)"
         >
@@ -102,7 +102,7 @@ import { ref } from 'vue';
 import type { PortfolioItem, TransactionItem } from '@/types/portfolio';
 import DividendModal from '../modals/DividendModal.vue';
 import { useSettingsStore } from '@/stores/settings';
-import { isPortfolioItemWithManualPrice, isTradePortfolioItem } from '@/utils/rules';
+import { isTradePortfolioItem } from '@/utils/rules';
 import ContextMenu from '../utils/ContextMenu.vue';
 import ManualPriceModal from '../modals/ManualPriceModal.vue';
 import TransactionModal from '../modals/TransactionModal.vue';
@@ -210,11 +210,7 @@ async function sell(t: TransactionItem) {
 }
 
 async function transfer(newAccount?: Account) {
-    await portfolioStore.transferStock(
-        selectedItem.value!.symbol.ticker,
-        selectedAccount.value?.name,
-        newAccount?.name
-    );
+    await portfolioStore.transferStock(selectedItem.value!.symbol.ticker, selectedAccount.value?.id, newAccount?.id);
     selectedItem.value = undefined;
     isTransferStockModalOpen.value = false;
 }

@@ -1,50 +1,31 @@
 import { type User } from '@/types/user';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import AuthService from './api/auth';
+import UsersService from './api/users';
 
 export const useAuthStore = defineStore('auth-store', () => {
-    const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
-
     const user = ref<User>();
     const isLogged = computed(() => !!user.value);
 
     async function init() {
-        await _retrieveUser();
+        user.value = await UsersService.loadUser();
     }
 
     async function login() {
-        const res = await fetch(`${BASE_URL}/auth/login`, { method: 'GET', credentials: 'include' });
-        const { auth_url } = await res.json();
-        window.location.href = auth_url;
+        const auth_url = await AuthService.login();
+        window.location.href = auth_url ?? '/';
     }
 
     async function logout() {
-        await fetch(`${BASE_URL}/auth/logout`, { method: 'GET', credentials: 'include' });
+        await AuthService.logout();
         user.value = undefined;
     }
 
     async function handleOAuthCallback(code: string, state: string) {
-        const res = await fetch(`${BASE_URL}/auth/callback?code=${code}&state=${state}`, {
-            method: 'GET',
-            credentials: 'include',
-        });
-        if (!res.ok) throw new Error('Network response was not ok');
-        const data = await res.json();
-        window.location.href = data.redirect_url;
-        return await _retrieveUser();
-    }
-
-    async function _retrieveUser() {
-        const res = await fetch(`${BASE_URL}/auth/me`, { method: 'GET', credentials: 'include' });
-        if (!res.ok) {
-            if (res.status === 401) {
-                user.value = undefined;
-                return;
-            }
-            throw new Error('Network response was not ok');
-        }
-        user.value = await res.json();
-        return user.value;
+        const redirect_url = await AuthService.handleOAuthCallback(code, state);
+        window.location.href = redirect_url ?? '/';
+        user.value = await UsersService.loadUser();
     }
 
     return { user, isLogged, init, login, logout, handleOAuthCallback };

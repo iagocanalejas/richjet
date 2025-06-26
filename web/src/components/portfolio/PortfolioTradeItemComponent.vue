@@ -7,10 +7,10 @@
     </div>
     <div class="text-sm text-right text-white">--</div>
     <div class="text-sm text-right text-white">--</div>
-    <div class="text-sm text-right" :class="textColorByRentability(winOrLoss, item.manualInputedPrice)">
+    <div class="text-sm text-right" :class="textColorByRentability(winOrLoss, !!item.symbol.manual_price)">
         {{ formatCurrency(winOrLoss, currency) }}
     </div>
-    <div class="text-sm text-right" :class="textColorByRentability(rentability, item.manualInputedPrice)">
+    <div class="text-sm text-right" :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
         {{ rentability.toFixed(2) }} %
     </div>
 </template>

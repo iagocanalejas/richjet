@@ -27,6 +27,7 @@ export interface StockSymbol {
     isin?: string;
     figi?: string;
     manual_price?: number;
+    is_user_created: boolean;
 }
 
 export type StockSymbolForDisplay = StockSymbol & {

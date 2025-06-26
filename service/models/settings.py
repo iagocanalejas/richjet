@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 
 from fastapi import HTTPException
+from log.errors import required_msg
 from psycopg2.extensions import connection as Connection
+from psycopg2.extras import RealDictCursor
 
 
 @dataclass
@@ -24,41 +26,43 @@ def get_user_settings(db: Connection, user_id: str) -> UserSettings:
     """
     Retrieves user settings from the database by user ID.
     """
-    assert user_id, "User ID cannot be None"
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT id, currency
-            FROM users
-            WHERE id = %s::uuid
-            """,
-            (user_id,),
-        )
-        result = cursor.fetchone()
-        if not result:
-            raise HTTPException(status_code=404, detail=f"User settings not found for user ID {user_id}")
+    sql = """
+        SELECT id, currency
+        FROM users
+        WHERE id = %s::uuid
+    """
 
-        return UserSettings(
-            user_id=result[0],
-            currency=result[1],
-        )
+    with db.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(sql, (user_id,))
+        row = cursor.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail=f"User settings not found for user ID {user_id}")
+
+    return UserSettings(
+        user_id=row["id"],
+        currency=row["currency"],
+    )
 
 
 def update_user_settings(db: Connection, user_settings: UserSettings) -> None:
     """
     Updates user settings in the database.
     """
-    assert user_settings.user_id, "User ID cannot be None"
-    assert user_settings.currency in ["USD", "EUR", "GBP"], "Unssuported currency"
+    if not user_settings.user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+    if user_settings.currency not in {"USD", "EUR", "GBP"}:
+        raise HTTPException(status_code=400, detail="Invalid currency")
+
+    sql = """
+        UPDATE users
+        SET currency = %s
+        WHERE id = %s::uuid
+    """
 
     with db.cursor() as cursor:
-        cursor.execute(
-            """
-            UPDATE users
-            SET currency = %s
-            WHERE id = %s::uuid
-            """,
-            (user_settings.currency, user_settings.user_id),
-        )
+        cursor.execute(sql, (user_settings.currency, user_settings.user_id))
         db.commit()

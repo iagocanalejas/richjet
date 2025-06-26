@@ -6,7 +6,7 @@
         </span>
     </div>
     <div class="text-sm text-right">
-        <div :class="textColorByRentability(rentability, item.manualInputedPrice)">
+        <div :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
             {{ formatCurrency(item.currentPrice, currency) }}
         </div>
         <div class="text-xs text-gray-400">
@@ -17,14 +17,14 @@
         {{ item.quantity }}
     </div>
     <div class="text-sm text-right">
-        <div :class="textColorByRentability(rentability, item.manualInputedPrice)">
+        <div :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
             {{ formatCurrency(item.currentPrice * item.quantity, currency) }}
         </div>
         <div class="text-xs text-gray-400">
             ({{ formatCurrency(item.currentInvested + item.commission, currency) }})
         </div>
     </div>
-    <div class="text-sm text-right" :class="textColorByRentability(rentability, item.manualInputedPrice)">
+    <div class="text-sm text-right" :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
         {{ rentability.toFixed(2) }} %
     </div>
     <button class="text-gray-400 hover:text-white cursor-pointer" title="Options">⋮</button>

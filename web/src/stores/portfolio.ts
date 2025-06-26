@@ -4,9 +4,12 @@ import { computed, ref, type Ref } from 'vue';
 import { useStocksStore } from './stocks';
 import { useSettingsStore } from './settings';
 import { useWatchlistStore } from './watchlist';
+import { useErrorsStore } from './errors';
+import { hasBoughtSharesIfNeeded } from '@/utils/rules';
+import TransactionsService from './api/transactions';
 
 export const usePortfolioStore = defineStore('portfolio', () => {
-    const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
+    const { addError } = useErrorsStore();
 
     const portfolios: Ref<{ [key: string]: PortfolioItem[] }> = ref({ default: [], all: [] });
     const transactions = ref<TransactionItem[]>([]);
@@ -16,106 +19,83 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     const { conversionRate, account, accounts } = storeToRefs(useSettingsStore());
     const watchlistStore = useWatchlistStore();
     const { updateSymbolManualPrice } = watchlistStore;
-    const { manualPrices } = storeToRefs(watchlistStore);
 
     const _accountKey = computed(() => account.value?.name ?? 'all');
     const portfolio = computed(() => portfolios.value[_accountKey.value] ?? []);
 
     async function init() {
-        const res = await fetch(`${BASE_URL}/transactions`, { method: 'GET', credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to fetch transactions');
-        const transactionsForPortfolio: TransactionItem[] = await res.json();
-
-        // Sort once before assigning, avoids extra reactivity triggering
-        transactionsForPortfolio.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        transactions.value = [...transactionsForPortfolio].reverse();
+        const transactionsForPortfolio = await TransactionsService.loadTransactions();
+        transactions.value = [...transactionsForPortfolio];
         portfolios.value['default'] = [];
         portfolios.value['all'] = [];
 
         // prefetch stock quotes for all transactions and saves them in the cache
         await _prefetchStockQuotes();
 
+        // update portfolios with transactions
         for (const transaction of transactionsForPortfolio) {
             const key = transaction.account?.name ?? 'default';
             if (!portfolios.value[key] && key !== 'default') portfolios.value[key] = [];
-
             await _updatePortfolio(key, transaction);
         }
 
+        // sort each portfolio by ticker
         for (const key in portfolios.value) {
             portfolios.value[key].sort((a, b) => a.symbol.ticker.localeCompare(b.symbol.ticker));
         }
     }
 
     async function addTransaction(transaction: TransactionItem) {
-        if (
-            transaction.transaction_type === 'DIVIDEND' &&
-            !transactions.value.find((t) => t.symbol.ticker === transaction.symbol.ticker)
-        ) {
-            // to create a dividend transaction, the stock must already exist
-            throw 'A dividend was created before the stock was created, please create the stock first';
+        if (!hasBoughtSharesIfNeeded(transaction, transactions.value)) {
+            addError({ readable_message: 'Trying to create a dividend for a stock that does not exist' });
+            return;
         }
 
-        const res = await fetch(`${BASE_URL}/transactions`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(transaction),
-        });
-        if (!res.ok) throw new Error('Failed to add transaction');
-        const newTransaction = await res.json();
+        const newTransaction = await TransactionsService.addTransaction(transaction);
+        if (!newTransaction) return;
+
         transactions.value.unshift(newTransaction);
         _updatePortfolio(newTransaction.account?.name ?? 'default', newTransaction);
     }
 
     async function removeTransaction(transaction: TransactionItem) {
         const lastIndex = transactions.value.lastIndexOf(transaction);
-        if (lastIndex < 0) {
-            return;
-        }
+        if (lastIndex < 0) return;
 
-        const res = await fetch(`${BASE_URL}/transactions/${transaction.id}`, {
-            method: 'DELETE',
-            credentials: 'include',
-        });
-        if (!res.ok) throw new Error('Failed to remove transaction');
+        const isRemoved = await TransactionsService.removeTransaction(transaction.id);
+        if (!isRemoved) return;
 
         transactions.value.splice(lastIndex, 1);
         _removeTransactionFromPortfolio(transaction.account?.name ?? 'default', transaction);
     }
 
-    async function transferStock(symbol: string, fromAccount?: string, toAccount?: string) {
-        if (fromAccount === toAccount) return;
+    async function transferStock(symbol: string, fromAccountId?: string, toAccountId?: string) {
+        if (fromAccountId === toAccountId) return;
 
-        const newAccount = toAccount ? accounts.value.find((a) => a.name === toAccount) : undefined;
+        const toAccount = toAccountId ? accounts.value.find((a) => a.name === toAccountId) : undefined;
+        const fromAccount = fromAccountId ? accounts.value.find((a) => a.name === fromAccountId) : undefined;
+        const transferedIds = await TransactionsService.transferStock(symbol, fromAccount?.id, toAccount?.id);
         for (const transaction of transactions.value) {
-            if (transaction.symbol.ticker === symbol && transaction.account?.name === fromAccount) {
-                const updated_transaction = await fetch(`${BASE_URL}/transactions/${transaction.id}`, {
-                    method: 'PUT',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ account_id: newAccount?.id }),
-                });
-                if (!updated_transaction.ok) throw new Error('Failed to update transaction account');
-                transaction.account = (await updated_transaction.json()).account;
+            if (transferedIds.includes(transaction.id)) {
+                transaction.account = toAccount;
             }
         }
 
-        const fromPortfolio = portfolios.value[fromAccount ?? 'default'];
-        let toPortfolio = portfolios.value[toAccount ?? 'default'];
+        const fromPortfolio = portfolios.value[fromAccount?.name ?? 'default'];
+        let toPortfolio = portfolios.value[toAccount?.name ?? 'default'];
         if (!toPortfolio && toAccount) {
-            portfolios.value[toAccount] = [];
-            toPortfolio = portfolios.value[toAccount];
+            portfolios.value[toAccount.name] = [];
+            toPortfolio = portfolios.value[toAccount.name];
         }
 
-        if (!toPortfolio) throw new Error(`Portfolio for account ${toAccount} not found`);
-        if (!fromPortfolio) throw new Error(`Portfolio for account ${fromAccount} not found`);
+        if (!toPortfolio) throw new Error(`Portfolio for account '${toAccount?.name}' not found`);
+        if (!fromPortfolio) throw new Error(`Portfolio for account '${fromAccount?.name}' not found`);
 
         // remove from the old portfolio
         const fromIdx = fromPortfolio.findIndex((item) => item.symbol.ticker === symbol);
         const item = fromPortfolio[fromIdx];
         fromPortfolio.splice(fromIdx, 1);
-        portfolios.value[fromAccount ?? 'default'] = [...fromPortfolio];
+        portfolios.value[fromAccount?.name ?? 'default'] = [...fromPortfolio];
 
         // add to the new portfolio
         const toIdx = toPortfolio.findIndex((item) => item.symbol.ticker === symbol);
@@ -132,7 +112,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             toPortfolio.push({ ...item });
         }
         toPortfolio.sort((a, b) => a.symbol.ticker.localeCompare(b.symbol.ticker));
-        portfolios.value[toAccount ?? 'default'] = [...toPortfolio];
+        portfolios.value[toAccount?.name ?? 'default'] = [...toPortfolio];
     }
 
     async function updateManualPrice(symbol_id: string, price?: number) {
@@ -141,23 +121,16 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         for (const item of portfolio) {
             if (item.symbol.id === symbol_id) {
                 item.currentPrice = updatedSymbol?.manual_price ?? 0;
-                item.manualInputedPrice = true;
                 break;
             }
         }
     }
 
     async function _prefetchStockQuotes() {
-        const symbols = [
-            ...new Set(
-                transactions.value
-                    .filter((t) => t.symbol.source && !manualPrices.value[t.symbol.ticker])
-                    .map((t) => `${t.symbol.source}|${t.symbol.ticker}`)
-            ),
-        ].map((s) => s.split('|') as [string, string]);
+        const symbols = [...new Set(transactions.value.map((t) => t.symbol))];
         for (let i = 0; i < symbols.length; i += 5) {
             const batch = symbols.slice(i, i + 5);
-            await Promise.all(batch.map(([source, symbol]) => stockStore.getStockQuote(source, symbol)));
+            await Promise.all(batch.map((symbol) => stockStore.getStockQuote(symbol)));
         }
     }
 
@@ -211,14 +184,13 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                 portfolio[idx].quantity += transaction.quantity;
             }
         } else {
-            if (!transaction.symbol.source)
+            if (!transaction.symbol || !transaction.symbol.source) {
                 throw new Error('A dividend was created before the stock was created, please create the stock first');
+            }
 
-            let currentPrice: number;
-            if (manualPrices.value[transaction.symbol.ticker]) {
-                currentPrice = manualPrices.value[transaction.symbol.ticker]!;
-            } else {
-                const quote = await stockStore.getStockQuote(transaction.symbol.source, transaction.symbol.ticker);
+            let currentPrice = transaction.symbol.manual_price;
+            if (!currentPrice) {
+                const quote = await stockStore.getStockQuote(transaction.symbol);
                 currentPrice = (quote?.current || 0) * conversionRate.value;
             }
 
@@ -227,7 +199,6 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                 currency: transaction.currency,
                 quantity: transaction.quantity,
                 currentPrice: currentPrice,
-                manualInputedPrice: !!manualPrices.value[transaction.symbol.ticker],
                 currentInvested: transaction.price * transaction.quantity,
                 totalInvested: transaction.price * transaction.quantity,
                 totalRetrieved: 0,
@@ -324,7 +295,6 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         removeTransaction,
         transferStock,
         updateManualPrice,
-        manualPrices,
         totalInvested,
         portfolioCurrentValue,
         closedPositions,

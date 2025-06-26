@@ -2,7 +2,9 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from fastapi import HTTPException
+from log.errors import required_msg
 from psycopg2.extensions import connection as Connection
+from psycopg2.extras import RealDictCursor, RealDictRow
 
 
 @dataclass
@@ -13,6 +15,17 @@ class User:
     picture: str | None
     id: str = ""
     created_at: str | None = None
+
+    @classmethod
+    def from_row(cls, row: RealDictRow) -> "User":
+        return cls(
+            id=row["user_id"] if "user_id" in row else row["id"],
+            email=row["email"],
+            given_name=row["given_name"],
+            family_name=row["family_name"],
+            picture=row["picture"],
+            created_at=row["created_at"],
+        )
 
     @classmethod
     def from_dict(cls, **kwargs) -> "User":
@@ -34,52 +47,47 @@ def create_user_if_not_exists(db: Connection, user: User) -> User:
     """
     Creates a user in the database if it doesn't exist.
     """
-    assert user, "User object cannot be None"
-    assert user.email, "User email cannot be None"
+    if not user.email:
+        raise HTTPException(status_code=400, detail=required_msg("user.email"))
 
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            INSERT INTO users (email, given_name, family_name, picture)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (email) DO NOTHING
-            RETURNING id, created_at
-            """,
-            (user.email, user.given_name, user.family_name, user.picture),
-        )
-        result = cursor.fetchone()
-        if not result:
-            return get_user_by_email_or_raise(db, user.email)
+    sql = """
+        INSERT INTO users (email, given_name, family_name, picture)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (email) DO NOTHING
+        RETURNING id, created_at
+    """
 
-        user.id, user.created_at = result
+    with db.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(sql, (user.email, user.given_name, user.family_name, user.picture))
+        row = cursor.fetchone()
+
+    if row:
+        user.id = row["id"]
+        user.created_at = row["created_at"]
         db.commit()
         return user
 
+    return get_user_by_email(db, user.email)
 
-def get_user_by_email_or_raise(db: Connection, email: str) -> User:
+
+def get_user_by_email(db: Connection, email: str) -> User:
     """
     Gets a user from the database by email.
     """
-    assert email, "Email cannot be None"
+    if not email:
+        raise HTTPException(status_code=400, detail=required_msg("email"))
 
-    with db.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT id, email, given_name, family_name, picture, created_at
-            FROM users
-            WHERE email = %s
-            """,
-            (email,),
-        )
+    sql = """
+        SELECT id, email, given_name, family_name, picture, created_at
+        FROM users
+        WHERE email = %s
+    """
+
+    with db.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(sql, (email,))
         result = cursor.fetchone()
-        if not result:
-            raise HTTPException(status_code=401, detail="User not found")
 
-        return User(
-            id=result[0],
-            email=result[1],
-            given_name=result[2],
-            family_name=result[3],
-            picture=result[4],
-            created_at=result[5],
-        )
+    if not result:
+        raise HTTPException(status_code=404, detail=f"User with email {email} not found")
+
+    return User.from_row(result)

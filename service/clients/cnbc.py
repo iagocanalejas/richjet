@@ -40,8 +40,6 @@ class CNBCClient:
         valid_results = [r for r in results if is_supported_ticker(r["symbolName"])]
         logger.warning(f"{self.NAME}: discarding results={[r for r in results if r not in valid_results]}")
 
-        print(valid_results)
-
         return [
             Symbol(
                 ticker=result["symbolName"].upper(),
@@ -61,8 +59,6 @@ class CNBCClient:
                 f"https://quote.cnbc.com/quote-html-webservice/quote.htm?symbols={symbol}&output=json",
                 timeout=5,
             )
-
-        print(response)
 
         if response.status_code != 200:
             raise HTTPException(

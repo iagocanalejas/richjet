@@ -4,6 +4,7 @@ import { usePortfolioStore } from '../../src/stores/portfolio';
 import { type TransactionItem } from '../../src/types/portfolio';
 import { ref } from 'vue';
 import { StockSymbol } from '../../src/types/stock';
+import { hasBoughtSharesIfNeeded } from '../../src/utils/rules';
 
 let getStockQuoteMock = vi.fn(() => Promise.resolve({ current: 100 }));
 vi.mock('@/stores/stocks', () => ({
@@ -23,25 +24,31 @@ vi.mock('@/stores/settings', () => ({
 vi.mock('@/stores/watchlist', () => {
     return {
         useWatchlistStore: () => ({
-            updateSymbolManualPrice: vi.fn((_, price) => Promise.resolve({ manual_price: price })),
-            manualPrices: ref({}),
+            updateSymbolManualPrice: vi.fn((symbol_id, price) =>
+                Promise.resolve({ ...mockSymbol, id: symbol_id, manual_price: price })
+            ),
         }),
     };
 });
 
+vi.mock('@/utils/rules', () => ({
+    hasBoughtSharesIfNeeded: vi.fn(),
+}));
+
 const mockSymbol: StockSymbol = {
-    id: 1,
+    id: '1',
     ticker: 'AAPL',
     name: 'Apple',
     currency: 'USD',
     source: 'NASDAQ',
     security_type: 'STOCK',
+    is_user_created: false,
 };
 
 async function mockTransaction(store: ReturnType<typeof usePortfolioStore>, overrides = {}) {
     const tx: TransactionItem = {
-        id: 1,
-        user_id: 1,
+        id: '1',
+        user_id: '1',
         symbol: mockSymbol,
         quantity: 10,
         price: 150,
@@ -53,7 +60,11 @@ async function mockTransaction(store: ReturnType<typeof usePortfolioStore>, over
     };
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => tx }));
+
+    const original = vi.mocked(hasBoughtSharesIfNeeded);
+    original.mockReturnValue(true);
     await store.addTransaction(tx);
+    original.mockReset();
     return tx;
 }
 
@@ -77,8 +88,8 @@ describe('usePortfolioStore', () => {
 
     it('initializes store with a buy transaction', async () => {
         const tx: TransactionItem = {
-            id: 1,
-            user_id: 1,
+            id: '1',
+            user_id: '1',
             symbol: mockSymbol,
             quantity: 10,
             price: 150,
@@ -96,8 +107,8 @@ describe('usePortfolioStore', () => {
 
     it('initializes store with buy and sell transaction', async () => {
         const tx1: TransactionItem = {
-            id: 1,
-            user_id: 1,
+            id: '1',
+            user_id: '1',
             symbol: mockSymbol,
             quantity: 10,
             price: 150,
@@ -107,8 +118,8 @@ describe('usePortfolioStore', () => {
             date: '2023-01-01',
         };
         const tx2: TransactionItem = {
-            id: 2,
-            user_id: 1,
+            id: '2',
+            user_id: '1',
             symbol: mockSymbol,
             quantity: 5,
             price: 200,
@@ -219,8 +230,8 @@ describe('usePortfolioStore', () => {
 
         it('tries to add a dividend before stock creation', async () => {
             const dividendTx: TransactionItem = {
-                id: 1,
-                user_id: 1,
+                id: '1',
+                user_id: '1',
                 symbol: { ...mockSymbol, ticker: 'NEW', name: 'New Corp.' },
                 quantity: 1,
                 price: 0,
@@ -229,15 +240,14 @@ describe('usePortfolioStore', () => {
                 transaction_type: 'DIVIDEND',
                 date: baseDate,
             };
-            await expect(store.addTransaction(dividendTx)).rejects.toThrow(
-                'A dividend was created before the stock was created, please create the stock first'
-            );
+
+            expect(await store.addTransaction(dividendTx)).toBe(undefined);
         });
 
         it('adds a cash dividend', async () => {
             const buy1 = await mockTransaction(store, {
-                id: 1,
-                user_id: 1,
+                id: '1',
+                user_id: '1',
                 symbol: { ...mockSymbol, ticker: 'GOOG', name: 'Alphabet Inc.' },
                 quantity: 5,
                 price: 200,
@@ -249,7 +259,7 @@ describe('usePortfolioStore', () => {
 
             await mockTransaction(store, {
                 ...buy1,
-                id: 2,
+                id: '2',
                 quantity: 0,
                 price: 100,
                 commission: 0,
@@ -273,7 +283,7 @@ describe('usePortfolioStore', () => {
             const buyTx = await mockTransaction(store);
             const divTx = await mockTransaction(store, {
                 ...buyTx,
-                id: 2,
+                id: '2',
                 quantity: 0,
                 price: 100,
                 commission: 0,
@@ -314,7 +324,7 @@ describe('usePortfolioStore', () => {
                 'fetch',
                 vi.fn().mockResolvedValue({
                     ok: true,
-                    json: async () => ({ ...tx, account: { ...tx.account, name: 'brokerage' } }),
+                    json: async () => [tx.id],
                 })
             );
             await store.transferStock('AAPL', 'default', 'brokerage');
@@ -346,7 +356,7 @@ describe('usePortfolioStore', () => {
                 'fetch',
                 vi.fn().mockResolvedValue({
                     ok: true,
-                    json: async () => ({ ...tx, account: { ...tx.account, name: 'brokerage' } }),
+                    json: async () => [tx.id],
                 })
             );
             await store.transferStock('AAPL', 'default', 'brokerage');
@@ -361,7 +371,6 @@ describe('usePortfolioStore', () => {
             await mockTransaction(store);
             await store.updateManualPrice(mockSymbol.id, 200);
             expect(store.portfolios.default[0].currentPrice).toBe(200);
-            expect(store.portfolios.default[0].manualInputedPrice).toBe(true);
         });
     });
 
@@ -372,10 +381,10 @@ describe('usePortfolioStore', () => {
 
         it('sums currentInvested and commission for positions with quantity > 0', async () => {
             await mockTransaction(store, {
-                id: 1,
-                user_id: 1,
+                id: '1',
+                user_id: '1',
                 symbol: {
-                    id: 1,
+                    id: '1',
                     name: 'Apple Inc.',
                     picture: '',
                     security_type: 'STOCK',
@@ -402,7 +411,7 @@ describe('usePortfolioStore', () => {
         it('sums currentPrice * quantity for all positions with quantity > 0', async () => {
             store.portfolio.push({
                 symbol: {
-                    id: 1,
+                    id: '1',
                     ticker: 'MSFT',
                     name: 'Microsoft Corp.',
                     image: '',
@@ -412,7 +421,6 @@ describe('usePortfolioStore', () => {
                 },
                 quantity: 5,
                 currentPrice: 300,
-                manualInputedPrice: false,
                 currentInvested: 1500,
                 totalInvested: 1500,
                 totalRetrieved: 0,
@@ -429,10 +437,10 @@ describe('usePortfolioStore', () => {
 
         it('calculates profit/loss from fully closed positions', async () => {
             const buy = await mockTransaction(store, {
-                id: 1,
-                user_id: 1,
+                id: '1',
+                user_id: '1',
                 symbol: {
-                    id: 1,
+                    id: '1',
                     ticker: 'TSLA',
                     name: 'Tesla Inc.',
                     picture: '',
@@ -449,7 +457,7 @@ describe('usePortfolioStore', () => {
             });
             await mockTransaction(store, {
                 ...buy,
-                id: 2,
+                id: '2',
                 transaction_type: 'SELL',
                 price: 150,
                 date: new Date().toISOString(),
@@ -465,10 +473,10 @@ describe('usePortfolioStore', () => {
 
         it('calculates rentability with open, closed positions and cash dividends', async () => {
             const buy = await mockTransaction(store, {
-                id: 1,
-                user_id: 1,
+                id: '1',
+                user_id: '1',
                 symbol: {
-                    id: 1,
+                    id: '1',
                     ticker: 'NFLX',
                     name: 'Netflix Inc.',
                     picture: '',
@@ -485,7 +493,7 @@ describe('usePortfolioStore', () => {
             });
             await mockTransaction(store, {
                 ...buy,
-                id: 2,
+                id: '2',
                 quantity: 5,
                 price: 150,
                 transaction_type: 'SELL',
@@ -493,8 +501,8 @@ describe('usePortfolioStore', () => {
             });
             await mockTransaction(store, {
                 ...buy,
-                id: 3,
-                transaction_type: 'DIVIDEND-CASH',
+                id: '3',
+                IDBTransactiontion_type: 'DIVIDEND-CASH',
                 price: 100,
                 quantity: 0,
                 date: new Date().toISOString(),

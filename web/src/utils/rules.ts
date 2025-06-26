@@ -1,4 +1,6 @@
-import type { PortfolioItem, TransactionType } from '@/types/portfolio';
+import type { PortfolioItem, TransactionItem, TransactionType } from '@/types/portfolio';
+
+// TODO: move a lot of repeated logic here
 
 export function isDividend(type: TransactionType): boolean {
     return type === 'DIVIDEND' || type === 'DIVIDEND-CASH';
@@ -9,7 +11,14 @@ export function isTradePortfolioItem(item: PortfolioItem): boolean {
 }
 
 export function isPortfolioItemWithManualPrice(item: PortfolioItem): boolean {
-    return item.manualInputedPrice || item.currentPrice === 0;
+    return item.currentPrice === 0;
+}
+
+export function hasBoughtSharesIfNeeded(transaction: TransactionItem, transactions: TransactionItem[]): boolean {
+    return (
+        isDividend(transaction.transaction_type) &&
+        transactions.some((t) => t.transaction_type === 'BUY' && t.symbol === transaction.symbol)
+    );
 }
 
 export function isValidISIN(isin: string): boolean {

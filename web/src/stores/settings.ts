@@ -1,10 +1,11 @@
 import type { Settings, Account } from '@/types/user';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import AccountsService from './api/accounts';
+import UsersService from './api/users';
+import StocksService from './api/stocks';
 
 export const useSettingsStore = defineStore('settings', () => {
-    const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
-
     const _settings = ref<Settings>({ currency: 'USD', accounts: [] });
     const conversionRate = ref<number>(1.0);
     const account = ref<Account | undefined>();
@@ -24,36 +25,22 @@ export const useSettingsStore = defineStore('settings', () => {
 
     async function init() {
         const [settings, accounts] = await Promise.all([
-            fetch(`${BASE_URL}/users/settings`, { method: 'GET', credentials: 'include' }),
-            fetch(`${BASE_URL}/accounts`, { method: 'GET', credentials: 'include' }),
+            UsersService.getUserSettings(),
+            AccountsService.retrieveAccounts(),
         ]);
-        if (!settings.ok) throw new Error('Error fetching settings');
-        if (!accounts.ok) throw new Error('Error fetching accounts');
-        _settings.value = { ..._settings.value, ...(await settings.json()), accounts: await accounts.json() };
-        await _getConvertionRate(_settings.value.currency);
+
+        _settings.value = { ..._settings.value, ...settings, accounts: accounts };
     }
 
     async function createAccount(a: Account) {
-        const res = await fetch(`${BASE_URL}/accounts`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(a),
-        });
-        if (!res.ok) throw new Error('Network response was not ok');
-        const newAccount = await res.json();
+        const newAccount = await AccountsService.addAccount(a);
+        if (!newAccount) return;
         _settings.value.accounts.push(newAccount);
         account.value = newAccount;
     }
 
     async function _updateCurrency() {
-        const res = await fetch(`${BASE_URL}/users/settings`, {
-            method: 'PUT',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ currency: _settings.value.currency }),
-        });
-        if (!res.ok) throw new Error('Network response was not ok');
+        await UsersService.updateUserCurrency(_settings.value.currency);
     }
 
     async function _getConvertionRate(currency: string) {
@@ -61,15 +48,9 @@ export const useSettingsStore = defineStore('settings', () => {
             conversionRate.value = 1.0;
             return;
         }
-        try {
-            const response = await fetch(`${BASE_URL}/exchangerate/${currency}`, { method: 'GET' });
-            if (!response.ok) throw new Error('Network response was not ok');
 
-            const data = await response.json();
-            conversionRate.value = data.conversion_rate;
-        } catch (error) {
-            console.error('Error fetching conversion rate:', error);
-        }
+        const conversion = await StocksService.retrieveConversionRate(currency);
+        conversionRate.value = conversion || 1.0;
     }
 
     return {

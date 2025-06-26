@@ -87,6 +87,7 @@
     <LoadingBar />
     <LandingView v-if="!isLogged" @sign-in="signIn" />
     <RouterView v-else />
+    <ErrorsModal v-if="isShowingErrorsModal" />
 
     <footer class="bg-gray-900 text-gray-400 py-6">
         <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -111,11 +112,14 @@ import LoadingBar from './components/LoadingBar.vue';
 import LandingView from './views/LandingView.vue';
 import AccountSelector from './components/utils/AccountSelector.vue';
 import type { Account } from './types/user';
+import ErrorsModal from './components/modals/ErrorsModal.vue';
+import { useErrorsStore } from './stores/errors';
 
 const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
 const { user, isLogged } = storeToRefs(authStore);
 const { currency, accounts, account: selectedAccount } = storeToRefs(settingsStore);
+const { hasErrors: isShowingErrorsModal } = storeToRefs(useErrorsStore());
 const currentYear = new Date().getFullYear();
 
 const showMenu = ref(false);
@@ -141,7 +145,6 @@ watch(
     () => isLogged.value,
     async (newValue, prevValue) => {
         if (!prevValue && newValue) {
-            await settingsStore.init();
             await useWatchlistStore().init();
             await usePortfolioStore().init();
         }

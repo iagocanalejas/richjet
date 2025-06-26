@@ -2,7 +2,10 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
-from psycopg2.extras import RealDictCursor
+from fastapi import HTTPException
+from log.errors import required_msg
+from psycopg2.extensions import connection as Connection
+from psycopg2.extras import RealDictCursor, RealDictRow
 
 
 class SecurityType(Enum):
@@ -19,7 +22,7 @@ class SecurityType(Enum):
             case "STOCK" | "COMMON STOCK" | "EQUITY" | "CSRT":
                 # alpha-vantage uses equity for stocks
                 return cls.COMMON_STOCK
-            case "ETP" | "ETF":
+            case "ETP" | "ETF" | "FUND":
                 return cls.ETP
             case "GDR":
                 return cls.GDR
@@ -72,36 +75,6 @@ class MarketSector(Enum):
                 raise ValueError(f"Unknown market sector: {market_sector}")
 
 
-def build_symbol_picture_url(item: "Symbol") -> str | None:
-    if item.isin:
-        return f"https://assets.parqet.com/logos/isin/{item.isin}"
-    else:
-        ttype = {
-            SecurityType.COMMON_STOCK: "symbol",
-            SecurityType.ETP: "symbol",
-            SecurityType.GDR: "symbol",
-            SecurityType.CRYPTO: "crypto",
-        }.get(item.security_type, "unknown")
-        if ttype != "unknown":
-            return f"https://assets.parqet.com/logos/{ttype}/{item.ticker}"
-
-
-def is_supported_ticker(ticker: str) -> bool:
-    """
-    Checks if the ticker is supported by the system.
-    """
-    if not ticker:
-        return False
-    ticker = ticker.strip().upper()
-
-    is_supported = "." not in ticker[1:]
-    is_supported &= not re.search(r"^-?\d+X SHORT\b", ticker)
-    is_supported &= not re.search(r"^-?\d+X LONG\b", ticker)
-    is_supported &= not re.search(r"^LS \d+X\b", ticker)
-
-    return is_supported
-
-
 @dataclass
 class Symbol:
     ticker: str
@@ -142,6 +115,23 @@ class Symbol:
         )
 
     @classmethod
+    def from_row(cls, row: RealDictRow) -> "Symbol":
+        return cls(
+            id=row["symbol_id"] if "symbol_id" in row else row["id"],
+            ticker=row["ticker"],
+            name=row["name"],
+            currency=row["symbol_currency"] if "symbol_currency" in row else row["currency"],
+            source=row["source"],
+            security_type=SecurityType(row["security_type"]),
+            market_sector=MarketSector(row["market_sector"]) if row["market_sector"] else None,
+            isin=row["isin"],
+            figi=row["figi"],
+            picture=row["picture"],
+            manual_price=row["manual_price"] if "manual_price" in row else None,
+            is_user_created=row["user_created"],
+        )
+
+    @classmethod
     def from_dict(cls, **kwargs) -> "Symbol":
         item = cls(**{k: v for k, v in kwargs.items() if k in cls.__dataclass_fields__})
         if "security_type" in kwargs and kwargs["security_type"]:
@@ -168,7 +158,37 @@ class Symbol:
         }
 
 
-def search_symbol(db, query: str) -> list[Symbol]:
+def build_symbol_picture_url(item: Symbol) -> str | None:
+    if item.isin:
+        return f"https://assets.parqet.com/logos/isin/{item.isin}"
+    else:
+        ttype = {
+            SecurityType.COMMON_STOCK: "symbol",
+            SecurityType.ETP: "symbol",
+            SecurityType.GDR: "symbol",
+            SecurityType.CRYPTO: "crypto",
+        }.get(item.security_type, "unknown")
+        if ttype != "unknown":
+            return f"https://assets.parqet.com/logos/{ttype}/{item.ticker}"
+
+
+def is_supported_ticker(ticker: str) -> bool:
+    """
+    Checks if the ticker is supported by the system.
+    """
+    if not ticker:
+        return False
+    ticker = ticker.strip().upper()
+
+    is_supported = "." not in ticker[1:]
+    is_supported &= not re.search(r"^-?\d+X SHORT\b", ticker)
+    is_supported &= not re.search(r"^-?\d+X LONG\b", ticker)
+    is_supported &= not re.search(r"^LS \d+X\b", ticker)
+
+    return is_supported
+
+
+def search_symbol(db: Connection, query: str) -> list[Symbol]:
     like_query = f"%{query}%"
     sql = """
         SELECT id, ticker, name, currency, source, security_type, market_sector,
@@ -186,79 +206,59 @@ def search_symbol(db, query: str) -> list[Symbol]:
         cursor.execute(sql, (like_query,) * 4)
         rows = cursor.fetchall()
 
-    return [
-        Symbol(
-            id=row["id"],
-            ticker=row["ticker"],
-            name=row["name"],
-            currency=row["currency"],
-            source=row["source"],
-            security_type=SecurityType(row["security_type"]),
-            market_sector=MarketSector(row["market_sector"]) if row["market_sector"] else None,
-            isin=row["isin"],
-            figi=row["figi"],
-            picture=row["picture"],
-            is_user_created=False,
-        )
-        for row in rows
-    ]
+    return [Symbol.from_row(row) for row in rows]
 
 
-def get_symbol_by_ticker(db, ticker: str) -> Symbol | None:
+def get_symbol_by_ticker(db: Connection, ticker: str) -> Symbol:
     """
     Gets a symbol by its ticker from the database.
     """
-    assert ticker, "Ticker cannot be None or empty"
+    if not ticker:
+        raise HTTPException(status_code=400, detail=required_msg("ticker"))
+
+    sql = """
+        SELECT id, ticker, name, currency, source, security_type, market_sector,
+               isin, figi, picture, user_created
+        FROM symbols
+        WHERE NOT user_created AND ticker = %s
+    """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
-        cursor.execute(
-            """
-            SELECT id, ticker, name, currency, source, security_type, market_sector,
-                   isin, figi, picture, user_created
-            FROM symbols
-            WHERE NOT user_created AND ticker = %s
-            """,
-            (ticker,),
-        )
-        row = cursor.fetchone()
+        cursor.execute(sql, (ticker,))
+        result = cursor.fetchone()
 
-    if not row:
-        return None
+    if not result:
+        raise HTTPException(status_code=404, detail=f"Symbol {ticker} not found")
 
-    return Symbol(
-        id=row["id"],
-        ticker=row["ticker"],
-        name=row["name"],
-        currency=row["currency"],
-        source=row["source"],
-        security_type=SecurityType(row["security_type"]),
-        market_sector=MarketSector(row["market_sector"]) if row["market_sector"] else None,
-        isin=row["isin"],
-        figi=row["figi"],
-        picture=row["picture"],
-        is_user_created=row["user_created"],
-    )
+    return Symbol.from_row(result)
 
 
-def create_symbol(db, symbol: Symbol) -> Symbol:
+def create_symbol(db: Connection, symbol: Symbol) -> Symbol:
     """
     Creates a symbol in the database.
     """
-    assert symbol, "Symbol object cannot be None"
-    assert symbol.ticker, "Ticker cannot be None"
-    assert symbol.name, "Name cannot be None"
-    assert symbol.currency, "Currency cannot be None"
-    assert symbol.source, "Source cannot be None"
-    assert symbol.security_type, "Security type cannot be None"
+    if not symbol.ticker:
+        raise HTTPException(status_code=400, detail=required_msg("symbol.ticker"))
+    if not symbol.name:
+        raise HTTPException(status_code=400, detail=required_msg("symbol.name"))
+    if not symbol.currency:
+        raise HTTPException(status_code=400, detail=required_msg("symbol.currency"))
+    if not symbol.source:
+        raise HTTPException(status_code=400, detail=required_msg("symbol.source"))
+    if not symbol.security_type:
+        raise HTTPException(status_code=400, detail=required_msg("symbol.security_type"))
+
+    sql = """
+        INSERT INTO symbols (
+            ticker, name, currency, source, security_type,
+            market_sector, isin, figi, picture, user_created
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
+    """
 
     with db.cursor() as cursor:
         cursor.execute(
-            """
-            INSERT INTO symbols (
-                ticker, name, currency, source, security_type, market_sector, isin, figi, picture, user_created
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id
-            """,
+            sql,
             (
                 symbol.ticker,
                 symbol.name,
@@ -272,10 +272,11 @@ def create_symbol(db, symbol: Symbol) -> Symbol:
                 symbol.is_user_created,
             ),
         )
-        result = cursor.fetchone()
-        if not result:
-            raise Exception("Failed to create symbol")
+        row = cursor.fetchone()
 
-        symbol.id = result[0]
-        db.commit()
+    if not row:
+        raise HTTPException(status_code=500, detail="Failed to create symbol")
+
+    symbol.id = row[0]
+    db.commit()
     return symbol
