@@ -28,7 +28,7 @@ ALPHA_VANTAGE_ENABLED = os.getenv("ALPHA_VANTAGE_ENABLED", False) == "True"
 OPENFIGI_ENABLED = os.getenv("OPENFIGI_ENABLED", False) == "True"
 CNBC_ENABLED = os.getenv("CNBC_ENABLED", False) == "True"
 
-cors_origins = ["https://richjet-web.onrender.com", "https://iagocanalejas.com"]
+cors_origins = ["https://richjet-web.onrender.com", "https://richjet.me"]
 if os.getenv("DEBUG", False) == "True":
     cors_origins = ["http://localhost:5173"]
 
