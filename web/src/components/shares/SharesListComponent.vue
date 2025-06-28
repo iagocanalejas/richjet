@@ -6,8 +6,13 @@
                 v-for="(item, index) in visibleItems"
                 :key="index"
                 @click="openTransactionModal(item)"
-                class="flex items-center justify-between bg-gray-800 p-4 rounded-lg space-x-4 cursor-pointer"
+                class="relative flex items-center justify-between bg-gray-800 p-4 rounded-lg space-x-4 cursor-pointer"
             >
+                <div
+                    class="absolute top-0 left-4 -translate-y-1/2 bg-gray-600 text-white text-xs px-2 py-0.5 rounded shadow"
+                >
+                    {{ item.source !== 'created' ? item.source : 'N/A' }}
+                </div>
                 <SharesItemComponent
                     :item="item"
                     @favorite="$emit('favorite', item)"

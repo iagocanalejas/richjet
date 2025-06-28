@@ -12,7 +12,7 @@ sys.platform: linux
 ### error information
 
 ```
-An unexpected error has occurred: ValueError: Migration 0002_session.sql has a different hash in the database: found=bc610c05a1f607fc1ef0aca0b5882d2f986f1f7aa46c40f5382c58e2e5826f75 existing=48749390cc2c95516cde7b87a200c10b3fc35ad80e06b4338e7ae876a88c7ea8
+An unexpected error has occurred: ValueError: Migration 0004_symbols.sql has a different hash in the database: found=559d20d9b797e314b47710127b7239d80a782f8d2c578fdde8a77923d042542d existing=e85a010fd4fc6c82d0f385e821edf2d08dce4d8a49039f23562214055f28b49b
 ```
 
 ```
@@ -36,5 +36,5 @@ Traceback (most recent call last):
     raise ValueError(
     ...<2 lines>...
     )
-ValueError: Migration 0002_session.sql has a different hash in the database: found=bc610c05a1f607fc1ef0aca0b5882d2f986f1f7aa46c40f5382c58e2e5826f75 existing=48749390cc2c95516cde7b87a200c10b3fc35ad80e06b4338e7ae876a88c7ea8
+ValueError: Migration 0004_symbols.sql has a different hash in the database: found=559d20d9b797e314b47710127b7239d80a782f8d2c578fdde8a77923d042542d existing=e85a010fd4fc6c82d0f385e821edf2d08dce4d8a49039f23562214055f28b49b
 ```
