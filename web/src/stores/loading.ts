@@ -3,6 +3,8 @@ import { computed, ref } from 'vue';
 
 export const useLoadingStore = defineStore('loading', () => {
     const _loading = ref(0);
+    const isFirstLoadCompleted = ref(true);
+
     const isLoading = computed(() => _loading.value > 0);
 
     function start() {
@@ -14,5 +16,10 @@ export const useLoadingStore = defineStore('loading', () => {
         }
     }
 
-    return { isLoading, start, stop };
+    return {
+        isFirstLoadCompleted,
+        isLoading,
+        start,
+        stop,
+    };
 });

@@ -84,9 +84,12 @@
         </nav>
     </header>
 
-    <LoadingBar />
+    <LoadingBar v-if="isLoading" />
+    <WakingUpModal v-if="!isFirstLoadCompleted" />
+
     <LandingView v-if="!isLogged" @sign-in="signIn" />
     <RouterView v-else />
+
     <ErrorsModal v-if="isShowingErrorsModal" />
 
     <footer class="bg-gray-900 text-gray-400 py-6">
@@ -114,11 +117,14 @@ import AccountSelector from './components/utils/AccountSelector.vue';
 import type { Account } from './types/user';
 import ErrorsModal from './components/modals/ErrorsModal.vue';
 import { useErrorsStore } from './stores/errors';
+import WakingUpModal from './components/modals/WakingUpModal.vue';
+import { useLoadingStore } from './stores/loading';
 
 const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
 const { user, isLogged } = storeToRefs(authStore);
 const { currency, accounts, account: selectedAccount } = storeToRefs(settingsStore);
+const { isLoading, isFirstLoadCompleted } = storeToRefs(useLoadingStore());
 const { hasErrors: isShowingErrorsModal } = storeToRefs(useErrorsStore());
 const currentYear = new Date().getFullYear();
 
