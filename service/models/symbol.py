@@ -19,7 +19,7 @@ class SecurityType(Enum):
     @classmethod
     def from_str(cls, security_type: str) -> "SecurityType":
         match security_type.upper():
-            case "STOCK" | "COMMON STOCK" | "EQUITY" | "CSRT":
+            case "STOCK" | "COMMON STOCK" | "ST" | "EQUITY" | "CSRT" | "PR" | "PREFERRED" | "PREFERRED STOCK":
                 # alpha-vantage uses equity for stocks
                 return cls.COMMON_STOCK
             case "ETP" | "ETF" | "FUND":
@@ -30,7 +30,7 @@ class SecurityType(Enum):
                 return cls.INDEX
             case "CRYPTO":
                 return cls.CRYPTO
-            case "BOND":
+            case "BOND" | "BND":
                 return cls.BOND
             case _:
                 raise ValueError(f"Unknown security type: {security_type}")

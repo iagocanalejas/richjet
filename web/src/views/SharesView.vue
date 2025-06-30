@@ -58,7 +58,7 @@
 <script setup lang="ts">
 import SearchComponent from '@/components/SearchComponent.vue';
 import SharesListComponent from '@/components/shares/SharesListComponent.vue';
-import { ref, type Ref } from 'vue';
+import { ref, watch, type Ref } from 'vue';
 import { useStocksStore } from '@/stores/stocks';
 import type { StockSymbolForDisplay, StockSymbol } from '@/types/stock';
 import { debounce } from '@/utils/utils';
@@ -110,6 +110,16 @@ async function _filterResults(query: string, is_load_more: boolean = false) {
         isFavorite: isInWatchlist(s),
     }));
 }
+
+watch(
+    () => watchlist.value,
+    () => {
+        filteredResults.value = filteredResults.value.map((s) => ({
+            ...s,
+            isFavorite: isInWatchlist(s),
+        }));
+    }
+);
 
 function toggleFavorite(result: StockSymbolForDisplay) {
     result.isFavorite = !result.isFavorite;

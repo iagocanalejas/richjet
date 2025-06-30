@@ -36,6 +36,7 @@ const messages = [
 const currentMessage = ref(messages[0]);
 let intervalId: number;
 
+// TODO: while this is open, if a fetch times out, we should retry the fetch
 onMounted(() => {
     let index = 0;
     intervalId = setInterval(() => {

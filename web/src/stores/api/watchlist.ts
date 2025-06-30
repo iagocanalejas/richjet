@@ -128,10 +128,7 @@ async function updateWatchlistSymbolPrice(symbol_id: string, price?: number) {
 async function removeFromWatchlist(item: StockSymbol) {
     const url = `${BASE_URL}/watchlist/${item.id}`;
     try {
-        const res = await fetch(`${BASE_URL}/watchlist/${item.id!}`, {
-            method: 'DELETE',
-            credentials: 'include',
-        });
+        const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
         if (!res.ok) {
             addError({
                 readable_message: `Error removing ${item.ticker} from watchlist`,

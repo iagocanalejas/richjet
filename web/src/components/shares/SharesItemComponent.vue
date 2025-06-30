@@ -31,6 +31,7 @@
         </div>
 
         <button
+            v-if="!item.isFavorite || item.id"
             @click.stop="emit('favorite', item)"
             class="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
             :title="item.isFavorite ? 'Unfavorite' : 'Favorite'"
