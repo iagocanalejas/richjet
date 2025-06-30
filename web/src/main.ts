@@ -12,27 +12,56 @@ const app = createApp(App);
 app.use(pinia);
 app.use(router);
 
-// monkey patch fetch to use loading store
 const loadingStore = useLoadingStore(pinia);
-const originalFetch = window.fetch;
+
+const MAX_RETRIES = Infinity;
+const RETRY_DELAY = 1000;
 
 const wakeUpTimeout = window.setTimeout(() => {
     loadingStore.isFirstLoadCompleted = false;
 }, 3000);
 
-// @ts-expect-error: unmatched function signature
-window.fetch = async (resource: RequestInfo, options: RequestInit & { timeout?: number } = {}) => {
-    const { timeout = 30000, ...rest } = options;
+// monkey patch fetch to use loading store
+const originalFetch = window.fetch.bind(window);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(`⏱️ Request ${resource} timed out`), timeout);
+// @ts-expect-error: unmatched function signature
+window.fetch = async function fetchWithRetry(resource: RequestInfo, options: RequestInit & { timeout?: number } = {}) {
+    const { timeout = 20000, ...rest } = options;
+
+    let attempt = 0;
+
+    async function tryFetch(): Promise<Response> {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(`⏱️ Request ${resource} timed out`), timeout);
+
+        attempt++;
+
+        try {
+            return await originalFetch(resource, {
+                ...rest,
+                signal: controller.signal,
+            });
+        } catch (err: any) {
+            const isTimeout = err.name === 'AbortError' || (err && err.includes('timed out'));
+
+            if (isTimeout && !loadingStore.isFirstLoadCompleted && attempt < MAX_RETRIES) {
+                console.warn(`Retrying request to ${resource} (attempt ${attempt}) due to timeout`);
+                clearTimeout(timeoutId);
+                await new Promise((r) => setTimeout(r, RETRY_DELAY));
+                return tryFetch();
+            }
+
+            throw err;
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
 
     loadingStore.start();
 
     try {
-        return await originalFetch(resource, { ...rest, signal: controller.signal });
+        return await tryFetch();
     } finally {
-        clearTimeout(timeoutId);
         clearTimeout(wakeUpTimeout);
         loadingStore.isFirstLoadCompleted = true;
         loadingStore.stop();

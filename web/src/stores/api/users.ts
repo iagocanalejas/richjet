@@ -7,26 +7,18 @@ const addError = (e: CustomError) => useErrorsStore().addError(e);
 
 async function loadUser() {
     const url = `${BASE_URL}/auth/me`;
-    try {
-        const res = await fetch(url, { method: 'GET', credentials: 'include' });
-        if (!res.ok) {
-            if (res.status === 401) return;
-            addError({
-                readable_message: 'Failed to load user',
-                trace: { status: res.status, statusText: res.statusText, url: res.url },
-            });
-            return;
-        }
-        return (await res.json()) as User;
-    } catch (err) {
+    const res = await fetch(url, { method: 'GET', credentials: 'include' });
+    if (!res.ok) {
+        if (res.status === 401) return;
         addError({
             readable_message: 'Failed to load user',
-            trace: {
-                status: err instanceof Error ? err.message : String(err),
-                url: url,
-            },
+            trace: { status: res.status, statusText: res.statusText, url: res.url },
         });
+        return;
     }
+    return (await res.json()) as User;
+
+    // HACK: Let errors bubble up as this is the main entry point we need to use to handle server wake up/
 }
 
 async function getUserSettings() {
