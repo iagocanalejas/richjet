@@ -15,6 +15,9 @@
 
             <div class="text-center space-y-1">
                 <h2 class="text-xl font-bold tracking-wide text-blue-400">Waking up the servers...</h2>
+                <h4 class="text-xl font-bold tracking-wide text-blue-400">
+                    This can take up to 1 minute as this is a beta service
+                </h4>
                 <p class="text-sm text-gray-300">{{ currentMessage }}</p>
             </div>
         </div>

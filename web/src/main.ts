@@ -41,8 +41,11 @@ window.fetch = async function fetchWithRetry(resource: RequestInfo, options: Req
                 ...rest,
                 signal: controller.signal,
             });
-        } catch (err: any) {
-            const isTimeout = err.name === 'AbortError' || (err && err.includes('timed out'));
+        } catch (err) {
+            const isTimeout =
+                err instanceof Error
+                    ? err.name === 'AbortError'
+                    : err && err instanceof String && err.includes('timed out');
 
             if (isTimeout && !loadingStore.isFirstLoadCompleted && attempt < MAX_RETRIES) {
                 console.warn(`Retrying request to ${resource} (attempt ${attempt}) due to timeout`);
