@@ -7,24 +7,32 @@
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">
+                        <span class="text-sm">*</span> Name
+                    </label>
                     <input
-                        v-model="name"
+                        v-model.trim="name"
                         type="text"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
+                        :class="{
+                            'border-red-500 focus:ring-red-500': $errors.name,
+                            'border-gray-700 focus:ring-blue-500': !$errors.name,
+                        }"
+                        required
                     />
+                    <p v-if="$errors.name" class="mt-1 text-sm text-red-400">{{ $errors.name }}</p>
                 </div>
             </div>
 
             <div class="flex flex-col gap-2 pt-2">
                 <button
-                    @click="setName()"
+                    @click="save()"
                     class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer"
                 >
                     Create Account
                 </button>
                 <button
-                    @click="$emit('close')"
+                    @click="close()"
                     class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer"
                 >
                     Cancel
@@ -35,18 +43,37 @@
 </template>
 
 <script setup lang="ts">
+import type { Account } from '@/types/user';
 import { ref } from 'vue';
+
+const props = defineProps({
+    accounts: {
+        type: Array as () => Account[],
+        required: true,
+    },
+});
 
 const emit = defineEmits(['set-name', 'close']);
 
 const name = ref('');
+const $errors = ref<{ name?: string }>({});
 
-function setName() {
-    if (name.value.trim() === '') {
-        alert('Please enter a valid name.');
+function save() {
+    $errors.value = {};
+    if (!name.value) {
+        $errors.value.name = 'Name cannot be empty.';
+        return;
+    }
+    if (props.accounts.some((a) => a.name.toUpperCase() === name.value.toUpperCase())) {
+        $errors.value.name = 'Name already exists.';
         return;
     }
     emit('set-name', name.value.trim());
+}
+
+function close() {
+    $errors.value = {};
+    emit('close');
 }
 </script>
 

@@ -24,15 +24,23 @@
 
             <div v-if="dividendType === 'cash'" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Amount (Cash)</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">
+                        <span class="text-sm">*</span> Amount (Cash)
+                    </label>
                     <input
                         v-model="priceInput"
                         type="text"
                         inputmode="decimal"
                         pattern="[0-9]*[.,]?[0-9]*"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
                         @input="transactionCopy.price = normalizePriceInput(priceInput)"
+                        :class="{
+                            'border-red-500 focus:ring-red-500': $errors.price,
+                            'border-gray-700 focus:ring-blue-500': !$errors.price,
+                        }"
+                        required
                     />
+                    <p v-if="$errors.price" class="mt-1 text-sm text-red-400">{{ $errors.price }}</p>
                 </div>
 
                 <div>
@@ -47,14 +55,22 @@
 
             <div v-else class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Quantity (Shares)</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">
+                        <span class="text-sm">*</span> Quantity (Shares)
+                    </label>
                     <input
                         v-model.number="transactionCopy.quantity"
                         type="number"
-                        min="0"
-                        step="0.01"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="1"
+                        step="1"
+                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
+                        :class="{
+                            'border-red-500 focus:ring-red-500': $errors.quantity,
+                            'border-gray-700 focus:ring-blue-500': !$errors.quantity,
+                        }"
+                        required
                     />
+                    <p v-if="$errors.quantity" class="mt-1 text-sm text-red-400">{{ $errors.quantity }}</p>
                 </div>
 
                 <div>
@@ -75,7 +91,7 @@
                     Add {{ dividendType === 'cash' ? 'Cash' : 'Stock' }} Dividend
                 </button>
                 <button
-                    @click="$emit('close')"
+                    @click="close()"
                     class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-medium transition cursor-pointer"
                 >
                     Cancel
@@ -101,6 +117,7 @@ const emit = defineEmits(['add-dividend', 'close']);
 
 const dividendType = ref<'cash' | 'stock'>('cash');
 const priceInput = ref('');
+const $errors = ref<{ price?: string; quantity?: string }>({});
 
 const transactionCopy = reactive({ ...props.transaction });
 watch(
@@ -109,16 +126,23 @@ watch(
 );
 
 function submit() {
+    $errors.value = {};
     transactionCopy.transaction_type = dividendType.value === 'cash' ? 'DIVIDEND-CASH' : 'DIVIDEND';
     if (transactionCopy.transaction_type === 'DIVIDEND-CASH' && transactionCopy.price <= 0) {
-        alert('Please enter a valid price.');
+        $errors.value.price = 'Price must be greater than 0.';
         return;
     }
     if (transactionCopy.transaction_type === 'DIVIDEND' && transactionCopy.quantity <= 0) {
-        alert('Please enter a valid quantity.');
+        $errors.value.quantity = 'Quantity must be greater than 0.';
         return;
     }
+
     emit('add-dividend', transactionCopy);
+}
+
+function close() {
+    $errors.value = {};
+    emit('close');
 }
 
 function tabClass(selected: boolean) {

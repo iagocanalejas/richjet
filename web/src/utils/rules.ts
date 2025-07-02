@@ -1,7 +1,5 @@
 import type { PortfolioItem, TransactionItem, TransactionType } from '@/types/portfolio';
 
-// TODO: move a lot of repeated logic here
-
 export function isDividend(type: TransactionType): boolean {
     return type === 'DIVIDEND' || type === 'DIVIDEND-CASH';
 }

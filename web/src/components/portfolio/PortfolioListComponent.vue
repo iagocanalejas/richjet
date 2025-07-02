@@ -189,20 +189,12 @@ async function addDividend(t: TransactionItem) {
 }
 
 async function buy(t: TransactionItem) {
-    if (t.quantity <= 0 || t.price <= 0) {
-        alert('Please enter a valid quantity and price.');
-        return;
-    }
     await portfolioStore.addTransaction(t);
     transaction.value = undefined;
     isTransactionModalOpen.value = false;
 }
 
 async function sell(t: TransactionItem) {
-    if (t.quantity <= 0 || t.price <= 0) {
-        alert('Please enter a valid quantity and price.');
-        return;
-    }
     t.transaction_type = 'SELL';
     await portfolioStore.addTransaction(t);
     transaction.value = undefined;

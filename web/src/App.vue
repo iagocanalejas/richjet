@@ -140,10 +140,6 @@ function signOut(): void {
 }
 
 function addAccount(account: Account) {
-    if (accounts.value.some((a) => a.name === account.name)) {
-        alert('Account already exists');
-        return;
-    }
     settingsStore.createAccount(account);
 }
 

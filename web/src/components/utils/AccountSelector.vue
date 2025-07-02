@@ -43,7 +43,12 @@
         Add account
     </button>
 
-    <AccountNameModal v-if="isAccountModalOpen" @set-name="addAccount" @close="isAccountModalOpen = false" />
+    <AccountNameModal
+        v-if="isAccountModalOpen"
+        :accounts="accounts"
+        @set-name="addAccount"
+        @close="isAccountModalOpen = false"
+    />
 </template>
 
 <script setup lang="ts">

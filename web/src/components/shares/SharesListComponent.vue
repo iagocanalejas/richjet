@@ -106,19 +106,11 @@ function openTransactionModal(item: StockSymbolForDisplay) {
 }
 
 function buy(item: TransactionItem) {
-    if (item.quantity <= 0 || item.price <= 0) {
-        alert('Please enter a valid quantity and price.');
-        return;
-    }
     emit('transact', item);
     closeModal();
 }
 
 function sell(item: TransactionItem) {
-    if (item.quantity <= 0 || item.price <= 0) {
-        alert('Please enter a valid quantity and price.');
-        return;
-    }
     item.transaction_type = 'SELL';
     emit('transact', item);
     closeModal();

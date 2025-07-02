@@ -13,8 +13,14 @@
                     <input
                         v-model.trim="shareCopy.ticker"
                         type="text"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
+                        :class="{
+                            'border-red-500 focus:ring-red-500': $errors.ticker,
+                            'border-gray-700 focus:ring-blue-500': !$errors.ticker,
+                        }"
+                        required
                     />
+                    <p v-if="$errors.ticker" class="mt-1 text-sm text-red-400">{{ $errors.ticker }}</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">
@@ -23,8 +29,14 @@
                     <input
                         v-model.trim="shareCopy.name"
                         type="text"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
+                        :class="{
+                            'border-red-500 focus:ring-red-500': $errors.name,
+                            'border-gray-700 focus:ring-blue-500': !$errors.name,
+                        }"
+                        required
                     />
+                    <p v-if="$errors.name" class="mt-1 text-sm text-red-400">{{ $errors.name }}</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">
@@ -32,15 +44,21 @@
                     </label>
                     <select
                         v-model="shareCopy.security_type"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
+                        :class="{
+                            'border-red-500 focus:ring-red-500': $errors.security_type,
+                            'border-gray-700 focus:ring-blue-500': !$errors.security_type,
+                        }"
+                        required
                     >
                         <option v-for="(label, type) in securityTypeLabels" :key="type" :value="type">
                             {{ label }}
                         </option>
                     </select>
+                    <p v-if="$errors.security_type" class="mt-1 text-sm text-red-400">{{ $errors.security_type }}</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1"> Market Sector</label>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Market Sector</label>
                     <select
                         v-model="shareCopy.market_sector"
                         class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -76,7 +94,7 @@
                     </button>
                 </div>
                 <button
-                    @click="$emit('close')"
+                    @click="close()"
                     class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-medium transition cursor-pointer"
                 >
                     Cancel
@@ -101,6 +119,7 @@ const props = defineProps({
 const emit = defineEmits(['save', 'close']);
 
 const shareCopy = ref({ ...props.share });
+const $errors = ref<Partial<Record<keyof StockSymbol, string>>>({});
 
 const securityTypeLabels: Record<SecurityType, string> = {
     STOCK: 'Stock',
@@ -130,21 +149,25 @@ watch(
 );
 
 function save() {
-    // TODO: errors displayed in the form
-    if (!shareCopy.value.ticker || !shareCopy.value.name || !shareCopy.value.security_type) {
-        alert('Please fill in all required fields.');
-        return;
-    }
-    if (shareCopy.value.isin && !isValidISIN(shareCopy.value.isin)) {
-        alert('Invalid ISIN format.');
-        return;
-    }
+    $errors.value = {};
+    if (!shareCopy.value.ticker) $errors.value.ticker = 'Ticker is required.';
+    if (!shareCopy.value.name) $errors.value.name = 'Name is required.';
+    if (!shareCopy.value.security_type) $errors.value.security_type = 'Security type is required.';
+    if (shareCopy.value.isin && !isValidISIN(shareCopy.value.isin)) $errors.value.isin = 'Invalid ISIN format.';
+
+    if (Object.keys($errors.value).length > 0) return;
     shareCopy.value.ticker = shareCopy.value.ticker.toUpperCase().trim();
     emit('save', shareCopy.value);
 }
 
 function reset() {
     shareCopy.value = { ...props.share };
+    $errors.value = {};
+}
+
+function close() {
+    $errors.value = {};
+    emit('close');
 }
 </script>
 
