@@ -5,11 +5,13 @@ export interface User {
     picture: string;
 }
 
+export const AccountTypes = ['BROKER', 'BANK'] as const;
+export type AccountType = (typeof AccountTypes)[number];
 export type Account = {
     id: string;
     name: string;
     user_id: string;
-    account_type: 'BROKER' | 'BANK';
+    account_type: AccountType;
 };
 
 export type Settings = {

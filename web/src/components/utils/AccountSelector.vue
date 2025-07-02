@@ -43,10 +43,10 @@
         Add account
     </button>
 
-    <AccountNameModal
+    <AccountModal
         v-if="isAccountModalOpen"
         :accounts="accounts"
-        @set-name="addAccount"
+        @save="addAccount"
         @close="isAccountModalOpen = false"
     />
 </template>
@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import type { Account } from '@/types/user';
 import { ref } from 'vue';
-import AccountNameModal from '../modals/AccountNameModal.vue';
+import AccountModal from '../modals/AccountModal.vue';
 
 defineProps({
     isLogged: { type: Boolean, default: false },
@@ -72,9 +72,8 @@ function select(item?: Account) {
     isDropdownOpen.value = false;
 }
 
-function addAccount(name: string) {
-    // TODO: support different types of accounts
-    emit('add', { name, account_type: 'BROKER' } as Account);
+function addAccount(account: Omit<Account, 'id' | 'user_id'>) {
+    emit('add', account);
     isDropdownOpen.value = false;
     isAccountModalOpen.value = false;
 }

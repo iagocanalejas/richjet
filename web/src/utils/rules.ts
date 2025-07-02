@@ -1,4 +1,5 @@
 import type { PortfolioItem, TransactionItem, TransactionType } from '@/types/portfolio';
+import type { Account } from '@/types/user';
 
 export function isDividend(type: TransactionType): boolean {
     return type === 'DIVIDEND' || type === 'DIVIDEND-CASH';
@@ -10,6 +11,10 @@ export function isTradePortfolioItem(item: PortfolioItem): boolean {
 
 export function isPortfolioItemWithManualPrice(item: PortfolioItem): boolean {
     return item.currentPrice === 0;
+}
+
+export function accountCanHaveShares(account?: Account): boolean {
+    return !account || account.account_type === 'BROKER';
 }
 
 export function hasBoughtSharesIfNeeded(transaction: TransactionItem, transactions: TransactionItem[]): boolean {

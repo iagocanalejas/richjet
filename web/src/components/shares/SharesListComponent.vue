@@ -62,6 +62,8 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import TransactionModal from '@/components/modals/TransactionModal.vue';
 import IntersectionObserver from '@/components/utils/IntersectionObserver.vue';
 import type { TransactionItem } from '@/types/portfolio';
+import { accountCanHaveShares } from '@/utils/rules';
+import { useErrorsStore } from '@/stores/errors';
 
 const ITEMS_PER_PATE = 20;
 
@@ -79,6 +81,7 @@ const emit = defineEmits(['favorite', 'transact', 'load-more']);
 
 const { currency, account: selectedAccount } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());
+const { addError } = useErrorsStore();
 
 // pagination
 const currentPage = ref(0);
@@ -90,6 +93,11 @@ const transaction = ref<Omit<TransactionItem, 'id' | 'user_id'> | undefined>();
 
 function openTransactionModal(item: StockSymbolForDisplay) {
     if (!item.isFavorite) return;
+    if (!accountCanHaveShares(selectedAccount.value)) {
+        addError({ readable_message: 'Invalid account type.' });
+        return;
+    }
+
     isTransactionModalOpen.value = true;
     transaction.value = {
         symbol: item,
