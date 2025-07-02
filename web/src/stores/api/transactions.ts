@@ -10,8 +10,9 @@ async function loadTransactions() {
     try {
         const res = await fetch(url, { method: 'GET', credentials: 'include' });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Failed to fetch transactions',
+                readable_message: err.detail ?? 'Failed to fetch transactions',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return [];
@@ -41,8 +42,9 @@ async function addTransaction(transaction: TransactionItem) {
             body: JSON.stringify(transaction),
         });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Error adding transaction',
+                readable_message: err.detail ?? 'Error adding transaction',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return;
@@ -69,8 +71,9 @@ async function transferStock(symbol: string, fromAccount?: string, toAccount?: s
             body: JSON.stringify({ from_account: fromAccount, to_account: toAccount }),
         });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Failed to transfer stock',
+                readable_message: err.detail ?? 'Failed to transfer stock',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return [];
@@ -93,8 +96,9 @@ async function removeTransaction(transactionId: string) {
     try {
         const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Error removing transaction',
+                readable_message: err.detail ?? 'Error removing transaction',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return false;

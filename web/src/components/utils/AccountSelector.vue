@@ -12,24 +12,47 @@
 
         <div
             v-if="isDropdownOpen"
-            class="absolute right-0 z-50 mt-2 w-48 bg-gray-800 text-white rounded-md shadow-lg ring-1 ring-white/10"
+            class="absolute right-0 z-50 mt-2 w-56 bg-gray-800 text-white rounded-lg shadow-lg ring-1 ring-white/10"
         >
-            <div @click="select()" class="px-4 py-2 hover:bg-gray-700 cursor-pointer">All</div>
+            <div @click="select()" class="flex items-center justify-between px-4 py-2 hover:bg-gray-700 cursor-pointer">
+                All
+            </div>
 
             <div class="border-t border-gray-600"></div>
 
             <div
                 v-for="account in accounts"
                 :key="account.name"
-                class="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                @click="select(account)"
+                class="group flex items-center justify-between px-4 py-2 hover:bg-gray-700"
             >
-                {{ account.name }}
+                <span @click="select(account)" class="cursor-pointer truncate">
+                    {{ account.name }}
+                </span>
+
+                <button
+                    @click.stop="deleteAccount(account)"
+                    class="p-1 rounded hover:bg-red-600 transition group-hover:opacity-100 opacity-70 cursor-pointer"
+                    title="Delete"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="w-4 h-4 text-white"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6L18 18M6 18L18 6" />
+                    </svg>
+                </button>
             </div>
 
             <div class="border-t border-gray-600"></div>
 
-            <div class="px-4 py-2 text-blue-400 hover:bg-gray-700 cursor-pointer" @click="isAccountModalOpen = true">
+            <div
+                class="px-4 py-2 text-blue-400 hover:bg-gray-700 hover:text-blue-300 cursor-pointer"
+                @click="isAccountModalOpen = true"
+            >
                 Add Account
             </div>
         </div>
@@ -62,13 +85,18 @@ defineProps({
     selected: { type: Object as () => Account | undefined, default: undefined },
 });
 
-const emit = defineEmits(['select', 'add']);
+const emit = defineEmits(['select', 'add', 'delete']);
 
 const isDropdownOpen = ref(false);
 const isAccountModalOpen = ref(false);
 
 function select(item?: Account) {
     emit('select', item);
+    isDropdownOpen.value = false;
+}
+
+function deleteAccount(account: Account) {
+    emit('delete', account);
     isDropdownOpen.value = false;
 }
 

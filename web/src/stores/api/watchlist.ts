@@ -10,8 +10,9 @@ async function retrieveWatchlist() {
     try {
         const res = await fetch(url, { method: 'GET', credentials: 'include' });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Failed to fetch watchlist',
+                readable_message: err.detail ?? 'Failed to fetch watchlist',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return [];
@@ -49,8 +50,9 @@ async function addToWatchlist(symbol: StockSymbol) {
             body: JSON.stringify(symbol),
         });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: `Error adding ${symbol.ticker} to watchlist`,
+                readable_message: err.detail ?? `Error adding ${symbol.ticker} to watchlist`,
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return;
@@ -78,8 +80,9 @@ async function addToWatchlistCreatingSymbol(symbol: Omit<StockSymbol, 'id'>) {
             body: JSON.stringify(symbol),
         });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: `Error creating symbol ${symbol.ticker}`,
+                readable_message: err.detail ?? `Error creating symbol ${symbol.ticker}`,
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return;
@@ -107,8 +110,9 @@ async function updateWatchlistSymbolPrice(symbol_id: string, price?: number) {
             body: JSON.stringify({ price }),
         });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: `Error updating manual price for symbol ${symbol_id}`,
+                readable_message: err.detail ?? `Error updating manual price for symbol ${symbol_id}`,
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return;
@@ -130,8 +134,9 @@ async function removeFromWatchlist(item: StockSymbol) {
     try {
         const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: `Error removing ${item.ticker} from watchlist`,
+                readable_message: err.detail ?? `Error removing ${item.ticker} from watchlist`,
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return false;

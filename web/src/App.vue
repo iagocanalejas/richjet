@@ -35,8 +35,9 @@
                 :is-logged="isLogged"
                 :accounts="accounts"
                 :selected="selectedAccount"
-                @add="addAccount"
                 @select="selectedAccount = $event"
+                @add="createAccount"
+                @delete="deleteAccount($event.id)"
             />
 
             <div v-if="isLogged" class="relative">
@@ -114,7 +115,6 @@ import { useAuthStore } from './stores/auth';
 import LoadingBar from './components/LoadingBar.vue';
 import LandingView from './views/LandingView.vue';
 import AccountSelector from './components/utils/AccountSelector.vue';
-import type { Account } from './types/user';
 import ErrorsModal from './components/modals/ErrorsModal.vue';
 import { useErrorsStore } from './stores/errors';
 import WakingUpModal from './components/modals/WakingUpModal.vue';
@@ -124,6 +124,7 @@ const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
 const { user, isLogged } = storeToRefs(authStore);
 const { currency, accounts, account: selectedAccount } = storeToRefs(settingsStore);
+const { createAccount, deleteAccount } = settingsStore;
 const { isLoading, isFirstLoadCompleted } = storeToRefs(useLoadingStore());
 const { hasErrors: isShowingErrorsModal } = storeToRefs(useErrorsStore());
 const currentYear = new Date().getFullYear();
@@ -137,10 +138,6 @@ function signIn() {
 function signOut(): void {
     authStore.logout();
     showMenu.value = false;
-}
-
-function addAccount(account: Account) {
-    settingsStore.createAccount(account);
 }
 
 watch(

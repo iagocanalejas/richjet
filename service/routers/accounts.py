@@ -1,6 +1,6 @@
 from db import get_db
 from fastapi import APIRouter, Body, Depends
-from models.account import Account, create_account, get_accounts_by_user_id
+from models.account import Account, create_account, get_accounts_by_user_id, remove_account_by_id
 
 from routers.auth import get_session
 
@@ -26,3 +26,12 @@ async def api_create_account(
     account = Account.from_dict(**account_data)
     account = create_account(db, session.user.id, account)
     return account.to_dict()
+
+
+@router.delete("/{account_id}")
+async def api_remove_acctoun(
+    account_id: str,
+    db=Depends(get_db),
+    session=Depends(get_session),
+):
+    remove_account_by_id(db, session.user.id, account_id)

@@ -39,6 +39,15 @@ export const useSettingsStore = defineStore('settings', () => {
         account.value = newAccount;
     }
 
+    async function deleteAccount(accountId: string) {
+        const deleted = await AccountsService.removeAccount(accountId);
+        if (!deleted) return;
+        _settings.value.accounts = _settings.value.accounts.filter((a) => a.id !== accountId);
+        if (account.value?.id === accountId) {
+            account.value = undefined;
+        }
+    }
+
     async function _updateCurrency() {
         await UsersService.updateUserCurrency(_settings.value.currency);
     }
@@ -61,5 +70,6 @@ export const useSettingsStore = defineStore('settings', () => {
         accounts,
         account,
         createAccount,
+        deleteAccount,
     };
 });

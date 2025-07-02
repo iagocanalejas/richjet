@@ -10,8 +10,9 @@ async function retrieveAccounts() {
     try {
         const res = await fetch(url, { method: 'GET', credentials: 'include' });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Failed to fetch accounts',
+                readable_message: err.detail ?? 'Failed to fetch accounts',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return [];
@@ -41,8 +42,9 @@ async function addAccount(account: Account) {
             body: JSON.stringify(account),
         });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Error creating account',
+                readable_message: err.detail ?? 'Error creating account',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return;
@@ -56,8 +58,31 @@ async function addAccount(account: Account) {
     }
 }
 
+async function removeAccount(accountId: string) {
+    const url = `${BASE_URL}/accounts/${accountId}`;
+    try {
+        const res = await fetch(url, { method: 'DELETE', credentials: 'include' });
+        if (!res.ok) {
+            const err = await res.json();
+            addError({
+                readable_message: err.detail ?? 'Error deleting account',
+                trace: { status: res.status, statusText: res.statusText, url: res.url },
+            });
+            return false;
+        }
+        return true;
+    } catch (error) {
+        addError({
+            readable_message: 'Error deleting account',
+            trace: { status: (error as Error).message, url },
+        });
+        return false;
+    }
+}
+
 const AccountsService = {
     retrieveAccounts,
     addAccount,
+    removeAccount,
 };
 export default AccountsService;

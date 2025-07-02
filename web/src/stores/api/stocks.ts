@@ -8,16 +8,17 @@ const addError = (e: CustomError) => useErrorsStore().addError(e);
 async function retrieveConversionRate(currency: string) {
     const url = `${BASE_URL}/exchangerate/${currency}`;
     try {
-        const response = await fetch(url, { method: 'GET' });
-        if (!response.ok) {
+        const res = await fetch(url, { method: 'GET' });
+        if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Failed to fetch conversion rate',
-                trace: { status: response.status, statusText: response.statusText, url: response.url },
+                readable_message: err.detail ?? 'Failed to fetch conversion rate',
+                trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return;
         }
 
-        return (await response.json()).conversion_rate as number;
+        return (await res.json()).conversion_rate as number;
     } catch (err) {
         addError({
             readable_message: 'Failed to fetch conversion rate',
@@ -33,16 +34,17 @@ async function symbolSearch(query: string, is_load_more: boolean) {
     const url = `${BASE_URL}/search?q=${query}&load_more=${is_load_more}`;
     try {
         const opts = { method: 'GET', timeout: 15000 };
-        const response = await fetch(url, opts);
-        if (!response.ok) {
+        const res = await fetch(url, opts);
+        if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: `Error searching for stock symbols: ${query}`,
-                trace: { status: response.status, statusText: response.statusText, url: response.url },
+                readable_message: err.detail ?? `Error searching for stock symbols: ${query}`,
+                trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return [];
         }
 
-        const data = await response.json();
+        const data = await res.json();
         if (data.errors?.length) {
             addError({
                 readable_message: `Error searching for stock symbols: ${query}`,

@@ -10,8 +10,9 @@ async function loadUser() {
     const res = await fetch(url, { method: 'GET', credentials: 'include' });
     if (!res.ok) {
         if (res.status === 401) return;
+        const err = await res.json();
         addError({
-            readable_message: 'Failed to load user',
+            readable_message: err.detail ?? 'Failed to load user',
             trace: { status: res.status, statusText: res.statusText, url: res.url },
         });
         return;
@@ -26,8 +27,9 @@ async function getUserSettings() {
     try {
         const res = await fetch(url, { method: 'GET', credentials: 'include' });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Failed to fetch user settings',
+                readable_message: err.detail ?? 'Failed to fetch user settings',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return;
@@ -54,8 +56,9 @@ async function updateUserCurrency(currency: string) {
             body: JSON.stringify({ currency }),
         });
         if (!res.ok) {
+            const err = await res.json();
             addError({
-                readable_message: 'Error updating user settings',
+                readable_message: err.detail ?? 'Error updating user settings',
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return;

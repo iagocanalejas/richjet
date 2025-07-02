@@ -19,7 +19,7 @@ export function accountCanHaveShares(account?: Account): boolean {
 
 export function hasBoughtSharesIfNeeded(transaction: TransactionItem, transactions: TransactionItem[]): boolean {
     return (
-        isDividend(transaction.transaction_type) &&
+        !isDividend(transaction.transaction_type) ||
         transactions.some((t) => t.transaction_type === 'BUY' && t.symbol === transaction.symbol)
     );
 }

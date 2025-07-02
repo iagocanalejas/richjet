@@ -22,7 +22,7 @@ class Account:
     @classmethod
     def from_row(cls, row: RealDictRow) -> "Account":
         return cls(
-            id=row["id"],
+            id=row["account_id"] if "account_id" in row else row["id"],
             user_id=row["user_id"],
             name=row["name"],
             account_type=AccountType(row["account_type"]),
@@ -104,3 +104,33 @@ def create_account(db: Connection, user_id: str, account: Account) -> Account:
     account.id = row[0]
     db.commit()
     return account
+
+
+def remove_account_by_id(db: Connection, user_id: str, account_id: str) -> None:
+    """
+    Removes an account from the database by its ID.
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+
+    if not account_id:
+        raise HTTPException(status_code=400, detail=required_msg("account_id"))
+
+    check_sql = """
+        SELECT count(*) FROM transactions
+        WHERE account_id = %s::uuid
+    """
+
+    delete_sql = """
+        DELETE FROM accounts
+        WHERE id = %s::uuid AND user_id = %s::uuid
+    """
+
+    with db.cursor() as cursor:
+        cursor.execute(check_sql, (account_id,))
+        result = cursor.fetchone()
+        if not result or result[0] > 0:
+            raise HTTPException(status_code=400, detail="Cannot delete account with existing transactions")
+        cursor.execute(delete_sql, (account_id, user_id))
+
+    db.commit()
