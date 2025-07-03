@@ -1,6 +1,6 @@
 from db import get_db
 from fastapi import APIRouter, Body, Depends
-from models.account import Account, create_account, get_accounts_by_user_id, remove_account_by_id
+from models.account import Account, create_account, get_accounts_by_user_id, remove_account_by_id, update_account
 
 from routers.auth import get_session
 
@@ -26,6 +26,19 @@ async def api_create_account(
     account = Account.from_dict(**account_data)
     account = create_account(db, session.user.id, account)
     return account.to_dict()
+
+
+@router.put("/{account_id}")
+async def api_update_account(
+    account_id: str,
+    account_data: dict = Body(...),
+    db=Depends(get_db),
+    session=Depends(get_session),
+):
+    account_data["user_id"] = session.user.id
+    account = Account.from_dict(**account_data)
+    updated_account = update_account(db, session.user.id, account, account_id)
+    return updated_account.to_dict()
 
 
 @router.delete("/{account_id}")

@@ -2,7 +2,7 @@
     <div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center px-4">
         <div class="w-full max-w-md bg-gray-900 text-white rounded-2xl shadow-2xl p-6 space-y-6 animate-fadeIn">
             <div class="text-center space-y-1">
-                <h2 class="text-xl font-bold tracking-wide">New Account Name</h2>
+                <h2 class="text-xl font-bold tracking-wide">New Account</h2>
             </div>
 
             <div class="space-y-4">

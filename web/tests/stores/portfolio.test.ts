@@ -33,6 +33,7 @@ vi.mock('@/stores/watchlist', () => {
 
 vi.mock('@/utils/rules', () => ({
     hasBoughtSharesIfNeeded: vi.fn(),
+    isSavingsAccount: vi.fn(),
 }));
 
 const mockSymbol: StockSymbol = {

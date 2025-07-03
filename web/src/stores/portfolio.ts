@@ -5,7 +5,7 @@ import { useStocksStore } from './stocks';
 import { useSettingsStore } from './settings';
 import { useWatchlistStore } from './watchlist';
 import { useErrorsStore } from './errors';
-import { hasBoughtSharesIfNeeded } from '@/utils/rules';
+import { hasBoughtSharesIfNeeded, isSavingsAccount } from '@/utils/rules';
 import TransactionsService from './api/transactions';
 
 export const usePortfolioStore = defineStore('portfolio', () => {
@@ -261,9 +261,15 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     const portfolioCurrentValue = computed(() => {
         const portfolio = portfolios.value[_accountKey.value];
         if (!portfolio) return 0;
-        return portfolio
+        const portfoliosValue = portfolio
             .filter((p) => p.quantity > 0)
             .reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
+
+        return portfoliosValue + savingAccountsValue.value;
+    });
+
+    const savingAccountsValue = computed(() => {
+        return accounts.value.filter((a) => isSavingsAccount(a)).reduce((acc, a) => acc + a.balance!, 0) ?? 0;
     });
 
     const closedPositions = computed(() => {
@@ -297,6 +303,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         updateManualPrice,
         totalInvested,
         portfolioCurrentValue,
+        savingAccountsValue,
         closedPositions,
         rentability,
     };
