@@ -18,6 +18,16 @@ function addAccount(account: Account) {
     return safeFetch<Account>(res, 'Error creating account');
 }
 
+function updateAccount(account: Account) {
+    const res = fetch(`${BASE_URL}/accounts/${account.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(account),
+    });
+    return safeFetch<Account>(res, 'Error updating account');
+}
+
 function removeAccount(accountId: string) {
     const res = fetch(`${BASE_URL}/accounts/${accountId}`, { method: 'DELETE', credentials: 'include' });
     return safeFetch(res, 'Error deleting account', false);
@@ -26,6 +36,7 @@ function removeAccount(accountId: string) {
 const AccountsService = {
     retrieveAccounts,
     addAccount,
+    updateAccount,
     removeAccount,
 };
 export default AccountsService;

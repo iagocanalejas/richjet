@@ -106,7 +106,7 @@
 
 <script setup lang="ts">
 import { type MarketSector, type SecurityType, type StockSymbol } from '@/types/stock';
-import { isValidISIN } from '@/utils/rules';
+import { isValidISIN } from '@/utils/validators';
 import { ref, watch } from 'vue';
 
 const props = defineProps({

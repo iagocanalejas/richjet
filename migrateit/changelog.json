@@ -69,6 +69,13 @@
             "parents": [
                 "0008_manual_price.sql"
             ]
+        },
+        {
+            "name": "0010_account_balance.sql",
+            "initial": false,
+            "parents": [
+                "0009_constraints.sql"
+            ]
         }
     ]
 }

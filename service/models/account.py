@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 from fastapi import HTTPException
@@ -18,6 +18,8 @@ class Account:
     name: str
     account_type: AccountType
     id: str = ""
+    balance: float | None = None
+    balance_history: list[dict] = field(default_factory=list)
 
     @classmethod
     def from_row(cls, row: RealDictRow) -> "Account":
@@ -26,6 +28,8 @@ class Account:
             user_id=row["user_id"],
             name=row["name"],
             account_type=AccountType(row["account_type"]),
+            balance=row.get("balance", None),
+            balance_history=row.get("balance_history", []),
         )
 
     @classmethod
@@ -41,7 +45,41 @@ class Account:
             "name": self.name,
             "account_type": self.account_type,
             "user_id": self.user_id,
+            "balance": self.balance,
+            "balance_history": self.balance_history,
         }
+
+
+def get_account_by_id(db: Connection, user_id: str, account_id: str) -> Account:
+    """
+    Retrieves an account from the database by user ID and account ID.
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+    if not account_id:
+        raise HTTPException(status_code=400, detail=required_msg("account_id"))
+
+    sql = """
+        SELECT a.id, user_id, name, account_type, a.balance,
+            COALESCE(
+                json_agg(ab ORDER BY ab.updated_at DESC) FILTER (WHERE ab.id IS NOT NULL),
+                '[]'
+            ) AS balance_history
+        FROM accounts a
+        LEFT JOIN account_balances ab ON a.id = ab.account_id
+        WHERE a.id = %s::uuid AND user_id = %s::uuid
+        GROUP BY a.id
+        ORDER BY MIN(a.created_at);
+    """
+
+    with db.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(sql, (account_id, user_id))
+        row = cursor.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    return Account.from_row(row)
 
 
 def get_accounts_by_user_id(db: Connection, user_id: str) -> list[Account]:
@@ -52,9 +90,16 @@ def get_accounts_by_user_id(db: Connection, user_id: str) -> list[Account]:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
     sql = """
-        SELECT id, name, account_type
-        FROM accounts
-        WHERE user_id = %s::uuid
+        SELECT a.id, user_id, name, account_type, a.balance,
+            COALESCE(
+                json_agg(ab ORDER BY ab.updated_at DESC) FILTER (WHERE ab.id IS NOT NULL),
+                '[]'
+            ) AS balance_history
+        FROM accounts a
+        LEFT JOIN account_balances ab ON a.id = ab.account_id
+        WHERE a.user_id = %s::uuid
+        GROUP BY a.id
+        ORDER BY MIN(a.created_at);
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -64,15 +109,7 @@ def get_accounts_by_user_id(db: Connection, user_id: str) -> list[Account]:
     if not rows:
         return []
 
-    return [
-        Account(
-            id=row["id"],
-            user_id=user_id,
-            name=row["name"],
-            account_type=row["account_type"],
-        )
-        for row in rows
-    ]
+    return [Account.from_row(row) for row in rows]
 
 
 def create_account(db: Connection, user_id: str, account: Account) -> Account:
@@ -89,21 +126,62 @@ def create_account(db: Connection, user_id: str, account: Account) -> Account:
         raise HTTPException(status_code=400, detail=f"invalid account type: {account.account_type}")
 
     sql = """
-        INSERT INTO accounts (user_id, name, account_type)
-        VALUES (%s, %s, %s)
+        INSERT INTO accounts (user_id, name, account_type, balance)
+        VALUES (%s, %s, %s, %s)
         RETURNING id
     """
 
+    balance = 0.0 if account.account_type == AccountType.BANK else None
     with db.cursor() as cursor:
-        cursor.execute(sql, (user_id, account.name, account.account_type.value))
-        row = cursor.fetchone()
+        cursor.execute(sql, (user_id, account.name, account.account_type.value, balance))
 
-    if not row:
-        raise HTTPException(status_code=500, detail="failed to create account")
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=500, detail="failed to create account")
+
+        if account.account_type == AccountType.BANK and balance is not None:
+            _update_balance_history(db, row[0], balance)
 
     account.id = row[0]
     db.commit()
     return account
+
+
+def update_account(db: Connection, user_id: str, account: Account, account_id: str) -> Account:
+    """
+    Updates an existing account in the database.
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+
+    if not account_id:
+        raise HTTPException(status_code=400, detail=required_msg("account_id"))
+
+    if account.balance and account.balance < 0:
+        raise HTTPException(status_code=400, detail="balance cannot be negative")
+
+    if not account.account_type == AccountType.BANK:
+        raise HTTPException(status_code=400, detail=f"invalid account type: {account.account_type}")
+
+    sql = """
+        UPDATE accounts
+        SET balance = %s
+        WHERE id = %s::uuid AND user_id = %s::uuid
+        RETURNING id
+    """
+
+    with db.cursor() as cursor:
+        cursor.execute(sql, (account.balance, account_id, user_id))
+
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Account not found or does not belong to the user")
+
+        if account.balance is not None:
+            _update_balance_history(db, row[0], account.balance)
+
+    db.commit()
+    return get_account_by_id(db, user_id, account_id)
 
 
 def remove_account_by_id(db: Connection, user_id: str, account_id: str) -> None:
@@ -134,3 +212,15 @@ def remove_account_by_id(db: Connection, user_id: str, account_id: str) -> None:
         cursor.execute(delete_sql, (account_id, user_id))
 
     db.commit()
+
+
+def _update_balance_history(db: Connection, account_id: str, balance: float) -> None:
+    """
+    Updates the balance history for an account.
+    """
+    sql = """
+        INSERT INTO account_balances (account_id, balance)
+        VALUES (%s::uuid, %s)
+    """
+    with db.cursor() as cursor:
+        cursor.execute(sql, (account_id, balance))
