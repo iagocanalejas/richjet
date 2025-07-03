@@ -60,7 +60,7 @@ import SearchComponent from '@/components/SearchComponent.vue';
 import SharesListComponent from '@/components/shares/SharesListComponent.vue';
 import { ref, watch, type Ref } from 'vue';
 import { useStocksStore } from '@/stores/stocks';
-import type { StockSymbolForDisplay, StockSymbol } from '@/types/stock';
+import { type StockSymbolForDisplay, type StockSymbol, stockSymbolForDisplayDefaults } from '@/types/stock';
 import { debounce } from '@/utils/utils';
 import { useWatchlistStore } from '@/stores/watchlist';
 import { usePortfolioStore } from '@/stores/portfolio';
@@ -97,16 +97,10 @@ async function _filterResults(query: string, is_load_more: boolean = false) {
         return;
     }
 
-    const extraProperties: Omit<StockSymbolForDisplay, keyof StockSymbol> = {
-        isFavorite: true,
-        price: undefined,
-        openPrice: undefined,
-        noPrice: false,
-    };
     const results = (await stockStore.symbolSearch(query.toUpperCase(), is_load_more)) as StockSymbolForDisplay[];
     filteredResults.value = results.map((s) => ({
         ...s,
-        ...extraProperties,
+        ...stockSymbolForDisplayDefaults,
         isFavorite: isInWatchlist(s),
     }));
 }

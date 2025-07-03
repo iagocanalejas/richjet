@@ -4,6 +4,8 @@ const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
 
 const addError = (e: CustomError) => useErrorsStore().addError(e);
 
+// NOTE: Don't use safeFetch in this module.
+
 async function login() {
     const url = `${BASE_URL}/auth/login`;
     try {

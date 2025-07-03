@@ -26,7 +26,7 @@ const originalFetch = window.fetch.bind(window);
 
 // @ts-expect-error: unmatched function signature
 window.fetch = async function fetchWithRetry(resource: RequestInfo, options: RequestInit & { timeout?: number } = {}) {
-    const { timeout = 20000, ...rest } = options;
+    const { timeout = 5000, ...rest } = options;
 
     let attempt = 0;
 

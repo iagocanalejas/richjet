@@ -37,6 +37,13 @@ export type StockSymbolForDisplay = StockSymbol & {
     noPrice: boolean | undefined;
 };
 
+export const stockSymbolForDisplayDefaults: Omit<StockSymbolForDisplay, keyof StockSymbol> = {
+    isFavorite: true,
+    price: undefined,
+    openPrice: undefined,
+    noPrice: false,
+} as const;
+
 export interface StockQuote {
     symbol: string;
     current: number;
