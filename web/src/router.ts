@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import PortfolioView from './views/PortfolioView.vue';
 import { useAuthStore } from './stores/auth';
+import { useSettingsStore } from './stores/settings';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.VITE_VUE_BASE_URL),
@@ -21,6 +22,15 @@ const router = createRouter({
             component: () => import('./views/TransactionsView.vue'),
         },
         {
+            path: '/settings',
+            name: 'settings',
+            component: () => import('./views/SettingsView.vue'),
+            beforeEnter: async () => {
+                if (!useAuthStore().isLogged) return { name: 'portfolio' };
+                await useSettingsStore().loadPlans();
+            },
+        },
+        {
             path: '/privacy-policy',
             name: 'privacy-policy',
             component: () => import('./views/legal/PrivacyPolicyView.vue'),
@@ -29,6 +39,16 @@ const router = createRouter({
             path: '/conditions',
             name: 'conditions',
             component: () => import('./views/legal/ConditionsView.vue'),
+        },
+        {
+            path: '/checkout-success',
+            name: 'checkout-success',
+            component: () => PortfolioView,
+        },
+        {
+            path: '/checkout-cancel',
+            name: 'checkout-cancel',
+            component: () => PortfolioView,
         },
         {
             path: '/auth/callback',
@@ -48,6 +68,20 @@ const router = createRouter({
             component: () => PortfolioView,
         },
     ],
+});
+
+let initialized = false;
+router.beforeEach(async (to, __, next) => {
+    if (to.name === 'auth-callback') return next();
+    if (!initialized) {
+        const authStore = useAuthStore();
+        await authStore.init();
+        if (!authStore.isLogged) return next();
+
+        await useSettingsStore().init();
+        initialized = true;
+    }
+    next();
 });
 
 export default router;

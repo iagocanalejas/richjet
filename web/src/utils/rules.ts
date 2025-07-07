@@ -1,6 +1,18 @@
 import type { PortfolioItem, TransactionItem, TransactionType } from '@/types/portfolio';
 import type { Account } from '@/types/user';
 
+export function isLite(plan: string): boolean {
+    return plan.toUpperCase().includes('LITE');
+}
+
+export function isPro(plan: string): boolean {
+    return plan.toUpperCase().includes('PRO');
+}
+
+export function isMax(plan: string): boolean {
+    return plan.toUpperCase().includes('MAX');
+}
+
 export function isDividend(type: TransactionType): boolean {
     return type === 'DIVIDEND' || type === 'DIVIDEND-CASH';
 }

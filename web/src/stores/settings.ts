@@ -1,14 +1,16 @@
-import type { Settings, Account } from '@/types/user';
+import type { Settings, Account, SubscriptionPlan } from '@/types/user';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import AccountsService from './api/accounts';
 import UsersService from './api/users';
 import StocksService from './api/stocks';
+import StripeService from './api/stripe';
 
 export const useSettingsStore = defineStore('settings', () => {
     const _settings = ref<Settings>({ currency: 'USD', accounts: [] });
     const conversionRate = ref<number>(1.0);
     const account = ref<Account | undefined>();
+    const subscription_plans = ref<SubscriptionPlan[]>([]);
 
     const currency = computed({
         get() {
@@ -30,6 +32,13 @@ export const useSettingsStore = defineStore('settings', () => {
         ]);
 
         _settings.value = { ..._settings.value, ...settings, accounts: accounts };
+    }
+
+    async function loadPlans() {
+        if (subscription_plans.value.length > 0) return;
+        const data = await StripeService.getPlans(_settings.value.currency);
+        if (!data) return;
+        subscription_plans.value = data;
     }
 
     async function createAccount(a: Account) {
@@ -56,6 +65,25 @@ export const useSettingsStore = defineStore('settings', () => {
         }
     }
 
+    async function subscribe(plan: SubscriptionPlan) {
+        const session = await StripeService.getCheckoutSession(plan.id);
+        if (!session) return;
+        window.location.href = session.url;
+    }
+
+    async function updateSubscriptionStatus(cancelAtPeriodEnd: boolean) {
+        if (!_settings.value.subscription || !_settings.value.subscription.id) return;
+        const subscription = await StripeService.updateSubscriptionStatus(
+            _settings.value.subscription.id,
+            cancelAtPeriodEnd
+        );
+        if (!subscription) return;
+        _settings.value.subscription = {
+            ...subscription,
+            plan: { ...subscription.plan, product: { ..._settings.value.subscription.plan.product } },
+        };
+    }
+
     async function _updateCurrency() {
         await UsersService.updateUserCurrency(_settings.value.currency);
     }
@@ -77,8 +105,12 @@ export const useSettingsStore = defineStore('settings', () => {
         conversionRate,
         accounts,
         account,
+        subscription_plans,
+        loadPlans,
         createAccount,
         updateAccount,
         deleteAccount,
+        subscribe,
+        updateSubscriptionStatus,
     };
 });

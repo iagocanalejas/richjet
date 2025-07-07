@@ -6,6 +6,7 @@ const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
 
 const addError = (e: CustomError) => useErrorsStore().addError(e);
 
+// HACK: Let errors bubble up as this is the main entry point we need to use to handle server wake up/
 async function loadUser() {
     const url = `${BASE_URL}/auth/me`;
     const res = await fetch(url, { method: 'GET', credentials: 'include' });
@@ -19,8 +20,6 @@ async function loadUser() {
         return;
     }
     return (await res.json()) as User;
-
-    // HACK: Let errors bubble up as this is the main entry point we need to use to handle server wake up/
 }
 
 function getUserSettings() {
@@ -38,9 +37,20 @@ function updateUserCurrency(currency: string) {
     return safeFetch<Settings>(f, 'Error updating user settings');
 }
 
+function subscribe(planId: string) {
+    const f = fetch(`${BASE_URL}/users/subscribe`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan_id: planId }),
+    });
+    return safeFetch<Settings>(f, 'Error subscribing to plan');
+}
+
 const UsersService = {
     loadUser,
     getUserSettings,
     updateUserCurrency,
+    subscribe,
 };
 export default UsersService;

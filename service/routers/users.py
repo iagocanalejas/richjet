@@ -1,6 +1,7 @@
 from db import get_db
 from fastapi import APIRouter, Depends
 from models.settings import UserSettings, get_user_settings, update_user_settings
+from models.subscriptions import get_active_subscription
 
 from routers.auth import get_session
 
@@ -9,7 +10,9 @@ router = APIRouter()
 
 @router.get("/settings")
 async def api_get_settings(db=Depends(get_db), session=Depends(get_session)):
-    return get_user_settings(db, session.user.id).to_dict()
+    settings = get_user_settings(db, session.user.id)
+    settings.subscription = get_active_subscription(session.user.stripe_id)
+    return settings.to_dict()
 
 
 @router.put("/settings")

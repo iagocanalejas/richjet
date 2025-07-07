@@ -75,7 +75,6 @@ function save() {
         $errors.value.balance = 'Balance must be a positive number.';
         return;
     }
-    console.log(accountCopy);
     emit('save', accountCopy);
 }
 

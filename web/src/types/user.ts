@@ -1,5 +1,7 @@
+export type PlanType = 'FREE' | 'LITE' | 'PRO' | 'MAX' | 'ADMIN';
 export interface User {
     id: string;
+    plan: PlanType;
     email: string;
     name: string;
     picture: string;
@@ -25,7 +27,36 @@ export type Account = {
     balance_history: AccountBalance[];
 };
 
+export type SubscriptionPlan = {
+    id: string;
+    currency: string;
+    unit_amount: number;
+    active: boolean;
+    recurring: { interval: string };
+    product: {
+        id: string;
+        name: string;
+        description?: string;
+        active: boolean;
+    };
+};
+
+export type Subscription = {
+    id: string;
+    plan: SubscriptionPlan;
+    cancel_at_period_end?: boolean;
+    canceled_at?: number;
+    currency: string;
+    items: {
+        data: {
+            current_period_end: number;
+            current_period_start: number;
+        }[];
+    };
+};
+
 export type Settings = {
     currency: string;
     accounts: Account[];
+    subscription?: Subscription;
 };

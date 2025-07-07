@@ -18,6 +18,13 @@ export function formatCurrency(value: number, currency: string, convertionRate?:
     return formatter.format(value * (convertionRate ?? 1));
 }
 
+export function formatDate(date: Date | string | number, options?: Intl.DateTimeFormatOptions): string {
+    if (typeof date === 'number') date = new Date(date * 1000);
+    if (typeof date === 'string') date = new Date(date);
+    const userLocale = mapWeirdLocales(navigator.language || 'en-US');
+    return new Intl.DateTimeFormat(userLocale, options).format(new Date(date));
+}
+
 function mapWeirdLocales(locale: string) {
     switch (locale) {
         case 'gl':

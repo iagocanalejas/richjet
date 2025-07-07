@@ -31,7 +31,6 @@ export const useWatchlistStore = defineStore('watchlist', () => {
     async function addToWatchlist(item: StockSymbolForDisplay) {
         const newSymbol = await WatchlistService.addToWatchlist(item);
         if (!newSymbol) return;
-
         const quote = await stockStore.getStockQuote(item);
         if (!quote) return;
 

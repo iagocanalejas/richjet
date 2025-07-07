@@ -1,5 +1,5 @@
 <template>
-    <main class="justify-center min-h-[calc(100vh-72px)] bg-gray-800 text-white border-t border-gray-900">
+    <main class="justify-center min-h-[calc(100vh-144px)] bg-gray-800 text-white border-t border-gray-900">
         <section class="text-center py-20 bg-gray-900 shadow-md">
             <h1 class="text-4xl font-bold mb-4">Track Your Investments with RichJet, Effortlessly.</h1>
             <p class="text-lg mb-6 text-gray-300">Stay on top of your stocks, crypto, and assets — all in one place.</p>

@@ -34,9 +34,11 @@ def get_session_by_id(db: Connection, session_id: str) -> Session:
 
     sql = """
         SELECT s.id AS session_id, s.tokens, s.expires,
-               u.id AS user_id, u.email, u.given_name, u.family_name, u.picture, u.created_at
+               u.id AS user_id, u.stripe_id, u.email, u.given_name, u.family_name, u.picture, u.created_at,
+               COALESCE(p.name, 'FREE') AS plan_name
         FROM sessions s
         JOIN users u ON s.user_id = u.id
+        LEFT JOIN plans p ON u.plan_id = p.id
         WHERE s.id = %s
     """
 

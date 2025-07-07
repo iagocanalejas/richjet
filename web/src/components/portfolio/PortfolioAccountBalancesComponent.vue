@@ -12,7 +12,7 @@
         :key="item.updated_at"
         class="mt-4 grid grid-cols-3 gap-x-4 items-center py-2 border-b border-gray-700"
     >
-        <div class="text-sm text-right text-white">{{ new Date(item.updated_at).toLocaleDateString() }}</div>
+        <div class="text-sm text-right text-white">{{ formatDate(item.updated_at) }}</div>
         <div class="text-sm font-semibold text-right text-white">{{ formatCurrency(item.balance, currency) }}</div>
         <div
             class="text-sm text-right"
@@ -30,7 +30,7 @@
 import { useSettingsStore } from '@/stores/settings';
 import type { Account } from '@/types/user';
 import { textColorByRentability } from '@/utils/styles';
-import { formatCurrency } from '@/utils/utils';
+import { formatCurrency, formatDate } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
 
 defineProps({

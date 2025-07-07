@@ -1,19 +1,23 @@
 import os
 
 import httpx
+import stripe
 from async_lru import alru_cache
 from clients import CNBCClient, FinnhubClient, OpenFIGIClient, VantageClient
 from db import get_db
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from log import logger
 from models.quote import StockQuote
 from models.symbol import Symbol, build_symbol_picture_url, search_symbol
+from models.user import unsubscribe, update_stripe_customer, update_stripe_plan
 from routers import accounts, auth, symbols, transactions, users, watchlist
+from routers import stripe as stripe_route
 
 app = FastAPI()
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(stripe_route.router, prefix="/checkout", tags=["checkout"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
 app.include_router(accounts.router, prefix="/accounts", tags=["accounts"])
@@ -174,3 +178,48 @@ async def get_quote(source: str, symbol: str):
         "open": quote.open,
         "previous_close": quote.previous_close,
     }
+
+
+@app.post("/webhook")
+async def stripe_webhook(request: Request, db=Depends(get_db)):
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+    STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+    try:
+        event = stripe.Webhook.construct_event(payload, sig_header, STRIPE_WEBHOOK_SECRET)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    except stripe.SignatureVerificationError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+
+    print(event["type"])
+
+    if event["type"] == "checkout.session.completed":
+        try:
+            data = event["data"]["object"]
+            user_id = data["metadata"].get("user_id")
+            customer_id = data.get("customer")
+        except (KeyError, IndexError, TypeError) as e:
+            logger.error(f"Missing key in event data: {e}")
+            raise HTTPException(status_code=400, detail="Invalid event data")
+        update_stripe_customer(db, user_id, customer_id)
+    elif event["type"] == "customer.subscription.created":
+        try:
+            data = event["data"]["object"]
+            customer_id = data.get("customer")
+            price_id = data["items"]["data"][0]["price"]["id"]
+        except (KeyError, IndexError, TypeError) as e:
+            logger.error(f"Missing key in event data: {e}")
+            raise HTTPException(status_code=400, detail="Invalid event data")
+        update_stripe_plan(db, customer_id, price_id)
+    elif event["type"] == "customer.subscription.deleted":
+        try:
+            data = event["data"]["object"]
+            customer_id = data.get("customer")
+        except (KeyError, IndexError, TypeError) as e:
+            logger.error(f"Missing key in event data: {e}")
+            raise HTTPException(status_code=400, detail="Invalid event data")
+        unsubscribe(db, customer_id)
+
+    return {"status": "success"}

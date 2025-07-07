@@ -9,7 +9,7 @@
         </span>
     </div>
 
-    <div class="text-sm text-right">{{ new Date(item.date).toLocaleDateString() }}</div>
+    <div class="text-sm text-right">{{ formatDate(item.date) }}</div>
     <div class="text-sm text-right">{{ item.price ? formatCurrency(item.price, currency) : '---' }}</div>
     <div class="text-sm text-right">{{ item.quantity ? item.quantity : '---' }}</div>
 
@@ -39,7 +39,7 @@
 <script lang="ts" setup>
 import { useSettingsStore } from '@/stores/settings';
 import type { TransactionItem } from '@/types/portfolio';
-import { formatCurrency } from '@/utils/utils';
+import { formatCurrency, formatDate } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
 import { isDividend } from '@/utils/rules';
 

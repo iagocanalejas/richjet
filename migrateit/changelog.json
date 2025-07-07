@@ -76,6 +76,13 @@
             "parents": [
                 "0009_constraints.sql"
             ]
+        },
+        {
+            "name": "0011_subscriptions.sql",
+            "initial": false,
+            "parents": [
+                "0010_account_balance.sql"
+            ]
         }
     ]
 }

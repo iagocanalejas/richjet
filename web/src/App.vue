@@ -59,11 +59,17 @@
                 />
                 <div
                     v-if="showMenu"
-                    class="absolute right-0 mt-2 w-48 bg-gray-800 text-white rounded-lg shadow-lg z-50 border border-gray-700"
+                    class="absolute right-0 mt-2 w-50 bg-gray-800 text-white rounded-lg shadow-lg z-50 border border-gray-700"
                 >
                     <button
+                        @click="goToSettings"
+                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition curpor-pointer"
+                    >
+                        Manage Subscription
+                    </button>
+                    <button
                         @click="signOut"
-                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition"
+                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition cursor-pointer"
                     >
                         Sign out
                     </button>
@@ -105,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router';
+import { RouterLink, RouterView, useRouter } from 'vue-router';
 import { useSettingsStore } from './stores/settings';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, watch } from 'vue';
@@ -120,6 +126,7 @@ import { useErrorsStore } from './stores/errors';
 import WakingUpModal from './components/modals/WakingUpModal.vue';
 import { useLoadingStore } from './stores/loading';
 
+const router = useRouter();
 const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
 const { user, isLogged } = storeToRefs(authStore);
@@ -140,6 +147,11 @@ function signOut(): void {
     showMenu.value = false;
 }
 
+function goToSettings() {
+    router.push('/settings');
+    showMenu.value = false;
+}
+
 watch(
     () => isLogged.value,
     async (newValue, prevValue) => {
@@ -151,10 +163,7 @@ watch(
 );
 
 onMounted(async () => {
-    await authStore.init();
-    if (!isLogged.value) return;
-
-    await settingsStore.init();
+    if (!authStore.isLogged) return;
     await useWatchlistStore().init();
     await usePortfolioStore().init();
 });

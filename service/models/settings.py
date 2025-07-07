@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import stripe
 from fastapi import HTTPException
 from log.errors import required_msg
 from psycopg2.extensions import connection as Connection
@@ -10,6 +11,7 @@ from psycopg2.extras import RealDictCursor
 class UserSettings:
     user_id: str
     currency: str
+    subscription: stripe.Subscription | None = None
 
     @classmethod
     def from_dict(cls, **kwargs) -> "UserSettings":
@@ -19,6 +21,7 @@ class UserSettings:
         return {
             "user_id": self.user_id,
             "currency": self.currency,
+            "subscription": self.subscription,
         }
 
 
