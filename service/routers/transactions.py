@@ -1,5 +1,6 @@
 from db import get_db
 from fastapi import APIRouter, Body, Depends
+from models._limits import LimitAction, enforce_limit
 from models.transactions import (
     Transaction,
     create_transaction,
@@ -25,6 +26,7 @@ async def api_get_transactions(
 @router.post("/")
 async def api_create_transaction(
     transaction_data: dict = Body(...),
+    _=enforce_limit(LimitAction.CREATE_TRANSACTION),
     db=Depends(get_db),
     session=Depends(get_session),
 ):

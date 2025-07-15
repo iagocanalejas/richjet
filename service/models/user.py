@@ -13,10 +13,12 @@ class User:
     given_name: str | None
     family_name: str | None
     picture: str | None
+
     id: str = ""
     plan: str = "FREE"
-    created_at: str | None = None
+
     stripe_id: str | None = None
+    created_at: str | None = None
 
     @classmethod
     def from_row(cls, row: RealDictRow) -> "User":

@@ -1,5 +1,6 @@
 from db import get_db
 from fastapi import APIRouter, Body, Depends
+from models._limits import LimitAction, enforce_limit
 from models.symbol import Symbol
 from models.watchlist import (
     create_watchlist_item,
@@ -25,6 +26,7 @@ async def api_get_watchlist(
 @router.post("/")
 async def api_create_watchlist_item(
     symbol_data: dict = Body(...),
+    _=enforce_limit(LimitAction.ADD_SHARE),
     db=Depends(get_db),
     session=Depends(get_session),
 ):

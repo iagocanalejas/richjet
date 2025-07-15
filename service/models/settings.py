@@ -12,6 +12,7 @@ class UserSettings:
     user_id: str
     currency: str
     subscription: stripe.Subscription | None = None
+    limits: dict[str, int] | None = None
 
     @classmethod
     def from_dict(cls, **kwargs) -> "UserSettings":
@@ -22,6 +23,7 @@ class UserSettings:
             "user_id": self.user_id,
             "currency": self.currency,
             "subscription": self.subscription,
+            "limits": self.limits,
         }
 
 
