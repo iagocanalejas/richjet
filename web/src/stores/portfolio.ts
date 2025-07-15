@@ -264,12 +264,12 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         const portfoliosValue = portfolio
             .filter((p) => p.quantity > 0)
             .reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
-
         return portfoliosValue + savingAccountsValue.value;
     });
 
     const savingAccountsValue = computed(() => {
-        return accounts.value.filter((a) => isSavingsAccount(a)).reduce((acc, a) => acc + a.balance!, 0) ?? 0;
+        const money = accounts.value.filter((a) => isSavingsAccount(a)).reduce((acc, a) => acc + a.balance!, 0) ?? 0;
+        return money * conversionRate.value;
     });
 
     const closedPositions = computed(() => {

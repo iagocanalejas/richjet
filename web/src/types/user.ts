@@ -17,12 +17,12 @@ export type AccountBalance = {
     updated_at: string;
 };
 
-// TODO: should the account have a currency?
 export type Account = {
     id: string;
     name: string;
     user_id: string;
     account_type: AccountType;
+    currency: string;
     balance?: number;
     balance_history: AccountBalance[];
 };

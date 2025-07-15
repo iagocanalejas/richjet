@@ -13,13 +13,12 @@
         class="mt-4 grid grid-cols-3 gap-x-4 items-center py-2 border-b border-gray-700"
     >
         <div class="text-sm text-right text-white">{{ formatDate(item.updated_at) }}</div>
-        <div class="text-sm font-semibold text-right text-white">{{ formatCurrency(item.balance, currency) }}</div>
-        <div
-            class="text-sm text-right"
-            :class="textColorByRentability(item.balance - account.balance_history[index + 1]?.balance)"
-        >
+        <div class="text-sm font-semibold text-right text-white">
+            {{ formatCurrency(item.balance, currency, conversionRate) }}
+        </div>
+        <div class="text-sm text-right" :class="textColorByRentability(item.balance - historyBalancePoint(index + 1))">
             <span v-if="index < account.balance_history.length - 1">
-                {{ formatCurrency(item.balance - account.balance_history[index + 1].balance, currency) }}
+                {{ formatCurrency(item.balance - historyBalancePoint(index + 1), currency, conversionRate) }}
             </span>
             <span v-else class="text-gray-500">—</span>
         </div>
@@ -33,7 +32,7 @@ import { textColorByRentability } from '@/utils/styles';
 import { formatCurrency, formatDate } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
 
-defineProps({
+const props = defineProps({
     account: {
         type: Object as () => Account,
         required: true,
@@ -41,5 +40,9 @@ defineProps({
 });
 defineEmits(['create']);
 
-const { currency } = storeToRefs(useSettingsStore());
+const { currency, conversionRate } = storeToRefs(useSettingsStore());
+
+function historyBalancePoint(index: number) {
+    return props.account.balance_history[index]?.balance || 0;
+}
 </script>

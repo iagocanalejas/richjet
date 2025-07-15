@@ -18,6 +18,7 @@ class Account:
     name: str
     account_type: AccountType
     id: str = ""
+    currency: str = "USD"
     balance: float | None = None
     balance_history: list[dict] = field(default_factory=list)
 
@@ -28,6 +29,7 @@ class Account:
             user_id=row["user_id"],
             name=row["name"],
             account_type=AccountType(row["account_type"]),
+            currency=row["currency"],
             balance=row.get("balance", None),
             balance_history=row.get("balance_history", []),
         )
@@ -44,6 +46,7 @@ class Account:
             "id": self.id,
             "name": self.name,
             "account_type": self.account_type,
+            "currency": self.currency,
             "user_id": self.user_id,
             "balance": self.balance,
             "balance_history": self.balance_history,
@@ -60,7 +63,7 @@ def get_account_by_id(db: Connection, user_id: str, account_id: str) -> Account:
         raise HTTPException(status_code=400, detail=required_msg("account_id"))
 
     sql = """
-        SELECT a.id, user_id, name, account_type, a.balance,
+        SELECT a.id, user_id, name, account_type, a.balance, currency,
             COALESCE(
                 json_agg(ab ORDER BY ab.updated_at DESC) FILTER (WHERE ab.id IS NOT NULL),
                 '[]'
@@ -90,7 +93,7 @@ def get_accounts_by_user_id(db: Connection, user_id: str) -> list[Account]:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
     sql = """
-        SELECT a.id, user_id, name, account_type, a.balance,
+        SELECT a.id, user_id, name, account_type, a.balance, currency,
             COALESCE(
                 json_agg(ab ORDER BY ab.updated_at DESC) FILTER (WHERE ab.id IS NOT NULL),
                 '[]'
@@ -126,14 +129,14 @@ def create_account(db: Connection, user_id: str, account: Account) -> Account:
         raise HTTPException(status_code=400, detail=f"invalid account type: {account.account_type}")
 
     sql = """
-        INSERT INTO accounts (user_id, name, account_type, balance)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO accounts (user_id, name, account_type, balance, currency)
+        VALUES (%s, %s, %s, %s, (SELECT currency FROM users WHERE id = %s::uuid))
         RETURNING id
     """
 
     balance = 0.0 if account.account_type == AccountType.BANK else None
     with db.cursor() as cursor:
-        cursor.execute(sql, (user_id, account.name, account.account_type.value, balance))
+        cursor.execute(sql, (user_id, account.name, account.account_type.value, balance, user_id))
 
         row = cursor.fetchone()
         if not row:

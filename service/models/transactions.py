@@ -95,7 +95,7 @@ def get_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> 
                t.transaction_type, t.date, t.created_at,
                s.id AS symbol_id, s.name, s.ticker, s.currency AS symbol_currency, s.source,
                s.security_type, s.market_sector, s.isin, s.figi, s.picture, s.user_created,
-               a.id AS account_id, a.name, a.account_type, a.balance
+               a.id AS account_id, a.name, a.account_type, a.balance, a.currency
         FROM transactions t
         JOIN symbols s ON t.symbol_id = s.id
         LEFT JOIN accounts a ON t.account_id = a.id
@@ -124,7 +124,7 @@ def get_transactions_by_user_id(db: Connection, user_id: str) -> list[Transactio
                t.currency AS transaction_currency, t.transaction_type, t.date, t.created_at,
                s.id AS symbol_id, s.name, s.ticker, s.currency AS symbol_currency,
                s.source, s.security_type, s.market_sector, s.isin, s.figi, s.picture,
-               s.user_created, a.id AS account_id, a.name AS account_name, a.account_type, a.balance,
+               s.user_created, a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency,
                w.manual_price
         FROM transactions t
         JOIN symbols s ON t.symbol_id = s.id

@@ -83,6 +83,13 @@
             "parents": [
                 "0010_account_balance.sql"
             ]
+        },
+        {
+            "name": "0012_account_currency.sql",
+            "initial": false,
+            "parents": [
+                "0011_subscriptions.sql"
+            ]
         }
     ]
 }

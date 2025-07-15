@@ -8,7 +8,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">
-                        <span class="text-sm">*</span> Balance
+                        <span class="text-sm">*</span> Balance ({{ account.currency }})
                     </label>
                     <input
                         v-model="priceInput"
