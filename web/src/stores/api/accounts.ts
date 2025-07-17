@@ -28,9 +28,20 @@ function updateAccount(account: Account) {
     return safeFetch<Account>(res, 'Error updating account');
 }
 
-function removeAccount(accountId: string) {
-    const res = fetch(`${BASE_URL}/accounts/${accountId}`, { method: 'DELETE', credentials: 'include' });
+function removeAccount(accountId: string, forced = false) {
+    const res = fetch(`${BASE_URL}/accounts/${accountId}?forced=${forced}`, {
+        method: 'DELETE',
+        credentials: 'include',
+    });
     return safeFetch(res, 'Error deleting account', false);
+}
+
+function removeAccountBalance(accountId: string, balanceId: string) {
+    const res = fetch(`${BASE_URL}/accounts/${accountId}/balances/${balanceId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+    });
+    return safeFetch<Account>(res, 'Error deleting account balance');
 }
 
 const AccountsService = {
@@ -38,5 +49,6 @@ const AccountsService = {
     addAccount,
     updateAccount,
     removeAccount,
+    removeAccountBalance,
 };
 export default AccountsService;

@@ -10,7 +10,7 @@
     <div
         v-for="(item, index) in account.balance_history"
         :key="item.updated_at"
-        class="mt-4 grid grid-cols-3 gap-x-4 items-center py-2 border-b border-gray-700"
+        class="mt-4 grid grid-cols-4 gap-x-4 items-center py-2 border-b border-gray-700"
     >
         <div class="text-sm text-right text-white">{{ formatDate(item.updated_at) }}</div>
         <div class="text-sm font-semibold text-right text-white">
@@ -21,6 +21,28 @@
                 {{ formatCurrency(item.balance - historyBalancePoint(index + 1), currency, conversionRate) }}
             </span>
             <span v-else class="text-gray-500">—</span>
+        </div>
+        <div v-if="index + 1 < account.balance_history.length" class="text-right">
+            <button
+                @click="$emit('delete-balance', item.account_id, item.id)"
+                class="hover:text-red-500 transition-colors cursor-pointer"
+                title="Delete"
+            >
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    class="w-5 h-5"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 12h4M4 6h16M9 6h6a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V8a2 2 0 012-2z"
+                    />
+                </svg>
+            </button>
         </div>
     </div>
 </template>
@@ -38,7 +60,7 @@ const props = defineProps({
         required: true,
     },
 });
-defineEmits(['create']);
+defineEmits(['create', 'delete-balance']);
 
 const { currency, conversionRate } = storeToRefs(useSettingsStore());
 

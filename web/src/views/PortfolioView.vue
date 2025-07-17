@@ -15,7 +15,11 @@
             v-if="isSavingsAccount(selectedAccount)"
             class="mt-6 flex flex-col justify-center items-center w-full max-w-2xl mx-auto"
         >
-            <PortfolioAccountBalancesComponent :account="selectedAccount!" @create="isAccountBalanceModalOpen = true" />
+            <PortfolioAccountBalancesComponent
+                :account="selectedAccount!"
+                @create="isAccountBalanceModalOpen = true"
+                @delete-balance="settingsStore.deleteAccountBalance"
+            />
         </div>
     </main>
 

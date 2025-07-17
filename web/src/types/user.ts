@@ -12,6 +12,7 @@ export const AccountTypes = ['BROKER', 'BANK'] as const;
 export type AccountType = (typeof AccountTypes)[number];
 
 export type AccountBalance = {
+    id: string;
     account_id: string;
     balance: number;
     updated_at: string;
@@ -55,8 +56,27 @@ export type Subscription = {
     };
 };
 
+export const DEFAULT_LIMITS = Object.freeze<Limits>({
+    max_accounts: 1,
+    max_shares: 10,
+    max_transactions: 100,
+});
+
+export type Limits = {
+    max_accounts: number;
+    max_shares: number;
+    max_transactions: number;
+};
+
+export const DEFAULT_SETTINGS = Object.freeze<Settings>({
+    currency: 'USD',
+    accounts: [],
+    limits: DEFAULT_LIMITS,
+});
+
 export type Settings = {
     currency: string;
     accounts: Account[];
     subscription?: Subscription;
+    limits: Limits;
 };

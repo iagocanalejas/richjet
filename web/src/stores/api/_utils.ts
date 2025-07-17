@@ -17,7 +17,7 @@ export async function safeFetch<T>(
         if (!res.ok) {
             const err = await res.json();
             addError({
-                readable_message: err.details ?? errorMessage,
+                readable_message: err.detail ?? errorMessage,
                 trace: { status: res.status, statusText: res.statusText, url: res.url },
             });
             return defaultValue;

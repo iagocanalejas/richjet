@@ -1,7 +1,14 @@
 from db import get_db
 from fastapi import APIRouter, Body, Depends
 from models._limits import LimitAction, enforce_limit
-from models.account import Account, create_account, get_accounts_by_user_id, remove_account_by_id, update_account
+from models.account import (
+    Account,
+    create_account,
+    get_accounts_by_user_id,
+    remove_account_balance_by_id,
+    remove_account_by_id,
+    update_account,
+)
 
 from routers.auth import get_session
 
@@ -44,9 +51,20 @@ async def api_update_account(
 
 
 @router.delete("/{account_id}")
-async def api_remove_acctoun(
+async def api_remove_account(
     account_id: str,
+    forced: bool = False,
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    remove_account_by_id(db, session.user.id, account_id)
+    remove_account_by_id(db, session.user.id, account_id, forced=forced)
+
+
+@router.delete("/{account_id}/balances/{balance_id}")
+async def api_remove_account_balance(
+    account_id: str,
+    balance_id: str,
+    db=Depends(get_db),
+    session=Depends(get_session),
+):
+    return remove_account_balance_by_id(db, session.user.id, account_id, balance_id)

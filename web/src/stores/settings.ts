@@ -1,4 +1,4 @@
-import type { Settings, Account, SubscriptionPlan } from '@/types/user';
+import { type Settings, type Account, type SubscriptionPlan, DEFAULT_SETTINGS } from '@/types/user';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import AccountsService from './api/accounts';
@@ -7,7 +7,7 @@ import StocksService from './api/stocks';
 import StripeService from './api/stripe';
 
 export const useSettingsStore = defineStore('settings', () => {
-    const _settings = ref<Settings>({ currency: 'USD', accounts: [] });
+    const _settings = ref<Settings>(DEFAULT_SETTINGS);
     const conversionRate = ref<number>(1.0);
     const account = ref<Account | undefined>();
     const subscription_plans = ref<SubscriptionPlan[]>([]);
@@ -56,13 +56,22 @@ export const useSettingsStore = defineStore('settings', () => {
         account.value = updatedAccount;
     }
 
-    async function deleteAccount(accountId: string) {
-        const deleted = await AccountsService.removeAccount(accountId);
+    async function deleteAccount(accountId: string, forced = false) {
+        const deleted = await AccountsService.removeAccount(accountId, forced);
         if (!deleted) return;
         _settings.value.accounts = _settings.value.accounts.filter((a) => a.id !== accountId);
         if (account.value?.id === accountId) {
             account.value = undefined;
         }
+    }
+
+    async function deleteAccountBalance(accountId: string, balanceId: string) {
+        const updated_account = await AccountsService.removeAccountBalance(accountId, balanceId);
+        if (!updated_account) return;
+        const index = _settings.value.accounts.findIndex((acc) => acc.id === accountId);
+        if (index === -1) return;
+        _settings.value.accounts[index] = updated_account;
+        account.value = updated_account;
     }
 
     async function subscribe(plan: SubscriptionPlan) {
@@ -110,6 +119,7 @@ export const useSettingsStore = defineStore('settings', () => {
         createAccount,
         updateAccount,
         deleteAccount,
+        deleteAccountBalance,
         subscribe,
         updateSubscriptionStatus,
     };

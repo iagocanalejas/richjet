@@ -187,7 +187,7 @@ def update_account(db: Connection, user_id: str, account: Account, account_id: s
     return get_account_by_id(db, user_id, account_id)
 
 
-def remove_account_by_id(db: Connection, user_id: str, account_id: str) -> None:
+def remove_account_by_id(db: Connection, user_id: str, account_id: str, forced: bool = False) -> None:
     """
     Removes an account from the database by its ID.
     """
@@ -197,24 +197,87 @@ def remove_account_by_id(db: Connection, user_id: str, account_id: str) -> None:
     if not account_id:
         raise HTTPException(status_code=400, detail=required_msg("account_id"))
 
-    check_sql = """
-        SELECT count(*) FROM transactions
-        WHERE account_id = %s::uuid
+    if forced:
+        _remove_account_forced(db, user_id, account_id)
+        db.commit()
+        return
+
+    sql = """
+        WITH checks AS (
+            SELECT
+                (SELECT COUNT(*) FROM transactions WHERE account_id = %s::uuid) AS tx_count,
+                (SELECT COUNT(*) FROM account_balances WHERE account_id = %s::uuid) AS ab_count
+        )
+        DELETE FROM accounts
+        WHERE id = %s::uuid
+          AND user_id = %s::uuid
+          AND (SELECT tx_count FROM checks) = 0
+          AND (SELECT ab_count FROM checks) = 0
+        RETURNING id;
     """
 
-    delete_sql = """
-        DELETE FROM accounts
-        WHERE id = %s::uuid AND user_id = %s::uuid
+    with db.cursor() as cursor:
+        cursor.execute(sql, (account_id, account_id, account_id, user_id))
+        deleted = cursor.fetchone()
+        if not deleted:
+            raise HTTPException(status_code=400, detail="Cannot delete account with existing transactions or balances")
+        db.commit()
+
+
+def remove_account_balance_by_id(db: Connection, user_id: str, account_id: str, balance_id: str) -> Account:
+    """
+    Removes a specific balance entry from an account.
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+
+    if not account_id:
+        raise HTTPException(status_code=400, detail=required_msg("account_id"))
+
+    if not balance_id:
+        raise HTTPException(status_code=400, detail=required_msg("balance_id"))
+
+    check_sql = """
+        SELECT id, balance FROM account_balances
+        WHERE account_id = %s::uuid
+        ORDER BY updated_at ASC
+    """
+
+    sql = """
+        DELETE FROM account_balances
+        WHERE id = %s::uuid AND account_id = %s::uuid AND account_id IN (
+            SELECT id FROM accounts WHERE user_id = %s::uuid
+        )
+        RETURNING id;
     """
 
     with db.cursor() as cursor:
         cursor.execute(check_sql, (account_id,))
-        result = cursor.fetchone()
-        if not result or result[0] > 0:
-            raise HTTPException(status_code=400, detail="Cannot delete account with existing transactions")
-        cursor.execute(delete_sql, (account_id, user_id))
+        all_balances = [(row[0], row[1]) for row in cursor.fetchall()]
 
-    db.commit()
+        if not all_balances:
+            return get_account_by_id(db, user_id, account_id)
+
+        # can't delete the first balance entry if there are others
+        if len(all_balances) > 1 and all_balances[0][0] == balance_id:
+            raise HTTPException(status_code=400, detail="Cannot delete the first balance entry while others exist")
+
+        # if we delete the last balance entry, we need to update the account balance
+        if all_balances[len(all_balances) - 1][0] == balance_id:
+            new_balance = all_balances[len(all_balances) - 2][1]
+            update_sql = """
+                UPDATE accounts
+                SET balance = %s
+                WHERE id = %s::uuid AND user_id = %s::uuid
+            """
+            cursor.execute(update_sql, (new_balance, account_id, user_id))
+
+        cursor.execute(sql, (balance_id, account_id, user_id))
+        deleted = cursor.fetchone()
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Balance entry not found or does not belong to the user")
+        db.commit()
+    return get_account_by_id(db, user_id, account_id)
 
 
 def _update_balance_history(db: Connection, account_id: str, balance: float) -> None:
@@ -227,3 +290,36 @@ def _update_balance_history(db: Connection, account_id: str, balance: float) -> 
     """
     with db.cursor() as cursor:
         cursor.execute(sql, (account_id, balance))
+
+
+def _remove_account_forced(db: Connection, user_id: str, account_id: str) -> None:
+    """
+    Forcefully removes an account and all its balances and transactions.
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+
+    if not account_id:
+        raise HTTPException(status_code=400, detail=required_msg("account_id"))
+
+    sql = """
+        WITH deleted_transactions AS (
+            DELETE FROM transactions WHERE account_id = %s::uuid AND user_id = %s::uuid
+        ),
+        deleted_balances AS (
+            DELETE FROM account_balances WHERE account_id = %s::uuid
+        ),
+        deleted_account AS (
+            DELETE FROM accounts
+            WHERE id = %s::uuid AND user_id = %s::uuid
+            RETURNING id
+        )
+        SELECT id FROM deleted_account;
+    """
+
+    with db.cursor() as cursor:
+        cursor.execute(sql, (account_id, user_id, account_id, account_id, user_id))
+        deleted = cursor.fetchone()
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Account not found or does not belong to the user")
+        db.commit()

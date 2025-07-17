@@ -32,9 +32,10 @@
             </RouterLink>
 
             <AccountSelector
-                :is-logged="isLogged"
+                v-if="isLogged"
                 :accounts="accounts"
                 :selected="selectedAccount"
+                :max-accounts="settings?.limits?.max_accounts ?? 0"
                 @select="selectedAccount = $event"
                 @add="createAccount"
                 @delete="deleteAccount($event.id)"
@@ -130,7 +131,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
 const { user, isLogged } = storeToRefs(authStore);
-const { currency, accounts, account: selectedAccount } = storeToRefs(settingsStore);
+const { currency, accounts, account: selectedAccount, settings } = storeToRefs(settingsStore);
 const { createAccount, deleteAccount } = settingsStore;
 const { isLoading, isFirstLoadCompleted } = storeToRefs(useLoadingStore());
 const { hasErrors: isShowingErrorsModal } = storeToRefs(useErrorsStore());

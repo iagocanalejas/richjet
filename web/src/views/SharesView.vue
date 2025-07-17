@@ -17,7 +17,7 @@
                     class="flex items-center justify-between w-full text-left text-xl font-semibold mb-2 focus:outline-none"
                     @click="showFavorites = !showFavorites"
                 >
-                    <span>Favorites</span>
+                    <span>Favorites ({{ watchlist.length }} / {{ settings.limits.max_shares }})</span>
                     <svg
                         :class="{ 'rotate-180': showFavorites }"
                         class="w-5 h-5 transition-transform me-4"
@@ -73,7 +73,7 @@ const { addTransaction } = usePortfolioStore();
 const watchlistStore = useWatchlistStore();
 const { watchlist } = storeToRefs(watchlistStore);
 const { isInWatchlist, addToWatchlist, removeFromWatchlist } = watchlistStore;
-const { currency } = storeToRefs(useSettingsStore());
+const { currency, settings } = storeToRefs(useSettingsStore());
 
 const showFavorites = ref(true);
 const showLoadMore = ref(false);
