@@ -5,7 +5,7 @@
                 <SearchComponent @on-search="debouncedFilterResults" />
                 <button
                     @click="openShareModal()"
-                    class="bg-blue-600 cursor-pointer hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition"
                 >
                     Create
                 </button>

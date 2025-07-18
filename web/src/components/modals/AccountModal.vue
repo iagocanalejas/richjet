@@ -47,13 +47,13 @@
             <div class="flex flex-col gap-2 pt-2">
                 <button
                     @click="save()"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition"
                 >
                     Create Account
                 </button>
                 <button
                     @click="close()"
-                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-semibold transition"
                 >
                     Cancel
                 </button>
@@ -75,7 +75,12 @@ const props = defineProps({
 
 const emit = defineEmits(['save', 'close']);
 
-const account = ref<Omit<Account, 'id' | 'user_id'>>({ name: '', account_type: 'BROKER' });
+const account = ref<Omit<Account, 'id' | 'user_id'>>({
+    name: '',
+    account_type: 'BROKER',
+    currency: 'USD',
+    balance_history: [],
+});
 const $errors = ref<Partial<Record<keyof Account, string>>>({});
 
 const accountTypeLabels: Record<AccountType, string> = {
@@ -93,30 +98,12 @@ function save() {
 
     if (Object.keys($errors.value).length > 0) return;
     emit('save', { ...account.value });
-    account.value = { name: '', account_type: 'BROKER' };
+    account.value = { name: '', account_type: 'BROKER', currency: 'USD', balance_history: [] };
 }
 
 function close() {
     $errors.value = {};
-    account.value = { name: '', account_type: 'BROKER' };
+    account.value = { name: '', account_type: 'BROKER', currency: 'USD', balance_history: [] };
     emit('close');
 }
 </script>
-
-<style scoped>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-}
-</style>

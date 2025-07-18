@@ -5,14 +5,14 @@
 
             <div class="flex justify-center mb-8">
                 <button
-                    class="px-4 py-2 rounded-l-lg cursor-pointer"
+                    class="px-4 py-2 rounded-l-lg"
                     :class="[billingPeriod === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300']"
                     @click="billingPeriod = 'month'"
                 >
                     Monthly
                 </button>
                 <button
-                    class="px-4 py-2 rounded-r-lg cursor-pointer"
+                    class="px-4 py-2 rounded-r-lg"
                     :class="[billingPeriod === 'year' ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-300']"
                     @click="billingPeriod = 'year'"
                 >
@@ -58,7 +58,7 @@
                             {{ billingPeriod === 'month' ? '/mo' : '/yr' }}
                         </p>
                         <button
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md transition duration-200 cursor-pointer"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl shadow-md transition duration-200"
                             @click="selectPlan(plan)"
                         >
                             Choose Plan
@@ -123,14 +123,14 @@
             <div class="pt-2">
                 <button
                     v-if="!settings.subscription.cancel_at_period_end"
-                    class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition duration-200 cursor-pointer"
+                    class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition duration-200"
                     @click="updateSubscriptionStatus(true)"
                 >
                     Cancel Subscription
                 </button>
                 <button
                     v-else
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition duration-200 cursor-pointer"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition duration-200"
                     @click="updateSubscriptionStatus(false)"
                 >
                     Keep Subscription

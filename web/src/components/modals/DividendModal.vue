@@ -86,13 +86,13 @@
             <div class="flex flex-col gap-2 pt-2">
                 <button
                     @click="submit"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition"
                 >
                     Add {{ dividendType === 'cash' ? 'Cash' : 'Stock' }} Dividend
                 </button>
                 <button
                     @click="close()"
-                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-medium transition cursor-pointer"
+                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-medium transition"
                 >
                     Cancel
                 </button>
@@ -149,21 +149,3 @@ function tabClass(selected: boolean) {
     return selected ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600';
 }
 </script>
-
-<style scoped>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-}
-</style>

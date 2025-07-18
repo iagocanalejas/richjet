@@ -38,7 +38,7 @@
                 :max-accounts="settings?.limits?.max_accounts ?? 0"
                 @select="selectedAccount = $event"
                 @add="createAccount"
-                @delete="deleteAccount($event.id)"
+                @delete="deleteAccount($event.id, true)"
             />
 
             <div v-if="isLogged" class="relative">
@@ -64,13 +64,13 @@
                 >
                     <button
                         @click="goToSettings"
-                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition curpor-pointer"
+                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition"
                     >
                         Manage Subscription
                     </button>
                     <button
                         @click="signOut"
-                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition cursor-pointer"
+                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition"
                     >
                         Sign out
                     </button>
@@ -80,7 +80,7 @@
             <div v-else>
                 <button
                     @click="signIn"
-                    class="flex items-center gap-2 bg-white text-gray-700 px-3 py-3 rounded-full shadow hover:shadow-md transition hover:bg-gray-100 cursor-pointer"
+                    class="flex items-center gap-2 bg-white text-gray-700 px-3 py-3 rounded-full shadow hover:shadow-md transition hover:bg-gray-100"
                 >
                     <img
                         src="https://developers.google.com/identity/images/g-logo.png"

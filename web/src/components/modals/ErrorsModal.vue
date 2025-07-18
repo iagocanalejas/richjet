@@ -31,7 +31,7 @@
             <div class="pt-2">
                 <button
                     @click="clearErrors"
-                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-semibold transition"
                 >
                     Close
                 </button>
@@ -76,46 +76,6 @@ function formatTrace(trace: unknown): string {
 </script>
 
 <style scoped>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-}
-
-/* Style the scrollbar for webkit browsers */
-ul::-webkit-scrollbar,
-pre::-webkit-scrollbar {
-    width: 8px;
-}
-
-ul::-webkit-scrollbar-track,
-pre::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-ul::-webkit-scrollbar-thumb,
-pre::-webkit-scrollbar-thumb {
-    background-color: #4b5563; /* Tailwind's gray-600 */
-    border-radius: 6px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-}
-
-ul::-webkit-scrollbar-thumb:hover,
-pre::-webkit-scrollbar-thumb:hover {
-    background-color: #6b7280; /* Tailwind's gray-500 */
-}
-
 ul,
 pre {
     scroll-behavior: smooth;

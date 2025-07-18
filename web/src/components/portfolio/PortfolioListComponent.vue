@@ -13,7 +13,7 @@
                 v-for="item in portfolio"
                 :key="item.symbol.ticker"
                 @click="showContextMenu($event, item)"
-                class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_0.2fr] gap-4 items-center bg-gray-800 p-4 rounded-lg cursor-pointer"
+                class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_0.2fr] gap-4 items-center bg-gray-800 p-4 rounded-lg"
             >
                 <PortfolioItemComponent v-if="!isTradePortfolioItem(item)" :item="item" />
                 <PortfolioTradeItemComponent v-else :item="item" />

@@ -31,7 +31,7 @@
     <div v-if="showLoadMore" class="mt-6 w-full text-center">
         <button
             @click="$emit('load-more')"
-            class="bg-gray-800 cursor-pointer text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+            class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
         >
             Load more
         </button>

@@ -33,7 +33,7 @@
         <button
             v-if="!item.isFavorite || item.id"
             @click.stop="emit('favorite', item)"
-            class="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+            class="text-gray-400 hover:text-red-500 transition-colors"
             :title="item.isFavorite ? 'Unfavorite' : 'Favorite'"
         >
             <svg
@@ -71,7 +71,7 @@
                 />
             </svg>
         </button>
-        <button class="text-gray-400 hover:text-white cursor-pointer" title="Options">⋮</button>
+        <button class="text-gray-400 hover:text-white" title="Options">⋮</button>
     </div>
 </template>
 

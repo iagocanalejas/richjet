@@ -27,7 +27,7 @@
     <div class="text-sm text-right" :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
         {{ rentability.toFixed(2) }} %
     </div>
-    <button class="text-gray-400 hover:text-white cursor-pointer" title="Options">⋮</button>
+    <button class="text-gray-400 hover:text-white" title="Options">⋮</button>
 </template>
 
 <script lang="ts" setup>

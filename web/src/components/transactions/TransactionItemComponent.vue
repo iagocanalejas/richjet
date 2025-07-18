@@ -17,11 +17,7 @@
     <div v-else class="text-sm text-right">{{ formatCurrency(item.quantity * item.price, currency) }}</div>
 
     <div class="text-gray-400 text-right">
-        <button
-            @click="emit('remove', item)"
-            class="hover:text-red-500 transition-colors cursor-pointer"
-            title="Remove"
-        >
+        <button @click="emit('remove', item)" class="hover:text-red-500 transition-colors" title="Remove">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"

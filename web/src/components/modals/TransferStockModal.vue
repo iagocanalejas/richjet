@@ -24,13 +24,13 @@
             <div class="flex flex-col gap-2 pt-2">
                 <button
                     @click="transfer()"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition"
                 >
                     Transfer
                 </button>
                 <button
                     @click="$emit('close')"
-                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                    class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-md text-sm font-semibold transition"
                 >
                     Cancel
                 </button>
@@ -71,21 +71,3 @@ function transfer() {
     emit('transfer', newAccount?.value);
 }
 </script>
-
-<style scoped>
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-}
-</style>

@@ -31,7 +31,7 @@
 
                 <button
                     @click.stop="deleteAccount(account)"
-                    class="p-1 rounded hover:bg-red-600 transition group-hover:opacity-100 opacity-70 cursor-pointer"
+                    class="p-1 rounded hover:bg-red-600 transition group-hover:opacity-100 opacity-70"
                     title="Delete"
                 >
                     <svg
@@ -47,9 +47,10 @@
                 </button>
             </div>
 
-            <div class="border-t border-gray-600"></div>
+            <div v-if="accounts.length < maxAccounts" class="border-t border-gray-600"></div>
 
             <div
+                v-if="accounts.length < maxAccounts"
                 class="px-4 py-2 text-blue-400 hover:bg-gray-700 hover:text-blue-300 cursor-pointer"
                 @click="isAccountModalOpen = true"
             >
@@ -61,7 +62,7 @@
     <button
         v-else
         @click="isAccountModalOpen = true"
-        class="px-3 py-2 rounded-lg transition duration-200 bg-gray-800 text-white hover:bg-gray-700 hover:text-gray-300 border border-gray-700 cursor-pointer"
+        class="px-3 py-2 rounded-lg transition duration-200 bg-gray-800 text-white hover:bg-gray-700 hover:text-gray-300 border border-gray-700"
     >
         Add account
     </button>
@@ -72,12 +73,15 @@
         @save="addAccount"
         @close="isAccountModalOpen = false"
     />
+
+    <ConfirmationModal ref="confirmationModal" :show-reconfirmation="true" @confirm="deleteAccount" />
 </template>
 
 <script setup lang="ts">
 import type { Account } from '@/types/user';
 import { ref } from 'vue';
 import AccountModal from '../modals/AccountModal.vue';
+import ConfirmationModal from '../modals/ConfirmationModal.vue';
 
 defineProps({
     accounts: { type: Array as () => Account[], default: () => [] },
@@ -89,13 +93,22 @@ const emit = defineEmits(['select', 'add', 'delete']);
 
 const isDropdownOpen = ref(false);
 const isAccountModalOpen = ref(false);
+const confirmationModal = ref<InstanceType<typeof ConfirmationModal> | null>(null);
 
 function select(item?: Account) {
     emit('select', item);
     isDropdownOpen.value = false;
 }
 
-function deleteAccount(account: Account) {
+function deleteAccount(account: Account, confirmed = false) {
+    if (!confirmed) {
+        confirmationModal.value?.show(
+            'Delete Account',
+            `Are you sure you want to delete the account "${account.name}" and all the data in it?`,
+            [account, true]
+        );
+        return;
+    }
     emit('delete', account);
     isDropdownOpen.value = false;
 }

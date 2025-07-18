@@ -25,7 +25,7 @@
         <div v-if="index + 1 < account.balance_history.length" class="text-right">
             <button
                 @click="$emit('delete-balance', item.account_id, item.id)"
-                class="hover:text-red-500 transition-colors cursor-pointer"
+                class="hover:text-red-500 transition-colors"
                 title="Delete"
             >
                 <svg
