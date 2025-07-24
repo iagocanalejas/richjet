@@ -72,8 +72,8 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     async function transferStock(symbol: string, fromAccountId?: string, toAccountId?: string) {
         if (fromAccountId === toAccountId) return;
 
-        const toAccount = toAccountId ? accounts.value.find((a) => a.name === toAccountId) : undefined;
-        const fromAccount = fromAccountId ? accounts.value.find((a) => a.name === fromAccountId) : undefined;
+        const toAccount = toAccountId ? accounts.value.find((a) => a.id === toAccountId) : undefined;
+        const fromAccount = fromAccountId ? accounts.value.find((a) => a.id === fromAccountId) : undefined;
         const transferedIds = await TransactionsService.transferStock(symbol, fromAccount?.id, toAccount?.id);
         for (const transaction of transactions.value) {
             if (transferedIds.includes(transaction.id)) {

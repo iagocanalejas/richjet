@@ -16,8 +16,11 @@ vi.mock('@/stores/stocks', () => ({
 vi.mock('@/stores/settings', () => ({
     useSettingsStore: () => ({
         conversionRate: ref(1),
-        account: ref({ name: 'default' }),
-        accounts: ref([{ name: 'default' }, { name: 'brokerage' }]),
+        account: ref({ id: '1', name: 'default' }),
+        accounts: ref([
+            { id: '1', name: 'default' },
+            { id: '2', name: 'brokerage' },
+        ]),
     }),
 }));
 
@@ -319,7 +322,7 @@ describe('usePortfolioStore', () => {
         it('transfers a stock between accounts', async () => {
             const tx = await mockTransaction(store, {
                 symbol: { ...mockSymbol, ticker: 'AAPL' },
-                account: { name: 'default' },
+                account: { id: '1', name: 'default' },
             });
             vi.stubGlobal(
                 'fetch',
@@ -328,7 +331,7 @@ describe('usePortfolioStore', () => {
                     json: async () => [tx.id],
                 })
             );
-            await store.transferStock('AAPL', 'default', 'brokerage');
+            await store.transferStock('AAPL', '1', '2');
             expect(store.portfolios.brokerage[0].symbol.ticker).toBe('AAPL');
             expect(store.portfolios.default.length).toBe(0);
         });
@@ -336,9 +339,9 @@ describe('usePortfolioStore', () => {
         it('should not transfer stock if fromAccount and toAccount are the same', async () => {
             await mockTransaction(store, {
                 symbol: { ...mockSymbol, ticker: 'AAPL' },
-                account: { name: 'default' },
+                account: { id: '1', name: 'default' },
             });
-            await store.transferStock('AAPL', 'default', 'default');
+            await store.transferStock('AAPL', '1', '1');
             expect(store.portfolios.default.length).toBe(1);
             expect(store.portfolios.default[0].symbol.ticker).toBe('AAPL');
         });
@@ -347,11 +350,11 @@ describe('usePortfolioStore', () => {
             store.portfolios['brokerage'] = [];
             const tx = await mockTransaction(store, {
                 symbol: { ...mockSymbol, ticker: 'AAPL' },
-                account: { name: 'default' },
+                account: { id: '1', name: 'default' },
             });
             await mockTransaction(store, {
                 symbol: { ...mockSymbol, ticker: 'AAPL' },
-                account: { name: 'brokerage' },
+                account: { id: '2', name: 'brokerage' },
             });
             vi.stubGlobal(
                 'fetch',
@@ -360,7 +363,7 @@ describe('usePortfolioStore', () => {
                     json: async () => [tx.id],
                 })
             );
-            await store.transferStock('AAPL', 'default', 'brokerage');
+            await store.transferStock('AAPL', '1', '2');
             expect(store.portfolios.brokerage[0].quantity).toBe(20);
             expect(store.portfolios.brokerage[0].totalInvested).toBe(3000);
             expect(store.portfolios.brokerage[0].commission).toBe(2);

@@ -215,6 +215,7 @@ def update_stock_account(
     """
     Updates the account for a transaction.
     """
+    print(from_account_id, to_account_id, ticker)
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not ticker:
@@ -235,7 +236,7 @@ def update_stock_account(
         SET account_id = %s::uuid
         WHERE user_id = %s::uuid AND
             account_id = %s::uuid AND
-            (SELECT ticker FROM symbol WHERE id = t.symbol_id) = %s
+            (SELECT ticker FROM symbols WHERE id = t.symbol_id) = %s
         RETURNING id
     """
 
