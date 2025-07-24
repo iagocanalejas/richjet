@@ -29,7 +29,7 @@
                     <h2 class="text-2xl font-semibold mb-4 text-center tracking-wide text-blue-400">
                         {{ plan.product.name }}
                     </h2>
-                    <div class="flex-1 flex items-center justify-center mb-6">
+                    <div class="flex-1 flex flex-col mb-6">
                         <template v-if="isLite(plan.product.name)">
                             <span>For simple tracking of small portfolios.</span>
                             <ul class="space-y-2 text-sm text-gray-300 list-disc list-inside mt-3">
@@ -168,5 +168,6 @@ async function updateSubscriptionStatus(cancelAtPeriodEnd: boolean) {
     await settingsStore.updateSubscriptionStatus(cancelAtPeriodEnd);
 }
 
+// TODO: fix styling for list
 onMounted(async () => await settingsStore.loadPlans());
 </script>

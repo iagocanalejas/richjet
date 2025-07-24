@@ -22,7 +22,7 @@ export function formatDate(date: Date | string | number, options?: Intl.DateTime
     if (typeof date === 'number') date = new Date(date * 1000);
     if (typeof date === 'string') date = new Date(date);
     const userLocale = mapWeirdLocales(navigator.language || 'en-US');
-    return new Intl.DateTimeFormat(userLocale, options).format(new Date(date));
+    return new Intl.DateTimeFormat(userLocale, options).format(date);
 }
 
 function mapWeirdLocales(locale: string) {
