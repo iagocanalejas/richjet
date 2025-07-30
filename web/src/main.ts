@@ -48,7 +48,6 @@ window.fetch = async function fetchWithRetry(resource: RequestInfo, options: Req
                     : err && err instanceof String && err.includes('timed out');
 
             if (isTimeout && !loadingStore.isFirstLoadCompleted && attempt < MAX_RETRIES) {
-                console.warn(`Retrying request to ${resource} (attempt ${attempt}) due to timeout`);
                 clearTimeout(timeoutId);
                 await new Promise((r) => setTimeout(r, RETRY_DELAY));
                 return tryFetch();
