@@ -32,7 +32,7 @@ window.fetch = async function fetchWithRetry(resource: RequestInfo, options: Req
 
     async function tryFetch(): Promise<Response> {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(`⏱️ Request ${resource} timed out`), timeout);
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
 
         attempt++;
 

@@ -39,3 +39,8 @@ export function normalizePriceInput(value: string): number {
     const parsed = parseFloat(normalized);
     return isNaN(parsed) ? 0 : parsed;
 }
+
+export function normalizeLimit(limit: string | number) {
+    if (limit === 'Infinity') return '∞';
+    return `${limit}`;
+}

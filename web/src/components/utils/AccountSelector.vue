@@ -4,7 +4,7 @@
             @click="isDropdownOpen = !isDropdownOpen"
             class="inline-flex items-center justify-between bg-gray-800 px-4 py-2 rounded-md hover:bg-gray-700"
         >
-            {{ selected?.name || 'All' }} ({{ accounts.length }} / {{ maxAccounts }})
+            {{ selected?.name || 'All' }} ({{ accounts.length }} / {{ normalizeLimit(maxAccounts) }})
             <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
@@ -47,10 +47,13 @@
                 </button>
             </div>
 
-            <div v-if="accounts.length < maxAccounts" class="border-t border-gray-600"></div>
+            <div
+                v-if="maxAccounts === 'Infinity' || accounts.length < Number(maxAccounts)"
+                class="border-t border-gray-600"
+            ></div>
 
             <div
-                v-if="accounts.length < maxAccounts"
+                v-if="maxAccounts === 'Infinity' || accounts.length < Number(maxAccounts)"
                 class="px-4 py-2 text-blue-400 hover:bg-gray-700 hover:text-blue-300 cursor-pointer"
                 @click="isAccountModalOpen = true"
             >
@@ -82,11 +85,12 @@ import type { Account } from '@/types/user';
 import { ref } from 'vue';
 import AccountModal from '../modals/AccountModal.vue';
 import ConfirmationModal from '../modals/ConfirmationModal.vue';
+import { normalizeLimit } from '@/utils/utils';
 
 defineProps({
     accounts: { type: Array as () => Account[], default: () => [] },
     selected: { type: Object as () => Account | undefined, default: undefined },
-    maxAccounts: { type: Number, required: true },
+    maxAccounts: { type: [Number, String], required: true },
 });
 
 const emit = defineEmits(['select', 'add', 'delete']);

@@ -168,6 +168,5 @@ async function updateSubscriptionStatus(cancelAtPeriodEnd: boolean) {
     await settingsStore.updateSubscriptionStatus(cancelAtPeriodEnd);
 }
 
-// TODO: fix styling for list
 onMounted(async () => await settingsStore.loadPlans());
 </script>

@@ -215,7 +215,6 @@ def update_stock_account(
     """
     Updates the account for a transaction.
     """
-    print(from_account_id, to_account_id, ticker)
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not ticker:

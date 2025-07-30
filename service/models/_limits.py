@@ -39,8 +39,16 @@ PLAN_DEFAULTS = {
         "max_shares": 100,
         "max_transactions": 1000,
     },
-    Plan.MAX: {},
-    Plan.ADMIN: {},
+    Plan.MAX: {
+        "max_accounts": float("inf"),
+        "max_shares": float("inf"),
+        "max_transactions": float("inf"),
+    },
+    Plan.ADMIN: {
+        "max_accounts": float("inf"),
+        "max_shares": float("inf"),
+        "max_transactions": float("inf"),
+    },
 }
 
 
@@ -50,7 +58,11 @@ class UserLimits:
 
     @classmethod
     def get_user_limits(cls, user: User) -> dict[str, int]:
-        return PLAN_DEFAULTS.get(Plan(user.plan), {})
+        plan = PLAN_DEFAULTS.get(Plan(user.plan), {})
+        for key in plan.keys():
+            if plan[key] == float("inf"):
+                plan[key] = "Infinity"
+        return plan
 
     def __post_init__(self):
         defaults = PLAN_DEFAULTS.get(Plan(self.user.plan), {})
