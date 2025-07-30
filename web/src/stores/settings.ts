@@ -32,6 +32,7 @@ export const useSettingsStore = defineStore('settings', () => {
         ]);
 
         _settings.value = { ..._settings.value, ...settings, accounts: accounts };
+        await _getConvertionRate(_settings.value.currency);
     }
 
     async function loadPlans() {

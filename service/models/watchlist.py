@@ -74,6 +74,7 @@ def get_watchlist_by_user_id(db: Connection, user_id: str) -> list[Symbol]:
         FROM watchlist w
         JOIN symbols s ON w.symbol_id = s.id
         WHERE w.user_id = %s::uuid
+        ORDER BY s.ticker
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:

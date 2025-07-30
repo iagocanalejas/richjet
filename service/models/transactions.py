@@ -131,6 +131,7 @@ def get_transactions_by_user_id(db: Connection, user_id: str) -> list[Transactio
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
         LEFT JOIN accounts a ON t.account_id = a.id
         WHERE t.user_id = %s::uuid
+        ORDER BY t.date DESC
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:

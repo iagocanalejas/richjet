@@ -3,6 +3,7 @@
         <img v-show="item.symbol.picture" :src="item.symbol.picture" alt="Icon" class="w-6 h-6 object-contain" />
         <span class="text-sm font-medium tracking-wide text-white">
             {{ item.symbol.ticker }}
+            <!-- TODO: add symbol name -->
         </span>
     </div>
     <div class="text-sm text-right">

@@ -25,7 +25,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
     async function init() {
         const transactionsForPortfolio = await TransactionsService.loadTransactions();
-        transactions.value = [...transactionsForPortfolio];
+        transactions.value = structuredClone(transactionsForPortfolio);
         portfolios.value['default'] = [];
         portfolios.value['all'] = [];
 
@@ -33,7 +33,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         await _prefetchStockQuotes();
 
         // update portfolios with transactions
-        for (const transaction of transactionsForPortfolio) {
+        for (const transaction of transactionsForPortfolio.reverse()) {
             const key = transaction.account?.name ?? 'default';
             if (!portfolios.value[key] && key !== 'default') portfolios.value[key] = [];
             await _updatePortfolio(key, transaction);
@@ -134,7 +134,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         }
     }
 
-    async function _updatePortfolio(portfolioKey: string, transaction: TransactionItem) {
+    async function _updatePortfolio(portfolioKey: string, transaction: Readonly<TransactionItem>) {
         if (transaction.transaction_type === 'DIVIDEND-CASH') {
             cashDividends.value += transaction.price;
             return;
@@ -153,7 +153,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                 portfolio[idx].currentInvested += transaction.price * transaction.quantity;
                 portfolio[idx].totalInvested += transaction.price * transaction.quantity;
                 portfolio[idx].commission += transaction.commission;
-                portfolio[idx].sortedBuys.push({ ...transaction });
+                portfolio[idx].sortedBuys.push(structuredClone(transaction));
             } else if (transaction.transaction_type === 'SELL') {
                 let remainingToSell = transaction.quantity;
                 let costBasis = 0;
@@ -161,7 +161,6 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                 // Apply FIFO: consume from earliest buys first
                 while (remainingToSell > 0 && portfolio[idx].sortedBuys.length > 0) {
                     const buy = portfolio[idx].sortedBuys[0];
-
                     if (buy.quantity <= remainingToSell) {
                         // Fully consume this buy
                         costBasis += buy.quantity * buy.price;
@@ -179,7 +178,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                 portfolio[idx].currentInvested -= costBasis;
                 portfolio[idx].totalRetrieved += transaction.price * transaction.quantity;
                 portfolio[idx].commission += transaction.commission;
-                portfolio[idx].sortedSells.push({ ...transaction, costBasis });
+                portfolio[idx].sortedSells.push(structuredClone({ ...transaction, costBasis }));
             } else if (transaction.transaction_type === 'DIVIDEND') {
                 portfolio[idx].quantity += transaction.quantity;
             }
@@ -203,7 +202,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                 totalInvested: transaction.price * transaction.quantity,
                 totalRetrieved: 0,
                 commission: transaction.commission,
-                sortedBuys: [transaction],
+                sortedBuys: [structuredClone(transaction)],
                 sortedSells: [],
             });
         }
