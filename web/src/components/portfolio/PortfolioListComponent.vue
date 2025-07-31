@@ -35,26 +35,26 @@
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
             @click="openTransactionsModal(contextMenu.item!)"
         >
-            Record Buy/Sell
+            Buy/Sell
         </button>
         <button
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
             @click="openDividendsModal(contextMenu.item!)"
         >
-            Add Dividend Payment
+            Add Dividend
         </button>
         <button
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
             @click="openTransferStockModal(contextMenu.item!)"
         >
-            Transfer to Another Account
+            Transfer Account
         </button>
         <button
             v-if="!!contextMenu.item?.symbol?.manual_price"
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
             @click="openManualPriceModal(contextMenu.item!)"
         >
-            Manually Set Current Price
+            Set Current Price
         </button>
     </ContextMenu>
 
