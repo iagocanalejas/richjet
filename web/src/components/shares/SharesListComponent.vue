@@ -68,14 +68,8 @@ import { useErrorsStore } from '@/stores/errors';
 const ITEMS_PER_PATE = 20;
 
 const props = defineProps({
-    values: {
-        type: Array as () => StockSymbolForDisplay[],
-        default: () => [],
-    },
-    showLoadMore: {
-        type: Boolean,
-        default: false,
-    },
+    values: { type: Array as () => StockSymbolForDisplay[], default: () => [] },
+    showLoadMore: { type: Boolean, default: false },
 });
 const emit = defineEmits(['favorite', 'transact', 'load-more']);
 

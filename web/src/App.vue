@@ -117,7 +117,6 @@ import { useSettingsStore } from './stores/settings';
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, watch } from 'vue';
 import { useWatchlistStore } from './stores/watchlist';
-import { usePortfolioStore } from './stores/portfolio';
 import { useAuthStore } from './stores/auth';
 import LoadingBar from './components/LoadingBar.vue';
 import LandingView from './views/LandingView.vue';
@@ -126,6 +125,7 @@ import ErrorsModal from './components/modals/ErrorsModal.vue';
 import { useErrorsStore } from './stores/errors';
 import WakingUpModal from './components/modals/WakingUpModal.vue';
 import { useLoadingStore } from './stores/loading';
+import { useTransactionsStore } from './stores/transactions';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -158,7 +158,7 @@ watch(
     async (newValue, prevValue) => {
         if (!prevValue && newValue) {
             await useWatchlistStore().init();
-            await usePortfolioStore().init();
+            await useTransactionsStore().init();
         }
     }
 );
@@ -166,6 +166,6 @@ watch(
 onMounted(async () => {
     if (!authStore.isLogged) return;
     await useWatchlistStore().init();
-    await usePortfolioStore().init();
+    await useTransactionsStore().init();
 });
 </script>

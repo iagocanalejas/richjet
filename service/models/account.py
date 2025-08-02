@@ -27,7 +27,7 @@ class Account:
         return cls(
             id=row["account_id"] if "account_id" in row else row["id"],
             user_id=row["user_id"],
-            name=row["name"],
+            name=row["account_name"] if "account_name" in row else row["name"],
             account_type=AccountType(row["account_type"]),
             currency=row["currency"],
             balance=row.get("balance", None),

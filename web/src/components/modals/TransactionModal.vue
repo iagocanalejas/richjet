@@ -70,12 +70,14 @@
             <div class="flex flex-col gap-2 pt-2">
                 <div class="flex gap-2">
                     <button
+                        v-if="mode === 'sell'"
                         @click="sell"
                         class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-md text-sm font-semibold transition"
                     >
                         Sell
                     </button>
                     <button
+                        v-if="mode === 'buy'"
                         @click="buy"
                         class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md text-sm font-semibold transition"
                     >
@@ -99,10 +101,8 @@ import { normalizePriceInput } from '@/utils/utils';
 import { reactive, ref, watch } from 'vue';
 
 const props = defineProps({
-    transaction: {
-        type: Object as () => Omit<TransactionItem, 'id' | 'user_id'>,
-        required: true,
-    },
+    transaction: { type: Object as () => Omit<TransactionItem, 'id' | 'user_id'>, required: true },
+    mode: { type: String as () => 'buy' | 'sell', default: 'buy' },
 });
 
 const emit = defineEmits(['buy', 'sell', 'close']);

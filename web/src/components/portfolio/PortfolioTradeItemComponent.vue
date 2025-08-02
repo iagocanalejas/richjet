@@ -1,9 +1,14 @@
 <template>
     <div class="flex items-center space-x-3">
         <img v-show="item.symbol.picture" :src="item.symbol.picture" class="w-6 h-6 object-contain" alt="Icon" />
-        <span class="text-sm font-medium tracking-wide text-white">
-            {{ item.symbol.ticker }}
-        </span>
+        <div class="flex flex-col">
+            <span class="text-sm font-medium tracking-wide text-white">
+                {{ item.symbol.ticker }}
+            </span>
+            <span v-if="item.symbol.name" class="text-xs text-gray-400">
+                {{ item.symbol.name }}
+            </span>
+        </div>
     </div>
     <div class="text-sm text-right text-white">--</div>
     <div class="text-sm text-right text-white">--</div>

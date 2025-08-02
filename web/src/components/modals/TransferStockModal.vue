@@ -44,17 +44,11 @@ import { useSettingsStore } from '@/stores/settings';
 import type { Account } from '@/types/user';
 import type { PortfolioItem } from '@/types/portfolio';
 import { storeToRefs } from 'pinia';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
-    item: {
-        type: Object as () => PortfolioItem,
-        required: true,
-    },
-    selectedAccount: {
-        type: Object as () => Account | undefined,
-        default: undefined,
-    },
+    item: { type: Object as () => PortfolioItem, required: true },
+    selectedAccount: { type: Object as () => Account | undefined, default: undefined },
 });
 
 const emit = defineEmits(['transfer', 'close']);
@@ -62,6 +56,14 @@ const emit = defineEmits(['transfer', 'close']);
 const { accounts } = storeToRefs(useSettingsStore());
 
 const newAccount = ref<Account | undefined>();
+
+watch(
+    () => props.selectedAccount,
+    (newVal) => {
+        newAccount.value = newVal ? newVal : undefined;
+    },
+    { immediate: true }
+);
 
 function transfer() {
     if (props.selectedAccount?.name === newAccount?.value?.name) {

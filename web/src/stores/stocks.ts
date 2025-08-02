@@ -19,5 +19,10 @@ export const useStocksStore = defineStore('stocks', () => {
         return data;
     }
 
-    return { symbolSearch, getStockQuote };
+    function getStockQuoteSync(symbol: StockSymbol) {
+        if (!symbol.source || !symbol || symbol.is_user_created || symbol.manual_price) return;
+        return _quoteCache.get(symbol.ticker);
+    }
+
+    return { symbolSearch, getStockQuote, getStockQuoteSync };
 });

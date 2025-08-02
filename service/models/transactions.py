@@ -95,7 +95,7 @@ def get_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> 
                t.transaction_type, t.date, t.created_at,
                s.id AS symbol_id, s.name, s.ticker, s.currency AS symbol_currency, s.source,
                s.security_type, s.market_sector, s.isin, s.figi, s.picture, s.user_created,
-               a.id AS account_id, a.name, a.account_type, a.balance, a.currency
+               a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency
         FROM transactions t
         JOIN symbols s ON t.symbol_id = s.id
         LEFT JOIN accounts a ON t.account_id = a.id
@@ -231,17 +231,23 @@ def update_stock_account(
         if not any(a.id == to_account_id for a in valid_accounts):
             raise HTTPException(status_code=400, detail=f"Account '{to_account_id}' not found for user '{user_id}'")
 
-    sql = """
+    account_sql = "account_id = %s::uuid AND" if from_account_id is not None else ""
+    sql = f"""
         UPDATE transactions t
         SET account_id = %s::uuid
         WHERE user_id = %s::uuid AND
-            account_id = %s::uuid AND
+            {account_sql}
             (SELECT ticker FROM symbols WHERE id = t.symbol_id) = %s
         RETURNING id
     """
 
     with db.cursor() as cursor:
-        cursor.execute(sql, (to_account_id, user_id, from_account_id, ticker))
+        params = (
+            (to_account_id, user_id, from_account_id, ticker)
+            if from_account_id is not None
+            else (to_account_id, user_id, ticker)
+        )
+        cursor.execute(sql, params)
         rows = cursor.fetchall()
 
     db.commit()

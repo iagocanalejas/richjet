@@ -14,14 +14,14 @@
 import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
 import SearchComponent from '@/components/SearchComponent.vue';
 import TransactionsListComponent from '@/components/transactions/TransactionsListComponent.vue';
-import { usePortfolioStore } from '@/stores/portfolio';
+import { useTransactionsStore } from '@/stores/transactions';
 import type { TransactionItem } from '@/types/portfolio';
 import { storeToRefs } from 'pinia';
 import { computed, ref } from 'vue';
 
-const portfolioStore = usePortfolioStore();
-const { removeTransaction } = portfolioStore;
-const { transactions } = storeToRefs(portfolioStore);
+const transactionsStore = useTransactionsStore();
+const { removeTransaction } = transactionsStore;
+const { transactions } = storeToRefs(transactionsStore);
 
 const query = ref('');
 const filteredTransactions = computed(() =>

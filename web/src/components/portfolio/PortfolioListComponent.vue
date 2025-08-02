@@ -33,24 +33,33 @@
     >
         <button
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
-            @click="openTransactionsModal(contextMenu.item!)"
+            @click="openTransactionsModal(contextMenu.item!, 'buy')"
         >
-            Buy/Sell
+            Buy Shares
         </button>
         <button
+            v-if="contextMenu.item!.quantity"
+            class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
+            @click="openTransactionsModal(contextMenu.item!, 'sell')"
+        >
+            Sell Shares
+        </button>
+        <button
+            v-if="contextMenu.item!.quantity"
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
             @click="openDividendsModal(contextMenu.item!)"
         >
             Add Dividend
         </button>
         <button
+            v-if="contextMenu.item!.quantity"
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
             @click="openTransferStockModal(contextMenu.item!)"
         >
             Transfer Account
         </button>
         <button
-            v-if="!!contextMenu.item?.symbol?.manual_price"
+            v-if="contextMenu.item!.quantity && isPortfolioItemWithManualPrice(contextMenu.item!)"
             class="block w-full text-left rounded-lg transition duration-200 hover:bg-gray-700 hover:text-gray-300 px-2 py-1"
             @click="openManualPriceModal(contextMenu.item!)"
         >
@@ -65,6 +74,7 @@
         <TransactionModal
             v-if="isTransactionModalOpen && transaction"
             :transaction="transaction"
+            :mode="transactionModalMode"
             @buy="buy"
             @sell="sell"
             @close="isTransactionModalOpen = false"
@@ -102,15 +112,16 @@ import { ref } from 'vue';
 import type { PortfolioItem, TransactionItem } from '@/types/portfolio';
 import DividendModal from '../modals/DividendModal.vue';
 import { useSettingsStore } from '@/stores/settings';
-import { isTradePortfolioItem } from '@/utils/rules';
+import { isPortfolioItemWithManualPrice, isTradePortfolioItem } from '@/utils/rules';
 import ContextMenu from '../utils/ContextMenu.vue';
 import ManualPriceModal from '../modals/ManualPriceModal.vue';
 import TransactionModal from '../modals/TransactionModal.vue';
 import TransferStockModal from '../modals/TransferStockModal.vue';
 import type { Account } from '@/types/user';
+import { useTransactionsStore } from '@/stores/transactions';
 
-const portfolioStore = usePortfolioStore();
-const { portfolio } = storeToRefs(portfolioStore);
+const transactionStore = useTransactionsStore();
+const { portfolio } = storeToRefs(usePortfolioStore());
 const { currency, account: selectedAccount } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());
 
@@ -119,6 +130,7 @@ const isDividendModalOpen = ref(false);
 const isPriceModalOpen = ref(false);
 const isTransactionModalOpen = ref(false);
 const isTransferStockModalOpen = ref(false);
+const transactionModalMode = ref<'buy' | 'sell'>('buy');
 const transaction = ref<Omit<TransactionItem, 'id' | 'user_id'> | undefined>();
 const selectedItem = ref<PortfolioItem | undefined>();
 
@@ -136,8 +148,8 @@ function showContextMenu(event: MouseEvent, item: PortfolioItem) {
 
     contextMenu.value = {
         visible: true,
-        x: event.clientX,
-        y: event.clientY,
+        x: event.clientX + window.scrollX,
+        y: event.clientY + window.scrollY,
         item,
     };
 }
@@ -157,8 +169,9 @@ function openDividendsModal(item: PortfolioItem) {
     isDividendModalOpen.value = true;
 }
 
-function openTransactionsModal(item: PortfolioItem) {
+function openTransactionsModal(item: PortfolioItem, mode: 'buy' | 'sell') {
     isTransactionModalOpen.value = true;
+    transactionModalMode.value = mode;
     transaction.value = {
         account: selectedAccount.value,
         symbol: item.symbol,
@@ -183,32 +196,32 @@ function openManualPriceModal(item: PortfolioItem) {
 }
 
 async function addDividend(t: TransactionItem) {
-    await portfolioStore.addTransaction(t);
+    await transactionStore.addTransaction(t);
     transaction.value = undefined;
     isDividendModalOpen.value = false;
 }
 
 async function buy(t: TransactionItem) {
-    await portfolioStore.addTransaction(t);
+    await transactionStore.addTransaction(t);
     transaction.value = undefined;
     isTransactionModalOpen.value = false;
 }
 
 async function sell(t: TransactionItem) {
     t.transaction_type = 'SELL';
-    await portfolioStore.addTransaction(t);
+    await transactionStore.addTransaction(t);
     transaction.value = undefined;
     isTransactionModalOpen.value = false;
 }
 
 async function transfer(newAccount?: Account) {
-    await portfolioStore.transferStock(selectedItem.value!.symbol.ticker, selectedAccount.value?.id, newAccount?.id);
+    await transactionStore.transferStock(selectedItem.value!.symbol.ticker, selectedAccount.value?.id, newAccount?.id);
     selectedItem.value = undefined;
     isTransferStockModalOpen.value = false;
 }
 
 async function setPrice(item: { symbol_id: string; price: number }) {
-    await portfolioStore.updateManualPrice(item.symbol_id, item.price);
+    await transactionStore.updateManualPrice(item.symbol_id, item.price);
     selectedItem.value = undefined;
     isPriceModalOpen.value = false;
 }

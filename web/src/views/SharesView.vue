@@ -56,6 +56,7 @@
 </template>
 
 <script setup lang="ts">
+// TODO: filter favorites by search query
 import SearchComponent from '@/components/SearchComponent.vue';
 import SharesListComponent from '@/components/shares/SharesListComponent.vue';
 import { ref, watch, type Ref } from 'vue';
@@ -63,13 +64,13 @@ import { useStocksStore } from '@/stores/stocks';
 import { type StockSymbolForDisplay, type StockSymbol, stockSymbolForDisplayDefaults } from '@/types/stock';
 import { debounce, normalizeLimit } from '@/utils/utils';
 import { useWatchlistStore } from '@/stores/watchlist';
-import { usePortfolioStore } from '@/stores/portfolio';
 import { storeToRefs } from 'pinia';
 import ShareModal from '@/components/modals/ShareModal.vue';
 import { useSettingsStore } from '@/stores/settings';
+import { useTransactionsStore } from '@/stores/transactions';
 
 const stockStore = useStocksStore();
-const { addTransaction } = usePortfolioStore();
+const { addTransaction } = useTransactionsStore();
 const watchlistStore = useWatchlistStore();
 const { watchlist } = storeToRefs(watchlistStore);
 const { isInWatchlist, addToWatchlist, removeFromWatchlist } = watchlistStore;
