@@ -96,6 +96,7 @@
 </template>
 
 <script setup lang="ts">
+// TODO: format the date correctly
 import type { TransactionItem } from '@/types/portfolio';
 import { normalizePriceInput } from '@/utils/utils';
 import { reactive, ref, watch } from 'vue';

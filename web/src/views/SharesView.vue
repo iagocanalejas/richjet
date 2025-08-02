@@ -30,7 +30,11 @@
                     </svg>
                 </button>
                 <div v-show="showFavorites">
-                    <SharesListComponent :values="watchlist" @favorite="toggleFavorite" @transact="addTransaction" />
+                    <SharesListComponent
+                        :values="filteredWatchlist"
+                        @favorite="toggleFavorite"
+                        @transact="addTransaction"
+                    />
                 </div>
             </div>
 
@@ -56,10 +60,9 @@
 </template>
 
 <script setup lang="ts">
-// TODO: filter favorites by search query
 import SearchComponent from '@/components/SearchComponent.vue';
 import SharesListComponent from '@/components/shares/SharesListComponent.vue';
-import { ref, watch, type Ref } from 'vue';
+import { onMounted, ref, watch, type Ref } from 'vue';
 import { useStocksStore } from '@/stores/stocks';
 import { type StockSymbolForDisplay, type StockSymbol, stockSymbolForDisplayDefaults } from '@/types/stock';
 import { debounce, normalizeLimit } from '@/utils/utils';
@@ -79,26 +82,50 @@ const { currency, settings } = storeToRefs(useSettingsStore());
 const showFavorites = ref(true);
 const showLoadMore = ref(false);
 const filteredResults: Ref<StockSymbolForDisplay[]> = ref([]);
+const filteredWatchlist: Ref<StockSymbolForDisplay[]> = ref([]);
 
 // modal
 const isShareModalOpen = ref(false);
 const share = ref<Omit<StockSymbol, 'id'> | undefined>();
 
 let _query: string | undefined = undefined;
+let _isWatchlistFiltered = false;
 const debouncedFilterResults = debounce(_filterResults);
 async function _filterResults(query: string, is_load_more: boolean = false) {
-    showLoadMore.value = !is_load_more;
-    if (is_load_more) {
-        query = _query ?? '';
-    }
+    /*
+     * 1. If the query is empty, reset the search and show the full watchlist.
+     * 2. Filter the watchlist.
+     * 3. First load_more click will send a normal request to the API.
+     * 4. Second load_more click will send a load_more request to the API and hide the load_more button.
+     */
+    const q = (is_load_more ? (_query ?? '') : query).trim().toLowerCase();
+    _query = q;
 
-    _query = query;
-    if (!query) {
-        filteredResults.value = [];
+    if (!q) {
+        resetSearch();
         return;
     }
 
-    const results = (await stockStore.symbolSearch(query.toUpperCase(), is_load_more)) as StockSymbolForDisplay[];
+    if (!is_load_more) {
+        const results = watchlist.value.filter(
+            (s) => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+        );
+        _isWatchlistFiltered = true;
+        if (results.length > 0) {
+            showLoadMore.value = true;
+            filteredWatchlist.value = results;
+            return;
+        }
+    }
+
+    if (_isWatchlistFiltered) {
+        is_load_more = false;
+        _isWatchlistFiltered = false;
+    }
+
+    showFavorites.value = false;
+    showLoadMore.value = !is_load_more;
+    const results = (await stockStore.symbolSearch(q.toUpperCase(), is_load_more)) as StockSymbolForDisplay[];
     filteredResults.value = results.map((s) => ({
         ...s,
         ...stockSymbolForDisplayDefaults,
@@ -106,15 +133,20 @@ async function _filterResults(query: string, is_load_more: boolean = false) {
     }));
 }
 
+onMounted(() => (filteredWatchlist.value = [...watchlist.value]));
 watch(
     () => watchlist.value,
-    () => {
-        filteredResults.value = filteredResults.value.map((s) => ({
-            ...s,
-            isFavorite: isInWatchlist(s),
-        }));
-    }
+    () => resetSearch()
 );
+
+function resetSearch() {
+    _query = undefined;
+    _isWatchlistFiltered = false;
+    showLoadMore.value = false;
+    showFavorites.value = true;
+    filteredResults.value = [];
+    filteredWatchlist.value = [...watchlist.value];
+}
 
 function toggleFavorite(result: StockSymbolForDisplay) {
     result.isFavorite = !result.isFavorite;
