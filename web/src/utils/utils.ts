@@ -21,8 +21,11 @@ export function formatCurrency(value: number, currency: string, convertionRate?:
 export function formatDate(date: Date | string | number, options?: Intl.DateTimeFormatOptions): string {
     if (typeof date === 'number') date = new Date(date * 1000);
     if (typeof date === 'string') date = new Date(date);
-    const userLocale = mapWeirdLocales(navigator.language || 'en-US');
-    return new Intl.DateTimeFormat(userLocale, options).format(date);
+    return new Intl.DateTimeFormat(locale(), options).format(date);
+}
+
+export function locale() {
+    return mapWeirdLocales(navigator.language || 'en-US');
 }
 
 function mapWeirdLocales(locale: string) {

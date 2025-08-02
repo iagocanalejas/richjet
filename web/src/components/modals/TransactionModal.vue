@@ -62,6 +62,7 @@
                     <input
                         v-model="transactionCopy.date"
                         type="date"
+                        :lang="locale()"
                         class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
@@ -96,9 +97,8 @@
 </template>
 
 <script setup lang="ts">
-// TODO: format the date correctly
 import type { TransactionItem } from '@/types/portfolio';
-import { normalizePriceInput } from '@/utils/utils';
+import { normalizePriceInput, locale } from '@/utils/utils';
 import { reactive, ref, watch } from 'vue';
 
 const props = defineProps({
