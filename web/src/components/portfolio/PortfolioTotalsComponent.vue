@@ -64,11 +64,13 @@ import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
 import { isSavingsAccount } from '@/utils/rules';
 import { computed } from 'vue';
+import { useTransactionsStore } from '@/stores/transactions';
 
 defineEmits(['create']);
 
 const { currency, account: selectedAccount } = storeToRefs(useSettingsStore());
-const { cashDividends, totalInvested, portfolioCurrentValue, savingAccountsValue, closedPositions, rentability } =
+const { cashDividends } = storeToRefs(useTransactionsStore());
+const { totalInvested, portfolioCurrentValue, savingAccountsValue, closedPositions, rentability } =
     storeToRefs(usePortfolioStore());
 
 const isSavings = computed(() => isSavingsAccount(selectedAccount.value));
