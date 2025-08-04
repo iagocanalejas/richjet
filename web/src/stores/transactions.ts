@@ -53,6 +53,18 @@ export const useTransactionsStore = defineStore('transactions', () => {
         }
     }
 
+    async function updateTransaction(transaction: TransactionItem) {
+        const newTransaction = await TransactionsService.updateTransaction(transaction);
+        if (!newTransaction) return;
+
+        const index = transactions.value.findIndex((t) => t.id === newTransaction.id);
+        if (index === -1) {
+            addError({ readable_message: 'Transaction not found for update' });
+            return;
+        }
+        transactions.value.splice(index, 1, newTransaction);
+    }
+
     async function removeTransaction(transaction: TransactionItem) {
         const lastIndex = transactions.value.lastIndexOf(transaction);
         if (lastIndex < 0) return;
@@ -97,6 +109,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         transactions,
         cashDividends,
         addTransaction,
+        updateTransaction,
         removeTransaction,
         transferStock,
         updateManualPrice,

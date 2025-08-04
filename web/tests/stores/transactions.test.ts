@@ -211,6 +211,40 @@ describe('useTransactionsStore', () => {
         });
     });
 
+    describe('updates', () => {
+        it('updates a buy transaction', async () => {
+            const tx = await mockTransaction(store);
+            const updatedTx: TransactionItem = {
+                ...tx,
+                price: 160,
+                commission: 2,
+                date: new Date().toISOString(),
+            };
+
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => updatedTx }));
+            await store.updateTransaction(updatedTx);
+            expect(store.transactions[0].price).toBe(160);
+            expect(store.transactions[0].commission).toBe(2);
+        });
+
+        it('updates a dividend transaction', async () => {
+            const buyTx = await mockTransaction(store);
+            const divTx = await mockTransaction(store, {
+                ...buyTx,
+                id: '2',
+                quantity: 1,
+                price: 0,
+                transaction_type: 'DIVIDEND',
+                date: new Date().toISOString(),
+            });
+
+            const updatedDivTx = { ...divTx, quantity: 5 };
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => updatedDivTx }));
+            await store.updateTransaction(updatedDivTx);
+            expect(store.transactions[0].quantity).toBe(5);
+        });
+    });
+
     describe('removal', () => {
         it('removes a buy transaction', async () => {
             const tx = await mockTransaction(store);

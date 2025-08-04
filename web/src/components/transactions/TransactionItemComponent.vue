@@ -16,8 +16,8 @@
     <div v-if="isDividend(item.transaction_type)" class="text-sm text-right">---</div>
     <div v-else class="text-sm text-right">{{ formatCurrency(item.quantity * item.price, currency) }}</div>
 
-    <div class="text-gray-400 text-right">
-        <button @click="emit('remove', item)" class="hover:text-red-500 transition-colors" title="Remove">
+    <div class="flex items-center justify-end text-gray-400">
+        <button @click.stop="emit('remove', item)" class="hover:text-red-500 transition-colors" title="Remove">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -33,6 +33,13 @@
                 />
             </svg>
         </button>
+        <button
+            class="text-gray-400 hover:text-white ml-2 flex items-center justify-center"
+            title="Options"
+            @click.stop="emit('edit', item)"
+        >
+            ⋮
+        </button>
     </div>
 </template>
 
@@ -47,7 +54,7 @@ defineProps({
     item: { type: Object as () => TransactionItem, required: true },
 });
 
-const emit = defineEmits(['remove']);
+const emit = defineEmits(['edit', 'remove']);
 
 const { currency } = storeToRefs(useSettingsStore());
 </script>

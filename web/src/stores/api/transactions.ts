@@ -18,8 +18,18 @@ function addTransaction(transaction: TransactionItem) {
     return safeFetch<TransactionItem>(f, 'Error adding transaction');
 }
 
+function updateTransaction(transaction: TransactionItem) {
+    const f = fetch(`${BASE_URL}/transactions/${transaction.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction),
+    });
+    return safeFetch<TransactionItem>(f, 'Error updating transaction');
+}
+
 function transferStock(symbol: string, fromAccount?: string, toAccount?: string) {
-    const f = fetch(`${BASE_URL}/transactions/${symbol}`, {
+    const f = fetch(`${BASE_URL}/transactions/${symbol}/account`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -36,6 +46,7 @@ function removeTransaction(transactionId: string) {
 const TransactionsService = {
     loadTransactions,
     addTransaction,
+    updateTransaction,
     transferStock,
     removeTransaction,
 };

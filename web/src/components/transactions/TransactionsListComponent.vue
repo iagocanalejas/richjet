@@ -16,7 +16,7 @@
                 class="relative grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4"
                 :class="[borderByTransactionType(item.transaction_type)]"
             >
-                <TransactionItemComponent :item="item" @remove="emit('remove', item)" />
+                <TransactionItemComponent :item="item" @remove="emit('remove', item)" @edit="emit('edit', item)" />
             </li>
         </ul>
 
@@ -38,16 +38,13 @@ import IntersectionObserver from '../utils/IntersectionObserver.vue';
 import { borderByTransactionType } from '@/utils/styles';
 import TransactionItemComponent from './TransactionItemComponent.vue';
 
-const emit = defineEmits(['remove']);
+const emit = defineEmits(['edit', 'remove']);
 const { isLoading } = storeToRefs(useLoadingStore());
 
 const ITEMS_PER_PATE = 20;
 
 const props = defineProps({
-    values: {
-        type: Array as () => TransactionItem[],
-        default: () => [],
-    },
+    values: { type: Array as () => TransactionItem[], default: () => [] },
 });
 
 const currentPage = ref(0);

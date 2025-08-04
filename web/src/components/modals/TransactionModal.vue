@@ -59,11 +59,19 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Date</label>
-                    <input
+                    <template v-if="mode === 'edit'">
+                        <div class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700">
+                            {{ formatDate(transaction.date) }}
+                        </div>
+                    </template>
+                    <VueDatePicker
+                        v-else
                         v-model="transactionCopy.date"
-                        type="date"
-                        :lang="locale()"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        :format="dateFormat"
+                        :locale="locale()"
+                        :enable-time-picker="false"
+                        auto-apply
+                        dark
                     />
                 </div>
             </div>
@@ -84,6 +92,13 @@
                     >
                         Buy
                     </button>
+                    <button
+                        v-if="mode === 'edit'"
+                        @click="save"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md text-sm font-semibold transition"
+                    >
+                        Edit
+                    </button>
                 </div>
                 <button
                     @click="close()"
@@ -98,24 +113,38 @@
 
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/portfolio';
-import { normalizePriceInput, locale } from '@/utils/utils';
-import { reactive, ref, watch } from 'vue';
+import VueDatePicker from '@vuepic/vue-datepicker';
+import { normalizePriceInput, locale, formatDate } from '@/utils/utils';
+import { onMounted, reactive, ref, watch } from 'vue';
 
 const props = defineProps({
     transaction: { type: Object as () => Omit<TransactionItem, 'id' | 'user_id'>, required: true },
-    mode: { type: String as () => 'buy' | 'sell', default: 'buy' },
+    mode: { type: String as () => 'buy' | 'sell' | 'edit', default: 'buy' },
 });
 
-const emit = defineEmits(['buy', 'sell', 'close']);
+const emit = defineEmits(['buy', 'sell', 'save', 'close']);
 
 const priceInput = ref('');
 const transactionCopy = reactive({ ...props.transaction });
 const $errors = ref<{ price?: string; quantity?: string }>({});
 
+onMounted(() => {
+    Object.assign(transactionCopy, props.transaction);
+    priceInput.value = transactionCopy.price ? transactionCopy.price.toString() : '';
+    transactionCopy.date = transactionCopy.date ? new Date(transactionCopy.date).toISOString().split('T')[0] : '';
+});
 watch(
     () => props.transaction,
-    (newVal) => Object.assign(transactionCopy, newVal)
+    (newVal) => {
+        Object.assign(transactionCopy, newVal);
+        priceInput.value = newVal.price ? newVal.price.toString() : '';
+        transactionCopy.date = newVal.date ? new Date(newVal.date).toISOString().split('T')[0] : '';
+    }
 );
+
+function dateFormat(date: Date) {
+    return new Intl.DateTimeFormat(locale()).format(date);
+}
 
 function buy() {
     $errors.value = {};
@@ -133,6 +162,15 @@ function sell() {
     if (Object.keys($errors.value).length > 0) return;
     const option = { ...transactionCopy, transaction_type: 'SELL' };
     emit('sell', option);
+}
+
+function save() {
+    $errors.value = {};
+    if (transactionCopy.quantity <= 0) $errors.value.quantity = 'Quantity must be greater than 0.';
+    if (transactionCopy.price <= 0) $errors.value.price = 'Price must be greater than 0.';
+
+    if (Object.keys($errors.value).length > 0) return;
+    emit('save', transactionCopy);
 }
 
 function close() {

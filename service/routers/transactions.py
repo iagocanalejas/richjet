@@ -7,6 +7,7 @@ from models.transactions import (
     get_transactions_by_user_id,
     remove_transaction_by_id,
     update_stock_account,
+    update_transaction,
 )
 
 from routers.auth import get_session
@@ -36,8 +37,22 @@ async def api_create_transaction(
     return transaction.to_dict()
 
 
-@router.put("/{ticker}")
+@router.put("/{transaction_id}")
 async def api_update_transaction(
+    transaction_id: str,
+    transaction_data: dict = Body(...),
+    db=Depends(get_db),
+    session=Depends(get_session),
+):
+    transaction_data["id"] = transaction_id
+    transaction_data["user_id"] = session.user.id
+    transaction = Transaction.from_dict(**transaction_data)
+    transaction = update_transaction(db, session.user.id, transaction)
+    return transaction.to_dict()
+
+
+@router.put("/{ticker}/account")
+async def api_update_transaction_account(
     ticker: str,
     transaction_data: dict = Body(...),
     db=Depends(get_db),

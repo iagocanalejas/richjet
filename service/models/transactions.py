@@ -150,28 +150,7 @@ def create_transaction(db: Connection, user_id: str, transaction: Transaction) -
     if not transaction.symbol_id:
         raise HTTPException(status_code=400, detail=required_msg("transaction.symbol_id"))
 
-    if transaction.transaction_type not in set(TransactionType):
-        raise HTTPException(status_code=400, detail=f"Invalid transaction type: {transaction.transaction_type}")
-
-    if transaction.transaction_type == TransactionType.DIVIDEND:
-        if transaction.quantity <= 0:
-            raise HTTPException(status_code=400, detail="Quantity must be greater than 0 for dividend transactions")
-        transaction.price = 0.0  # Not applicable
-
-    if transaction.transaction_type == TransactionType.DIVIDEND_CASH:
-        if transaction.price <= 0:
-            raise HTTPException(status_code=400, detail="Price must be greater than 0 for dividend cash transactions")
-        transaction.quantity = 0  # Not applicable
-
-    # Check for at least one BUY transaction for the given symbol
-    if transaction.transaction_type in {TransactionType.DIVIDEND, TransactionType.DIVIDEND_CASH}:
-        transactions = get_transactions_by_user_id(db, user_id)
-        _has_buy_transaction = any(
-            t.transaction_type == TransactionType.BUY and t.symbol.id == transaction.symbol_id for t in transactions
-        )
-        if not _has_buy_transaction:
-            ticker = transaction.symbol.ticker if transaction.symbol else transaction.symbol_id
-            raise HTTPException(status_code=400, detail=f"No BUY transaction found for symbol {ticker}")
+    _validate_transaction_by_type(db, user_id, transaction)
 
     sql = """
         INSERT INTO transactions (
@@ -204,6 +183,44 @@ def create_transaction(db: Connection, user_id: str, transaction: Transaction) -
     transaction.id = row[0]
     db.commit()
     return transaction
+
+
+def update_transaction(db: Connection, user_id: str, transaction: Transaction) -> Transaction:
+    """
+    Updates a transaction in the database.
+    """
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+    if not transaction.id:
+        raise HTTPException(status_code=400, detail=required_msg("transaction.id"))
+
+    _validate_transaction_by_type(db, user_id, transaction)
+
+    sql = """
+        UPDATE transactions
+        SET quantity = %s, price = %s, commission = %s
+        WHERE id = %s::uuid AND user_id = %s::uuid
+        RETURNING id
+    """
+
+    with db.cursor() as cursor:
+        cursor.execute(
+            sql,
+            (
+                transaction.quantity,
+                transaction.price,
+                transaction.commission,
+                transaction.id,
+                user_id,
+            ),
+        )
+        row = cursor.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    db.commit()
+    return get_transaction_by_id(db, user_id, row[0])
 
 
 def update_stock_account(
@@ -272,3 +289,28 @@ def remove_transaction_by_id(db: Connection, user_id: str, transaction_id: str) 
             (user_id, transaction_id),
         )
         db.commit()
+
+
+def _validate_transaction_by_type(db: Connection, user_id: str, transaction: Transaction) -> None:
+    if transaction.transaction_type not in set(TransactionType):
+        raise HTTPException(status_code=400, detail=f"Invalid transaction type: {transaction.transaction_type}")
+
+    if transaction.transaction_type == TransactionType.DIVIDEND:
+        if transaction.quantity <= 0:
+            raise HTTPException(status_code=400, detail="Quantity must be greater than 0 for dividend transactions")
+        transaction.price = 0.0  # Not applicable
+
+    if transaction.transaction_type == TransactionType.DIVIDEND_CASH:
+        if transaction.price <= 0:
+            raise HTTPException(status_code=400, detail="Price must be greater than 0 for dividend cash transactions")
+        transaction.quantity = 0  # Not applicable
+
+    # Check for at least one BUY transaction for the given symbol
+    if transaction.transaction_type in {TransactionType.DIVIDEND, TransactionType.DIVIDEND_CASH}:
+        transactions = get_transactions_by_user_id(db, user_id)
+        _has_buy_transaction = any(
+            t.transaction_type == TransactionType.BUY and t.symbol.id == transaction.symbol_id for t in transactions
+        )
+        if not _has_buy_transaction:
+            ticker = transaction.symbol.ticker if transaction.symbol else transaction.symbol_id
+            raise HTTPException(status_code=400, detail=f"No BUY transaction found for symbol {ticker}")
