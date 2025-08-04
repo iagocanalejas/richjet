@@ -31,7 +31,11 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             _portfolio.push(_createPortfolioItem(trsBySymbol[symbolId].reverse()));
         }
 
-        _portfolio.sort((a, b) => a.symbol.ticker.localeCompare(b.symbol.ticker));
+        _portfolio.sort((a, b) => {
+            if (a.quantity === 0) return 1;
+            if (b.quantity === 0) return -1;
+            return a.symbol.name.localeCompare(b.symbol.name);
+        });
         return _portfolio;
     });
 

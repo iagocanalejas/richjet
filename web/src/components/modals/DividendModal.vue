@@ -45,11 +45,13 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Date</label>
-                    <input
+                    <VueDatePicker
                         v-model="transactionCopy.date"
-                        type="date"
-                        :lang="locale()"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        :format="dateFormat"
+                        :locale="locale()"
+                        :enable-time-picker="false"
+                        auto-apply
+                        dark
                     />
                 </div>
             </div>
@@ -76,11 +78,13 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Date</label>
-                    <input
+                    <VueDatePicker
                         v-model="transactionCopy.date"
-                        type="date"
-                        :lang="locale()"
-                        class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        :format="dateFormat"
+                        :locale="locale()"
+                        :enable-time-picker="false"
+                        auto-apply
+                        dark
                     />
                 </div>
             </div>
@@ -105,6 +109,7 @@
 
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/portfolio';
+import VueDatePicker from '@vuepic/vue-datepicker';
 import { normalizePriceInput, locale } from '@/utils/utils';
 import { reactive, ref, watch } from 'vue';
 
@@ -126,6 +131,10 @@ watch(
     () => props.transaction,
     (newVal) => Object.assign(transactionCopy, newVal)
 );
+
+function dateFormat(date: Date) {
+    return new Intl.DateTimeFormat(locale()).format(date);
+}
 
 function submit() {
     $errors.value = {};

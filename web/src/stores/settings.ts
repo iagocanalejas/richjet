@@ -31,6 +31,10 @@ export const useSettingsStore = defineStore('settings', () => {
             AccountsService.retrieveAccounts(),
         ]);
 
+        if (accounts.length === 1) {
+            account.value = accounts[0];
+        }
+
         _settings.value = { ..._settings.value, ...settings, accounts: accounts };
         await _getConvertionRate(_settings.value.currency);
     }
