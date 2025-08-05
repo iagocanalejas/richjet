@@ -39,7 +39,7 @@ def get_watchlist_item_by_id(db: Connection, user_id: str, watchlist_item_id: st
         raise HTTPException(status_code=400, detail=required_msg("watchlist_item_id"))
 
     sql = """
-        SELECT w.id, w.user_id, s.id AS symbol_id, s.ticker, s.name, s.currency, s.source,
+        SELECT w.id, w.user_id, s.id AS symbol_id, s.ticker, s.display_name, s.name, s.currency, s.source,
                s.security_type, s.market_sector, s.isin, s.figi, s.picture, w.manual_price,
                s.user_created
         FROM watchlist w
@@ -69,12 +69,12 @@ def get_watchlist_by_user_id(db: Connection, user_id: str) -> list[Symbol]:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
     sql = """
-        SELECT s.id, s.ticker, s.name, s.currency, s.source, s.security_type, s.market_sector,
+        SELECT s.id, s.ticker, s.display_name, s.name, s.currency, s.source, s.security_type, s.market_sector,
                s.isin, s.figi, s.picture, w.manual_price, s.user_created
         FROM watchlist w
         JOIN symbols s ON w.symbol_id = s.id
         WHERE w.user_id = %s::uuid
-        ORDER BY s.ticker
+        ORDER BY s.display_name
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:

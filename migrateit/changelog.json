@@ -90,6 +90,13 @@
             "parents": [
                 "0011_subscriptions.sql"
             ]
+        },
+        {
+            "name": "0013_symbol_display_name.sql",
+            "initial": false,
+            "parents": [
+                "0012_account_currency.sql"
+            ]
         }
     ]
 }

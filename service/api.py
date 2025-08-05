@@ -118,6 +118,7 @@ async def search_stock(
     results = [
         {
             "ticker": symbol.ticker,
+            "display_name": symbol.display_name,
             "name": symbol.name,
             "security_type": symbol.security_type.value,
             "currency": symbol.currency,

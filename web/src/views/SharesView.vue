@@ -83,6 +83,7 @@ const showFavorites = ref(true);
 const showLoadMore = ref(false);
 const filteredResults: Ref<StockSymbolForDisplay[]> = ref([]);
 const filteredWatchlist: Ref<StockSymbolForDisplay[]> = ref([]);
+// TODO: adding new item to watchlist is not reflected in favorites
 
 // modal
 const isShareModalOpen = ref(false);

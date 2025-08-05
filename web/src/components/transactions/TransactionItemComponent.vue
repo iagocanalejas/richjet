@@ -4,9 +4,10 @@
     </div>
     <div class="flex items-center space-x-3">
         <img v-show="item.symbol.picture" :src="item.symbol.picture" class="w-6 h-6 object-contain" alt="Icon" />
-        <span class="text-sm font-medium tracking-wide text-white">
-            {{ item.symbol.ticker }}
-        </span>
+        <div class="flex items-baseline gap-1">
+            <span class="text-sm font-medium tracking-wide text-white">{{ item.symbol.display_name }}</span>
+            <span class="text-xs text-gray-400 self-center">({{ item.symbol.ticker }})</span>
+        </div>
     </div>
 
     <div class="text-sm text-right">{{ formatDate(item.date) }}</div>

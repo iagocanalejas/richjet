@@ -43,6 +43,8 @@ import { isSavingsAccount } from '@/utils/rules';
 import { storeToRefs } from 'pinia';
 import { ref } from 'vue';
 
+// TODO: option to update all manually entered prices in the portfolio
+
 const settingsStore = useSettingsStore();
 const { account: selectedAccount } = storeToRefs(settingsStore);
 

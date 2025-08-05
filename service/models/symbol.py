@@ -78,6 +78,7 @@ class MarketSector(Enum):
 @dataclass
 class Symbol:
     ticker: str
+    display_name: str
     name: str
     currency: str
     source: str
@@ -100,6 +101,7 @@ class Symbol:
     def merge(self, other: "Symbol") -> "Symbol":
         return Symbol(
             id=self.id,
+            display_name=self.display_name or other.display_name,
             ticker=self.ticker or other.ticker,
             name=self.name or other.name,
             currency=self.currency or other.currency,
@@ -118,6 +120,7 @@ class Symbol:
     def from_row(cls, row: RealDictRow) -> "Symbol":
         return cls(
             id=row["symbol_id"] if "symbol_id" in row else row["id"],
+            display_name=row["display_name"],
             ticker=row["ticker"],
             name=row["name"],
             currency=row["symbol_currency"] if "symbol_currency" in row else row["currency"],
@@ -144,6 +147,7 @@ class Symbol:
         return {
             "id": self.id,
             "ticker": self.ticker,
+            "display_name": self.display_name,
             "name": self.name,
             "currency": self.currency,
             "source": self.source,
@@ -191,7 +195,7 @@ def is_supported_ticker(ticker: str) -> bool:
 def search_symbol(db: Connection, query: str) -> list[Symbol]:
     like_query = f"%{query}%"
     sql = """
-        SELECT id, ticker, name, currency, source, security_type, market_sector,
+        SELECT id, ticker, display_name, name, currency, source, security_type, market_sector,
                isin, figi, picture, user_created
         FROM symbols
         WHERE NOT user_created AND (
@@ -217,7 +221,7 @@ def get_symbol_by_ticker(db: Connection, ticker: str) -> Symbol:
         raise HTTPException(status_code=400, detail=required_msg("ticker"))
 
     sql = """
-        SELECT id, ticker, name, currency, source, security_type, market_sector,
+        SELECT id, ticker, display_name, name, currency, source, security_type, market_sector,
                isin, figi, picture, user_created
         FROM symbols
         WHERE NOT user_created AND ticker = %s

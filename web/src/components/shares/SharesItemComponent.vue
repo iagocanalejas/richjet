@@ -8,10 +8,11 @@
             alt="Share icon"
         />
         <div class="flex flex-col">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
-                <span class="truncate font-medium text-white">{{ item.name }}</span>
+            <div class="flex items-baseline gap-1">
+                <span class="text-sm font-medium tracking-wide text-white">{{ item.display_name }}</span>
                 <span class="text-xs text-gray-400">({{ item.ticker }})</span>
             </div>
+            <span v-if="item.name" class="text-xs text-gray-400">{{ item.name }}</span>
             <div v-if="item.isin || item.figi" class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                 <div v-if="item.isin" class="text-xs text-gray-300 sm:mt-0.5">ISIN: {{ item.isin }}</div>
                 <div v-if="item.figi" class="text-xs text-gray-300 sm:mt-0.5">FIGI: {{ item.figi }}</div>

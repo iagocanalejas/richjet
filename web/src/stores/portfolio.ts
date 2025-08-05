@@ -34,7 +34,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         _portfolio.sort((a, b) => {
             if (a.quantity === 0) return 1;
             if (b.quantity === 0) return -1;
-            return a.symbol.name.localeCompare(b.symbol.name);
+            return a.symbol.display_name.localeCompare(b.symbol.display_name);
         });
         return _portfolio;
     });

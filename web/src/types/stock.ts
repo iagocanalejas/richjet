@@ -18,6 +18,7 @@ export type MarketSector = (typeof MarketSectors)[number];
 export interface StockSymbol {
     id: string;
     ticker: string;
+    display_name: string;
     name: string;
     currency: string;
     source: string;
