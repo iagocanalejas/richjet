@@ -83,7 +83,6 @@ const showFavorites = ref(true);
 const showLoadMore = ref(false);
 const filteredResults: Ref<StockSymbolForDisplay[]> = ref([]);
 const filteredWatchlist: Ref<StockSymbolForDisplay[]> = ref([]);
-// TODO: adding new item to watchlist is not reflected in favorites
 
 // modal
 const isShareModalOpen = ref(false);
@@ -136,7 +135,7 @@ async function _filterResults(query: string, is_load_more: boolean = false) {
 
 onMounted(() => (filteredWatchlist.value = [...watchlist.value]));
 watch(
-    () => watchlist.value,
+    () => watchlist.value.length,
     () => resetSearch()
 );
 

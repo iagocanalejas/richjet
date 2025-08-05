@@ -32,7 +32,6 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         const newSymbol = await WatchlistService.addToWatchlist(item);
         if (!newSymbol) return;
         const quote = await stockStore.getStockQuote(item);
-        if (!quote) return;
 
         watchlist.value.push({
             ...newSymbol,
@@ -41,7 +40,7 @@ export const useWatchlistStore = defineStore('watchlist', () => {
             isFavorite: true,
             noPrice: false,
         });
-        watchlist.value.sort((a, b) => a.ticker.localeCompare(b.ticker));
+        watchlist.value.sort((a, b) => a.display_name.localeCompare(b.display_name));
     }
 
     async function addToWatchlistCreatingSymbol(symbol: Omit<StockSymbol, 'id'>) {
