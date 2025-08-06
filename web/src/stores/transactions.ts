@@ -104,6 +104,22 @@ export const useTransactionsStore = defineStore('transactions', () => {
         );
     }
 
+    async function bulkUpdateManualPrices(symbols: { symbol_id: string; price: number }[]) {
+        const updates = symbols.map((s) => updateSymbolManualPrice(s.symbol_id, s.price));
+        await Promise.all(updates);
+
+        transactions.value = transactions.value.map((transaction) => {
+            const symbolUpdate = symbols.find((s) => s.symbol_id === transaction.symbol.id);
+            if (symbolUpdate) {
+                return {
+                    ...structuredClone(toRaw(transaction)),
+                    symbol: { ...transaction.symbol, manual_price: symbolUpdate.price },
+                };
+            }
+            return transaction;
+        });
+    }
+
     return {
         init,
         transactions,
@@ -113,5 +129,6 @@ export const useTransactionsStore = defineStore('transactions', () => {
         removeTransaction,
         transferStock,
         updateManualPrice,
+        bulkUpdateManualPrices,
     };
 });

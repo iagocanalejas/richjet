@@ -49,10 +49,7 @@ import { normalizePriceInput } from '@/utils/utils';
 import { ref } from 'vue';
 
 const props = defineProps({
-    item: {
-        type: Object as () => PortfolioItem,
-        required: true,
-    },
+    item: { type: Object as () => PortfolioItem, required: true },
 });
 
 const emit = defineEmits(['set-price', 'close']);

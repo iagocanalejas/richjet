@@ -317,4 +317,30 @@ describe('useTransactionsStore', () => {
             expect(store.transactions[0].symbol.manual_price).toBe(newPrice);
         });
     });
+
+    describe('bulk updates manual prices', () => {
+        it('updates multiple transactions', async () => {
+            const tx1 = await mockTransaction(store, {
+                symbol: { ...mockSymbol, id: '1', ticker: 'AAPL' },
+            });
+            const tx2 = await mockTransaction(store, {
+                symbol: { ...mockSymbol, id: '2', ticker: 'GOOG' },
+            });
+            const updates = [
+                { symbol_id: tx1.symbol.id, price: 200 },
+                { symbol_id: tx2.symbol.id, price: 300 },
+            ];
+            vi.stubGlobal(
+                'fetch',
+                vi.fn().mockResolvedValue({
+                    ok: true,
+                    json: async () => updates.map((u) => ({ ...u, manual_price: u.price })),
+                })
+            );
+
+            await store.bulkUpdateManualPrices(updates);
+            expect(store.transactions[0].symbol.manual_price).toBe(200);
+            expect(store.transactions[1].symbol.manual_price).toBe(300);
+        });
+    });
 });
