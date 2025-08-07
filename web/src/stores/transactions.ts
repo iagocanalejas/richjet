@@ -41,7 +41,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             return;
         }
 
-        const transaction = await TransactionsService.addTransaction(t);
+        const transaction = await TransactionsService.addTransaction({ ...t, account_id: account.value?.id });
         if (!transaction) return;
 
         const trDate = new Date(transaction.date);
@@ -53,16 +53,16 @@ export const useTransactionsStore = defineStore('transactions', () => {
         }
     }
 
-    async function updateTransaction(transaction: TransactionItem) {
-        const newTransaction = await TransactionsService.updateTransaction(transaction);
-        if (!newTransaction) return;
+    async function updateTransaction(t: TransactionItem) {
+        const transaction = await TransactionsService.updateTransaction({ ...t, account_id: account.value?.id });
+        if (!transaction) return;
 
-        const index = transactions.value.findIndex((t) => t.id === newTransaction.id);
+        const index = transactions.value.findIndex((t) => t.id === transaction.id);
         if (index === -1) {
             addError({ readable_message: 'Transaction not found for update' });
             return;
         }
-        transactions.value.splice(index, 1, newTransaction);
+        transactions.value.splice(index, 1, transaction);
     }
 
     async function removeTransaction(transaction: TransactionItem) {

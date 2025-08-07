@@ -179,7 +179,6 @@ function submit() {
         return;
     }
 
-    transactionCopy.account_id = transactionCopy.account ? transactionCopy.account.id : undefined;
     emit('add-dividend', transactionCopy);
 }
 

@@ -171,7 +171,6 @@ function buy() {
     if (transactionCopy.price <= 0) $errors.value.price = 'Price must be greater than 0.';
 
     if (Object.keys($errors.value).length > 0) return;
-    transactionCopy.account_id = transactionCopy.account ? transactionCopy.account.id : undefined;
     emit('buy', transactionCopy);
 }
 
@@ -180,11 +179,7 @@ function sell() {
     if (transactionCopy.price <= 0) $errors.value.price = 'Price must be greater than 0.';
 
     if (Object.keys($errors.value).length > 0) return;
-    const option = {
-        ...transactionCopy,
-        transaction_type: 'SELL',
-        account_id: transactionCopy.account ? transactionCopy.account.id : undefined,
-    };
+    const option = { ...transactionCopy, transaction_type: 'SELL' };
     emit('sell', option);
 }
 
@@ -194,7 +189,6 @@ function save() {
     if (transactionCopy.price <= 0) $errors.value.price = 'Price must be greater than 0.';
 
     if (Object.keys($errors.value).length > 0) return;
-    transactionCopy.account_id = transactionCopy.account ? transactionCopy.account.id : undefined;
     emit('save', transactionCopy);
 }
 
