@@ -198,7 +198,14 @@ def update_transaction(db: Connection, user_id: str, transaction: Transaction) -
 
     sql = """
         UPDATE transactions
-        SET quantity = %s, price = %s, commission = %s
+        SET quantity = %s, price = %s, commission = %s,
+            account_id = CASE
+                WHEN %s IS NULL THEN NULL
+                ELSE (
+                    SELECT id FROM accounts
+                    WHERE id = %s::uuid AND user_id = %s::uuid
+                )
+        END
         WHERE id = %s::uuid AND user_id = %s::uuid
         RETURNING id
     """
@@ -210,6 +217,9 @@ def update_transaction(db: Connection, user_id: str, transaction: Transaction) -
                 transaction.quantity,
                 transaction.price,
                 transaction.commission,
+                transaction.account_id,
+                transaction.account_id,
+                user_id,
                 transaction.id,
                 user_id,
             ),

@@ -44,6 +44,21 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-300">
+                        Account
+                        <select
+                            v-model="transactionCopy.account"
+                            class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                        >
+                            <option :value="undefined">No account</option>
+                            <option v-for="account in accounts" :key="account.name" :value="account">
+                                {{ account.name }}
+                            </option>
+                        </select>
+                    </label>
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Date</label>
                     <VueDatePicker
                         v-model="transactionCopy.date"
@@ -74,6 +89,21 @@
                         required
                     />
                     <p v-if="$errors.quantity" class="mt-1 text-sm text-red-400">{{ $errors.quantity }}</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300">
+                        Account
+                        <select
+                            v-model="transactionCopy.account"
+                            class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                        >
+                            <option :value="undefined">No account</option>
+                            <option v-for="account in accounts" :key="account.name" :value="account">
+                                {{ account.name }}
+                            </option>
+                        </select>
+                    </label>
                 </div>
 
                 <div>
@@ -112,12 +142,16 @@ import type { TransactionItem } from '@/types/portfolio';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import { normalizePriceInput, locale } from '@/utils/utils';
 import { reactive, ref, watch, type PropType } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useSettingsStore } from '@/stores/settings';
 
 const props = defineProps({
     transaction: { type: Object as PropType<Omit<TransactionItem, 'id' | 'user_id'>>, required: true },
 });
 
 const emit = defineEmits(['add-dividend', 'close']);
+
+const { accounts } = storeToRefs(useSettingsStore());
 
 const dividendType = ref<'cash' | 'stock'>('cash');
 const priceInput = ref('');
@@ -145,6 +179,7 @@ function submit() {
         return;
     }
 
+    transactionCopy.account_id = transactionCopy.account ? transactionCopy.account.id : undefined;
     emit('add-dividend', transactionCopy);
 }
 

@@ -58,6 +58,21 @@
                 </div>
 
                 <div>
+                    <label class="block text-sm font-medium text-gray-300">
+                        Account
+                        <select
+                            v-model="transactionCopy.account"
+                            class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                        >
+                            <option :value="undefined">No account</option>
+                            <option v-for="account in accounts" :key="account.name" :value="account">
+                                {{ account.name }}
+                            </option>
+                        </select>
+                    </label>
+                </div>
+
+                <div>
                     <label class="block text-sm font-medium text-gray-300 mb-1">Date</label>
                     <template v-if="mode === 'edit'">
                         <div class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700">
@@ -116,6 +131,8 @@ import type { TransactionItem } from '@/types/portfolio';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import { normalizePriceInput, locale, formatDate } from '@/utils/utils';
 import { onMounted, reactive, ref, watch, type PropType } from 'vue';
+import { useSettingsStore } from '@/stores/settings';
+import { storeToRefs } from 'pinia';
 
 const props = defineProps({
     transaction: { type: Object as PropType<Omit<TransactionItem, 'id' | 'user_id'>>, required: true },
@@ -123,6 +140,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['buy', 'sell', 'save', 'close']);
+
+const { accounts } = storeToRefs(useSettingsStore());
 
 const priceInput = ref('');
 const transactionCopy = reactive({ ...props.transaction });
@@ -152,6 +171,7 @@ function buy() {
     if (transactionCopy.price <= 0) $errors.value.price = 'Price must be greater than 0.';
 
     if (Object.keys($errors.value).length > 0) return;
+    transactionCopy.account_id = transactionCopy.account ? transactionCopy.account.id : undefined;
     emit('buy', transactionCopy);
 }
 
@@ -160,7 +180,11 @@ function sell() {
     if (transactionCopy.price <= 0) $errors.value.price = 'Price must be greater than 0.';
 
     if (Object.keys($errors.value).length > 0) return;
-    const option = { ...transactionCopy, transaction_type: 'SELL' };
+    const option = {
+        ...transactionCopy,
+        transaction_type: 'SELL',
+        account_id: transactionCopy.account ? transactionCopy.account.id : undefined,
+    };
     emit('sell', option);
 }
 
@@ -170,6 +194,7 @@ function save() {
     if (transactionCopy.price <= 0) $errors.value.price = 'Price must be greater than 0.';
 
     if (Object.keys($errors.value).length > 0) return;
+    transactionCopy.account_id = transactionCopy.account ? transactionCopy.account.id : undefined;
     emit('save', transactionCopy);
 }
 

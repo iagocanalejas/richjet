@@ -157,7 +157,6 @@ function showContextMenu(event: MouseEvent, item: PortfolioItem) {
 function openDividendsModal(item: PortfolioItem) {
     transaction.value = {
         account: selectedAccount.value,
-        account_id: selectedAccount.value?.id ?? undefined,
         symbol: item.symbol,
         symbol_id: item.symbol.id,
         price: 0,
@@ -175,7 +174,6 @@ function openTransactionsModal(item: PortfolioItem, mode: 'buy' | 'sell') {
     transactionModalMode.value = mode;
     transaction.value = {
         account: selectedAccount.value,
-        account_id: selectedAccount.value?.id ?? undefined,
         symbol: item.symbol,
         symbol_id: item.symbol.id,
         price: 0,

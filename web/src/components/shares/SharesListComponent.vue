@@ -103,7 +103,6 @@ function openTransactionModal(item: StockSymbolForDisplay) {
         transaction_type: 'BUY',
         date: new Date().toISOString().split('T')[0],
         account: selectedAccount.value,
-        account_id: selectedAccount.value?.id ?? undefined,
     };
 }
 
