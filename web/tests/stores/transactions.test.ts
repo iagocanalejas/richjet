@@ -31,6 +31,7 @@ vi.mock('@/utils/rules', () => ({
 const mockSymbol: StockSymbol = {
     id: '1',
     ticker: 'AAPL',
+    display_name: 'APPLE',
     name: 'Apple',
     currency: 'USD',
     source: 'NASDAQ',
@@ -322,6 +323,7 @@ describe('useTransactionsStore', () => {
         it('updates multiple transactions', async () => {
             const tx1 = await mockTransaction(store, {
                 symbol: { ...mockSymbol, id: '1', ticker: 'AAPL' },
+                date: new Date(Date.now()).toISOString(), // ensure this one is first
             });
             const tx2 = await mockTransaction(store, {
                 symbol: { ...mockSymbol, id: '2', ticker: 'GOOG' },

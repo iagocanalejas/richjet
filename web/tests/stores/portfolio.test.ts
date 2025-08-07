@@ -46,6 +46,7 @@ vi.mock('@/stores/watchlist', () => {
 const mockSymbol: StockSymbol = {
     id: '1',
     ticker: 'AAPL',
+    display_name: 'APPLE',
     name: 'Apple',
     currency: 'USD',
     source: 'NASDAQ',
