@@ -44,11 +44,11 @@ import { useSettingsStore } from '@/stores/settings';
 import type { Account } from '@/types/user';
 import type { PortfolioItem } from '@/types/portfolio';
 import { storeToRefs } from 'pinia';
-import { ref, watch } from 'vue';
+import { ref, watch, type PropType } from 'vue';
 
 const props = defineProps({
-    item: { type: Object as () => PortfolioItem, required: true },
-    selectedAccount: { type: Object as () => Account | undefined, default: undefined },
+    item: { type: Object as PropType<PortfolioItem>, required: true },
+    selectedAccount: { type: Object as PropType<Account | undefined>, default: undefined },
 });
 
 const emit = defineEmits(['transfer', 'close']);

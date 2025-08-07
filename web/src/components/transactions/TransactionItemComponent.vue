@@ -50,9 +50,10 @@ import type { TransactionItem } from '@/types/portfolio';
 import { formatCurrency, formatDate } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
 import { isDividend } from '@/utils/rules';
+import type { PropType } from 'vue';
 
 defineProps({
-    item: { type: Object as () => TransactionItem, required: true },
+    item: { type: Object as PropType<TransactionItem>, required: true },
 });
 
 const emit = defineEmits(['edit', 'remove']);

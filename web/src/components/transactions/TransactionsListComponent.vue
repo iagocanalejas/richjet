@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { type TransactionItem } from '@/types/portfolio';
-import { computed, ref } from 'vue';
+import { computed, ref, type PropType } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useLoadingStore } from '@/stores/loading';
 import LoadingSpinner from '../LoadingSpinner.vue';
@@ -44,7 +44,7 @@ const { isLoading } = storeToRefs(useLoadingStore());
 const ITEMS_PER_PATE = 20;
 
 const props = defineProps({
-    values: { type: Array as () => TransactionItem[], default: () => [] },
+    values: { type: Array as PropType<TransactionItem[]>, default: () => [] },
 });
 
 const currentPage = ref(0);

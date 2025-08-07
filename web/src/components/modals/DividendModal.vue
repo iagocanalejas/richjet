@@ -111,13 +111,10 @@
 import type { TransactionItem } from '@/types/portfolio';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import { normalizePriceInput, locale } from '@/utils/utils';
-import { reactive, ref, watch } from 'vue';
+import { reactive, ref, watch, type PropType } from 'vue';
 
 const props = defineProps({
-    transaction: {
-        type: Object as () => Omit<TransactionItem, 'id' | 'user_id'>,
-        required: true,
-    },
+    transaction: { type: Object as PropType<Omit<TransactionItem, 'id' | 'user_id'>>, required: true },
 });
 
 const emit = defineEmits(['add-dividend', 'close']);

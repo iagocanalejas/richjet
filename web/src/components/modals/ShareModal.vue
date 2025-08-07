@@ -107,13 +107,10 @@
 <script setup lang="ts">
 import { type MarketSector, type SecurityType, type StockSymbol } from '@/types/stock';
 import { isValidISIN } from '@/utils/validators';
-import { ref, watch } from 'vue';
+import { ref, watch, type PropType } from 'vue';
 
 const props = defineProps({
-    share: {
-        type: Object as () => Omit<StockSymbol, 'id'>,
-        required: true,
-    },
+    share: { type: Object as PropType<Omit<StockSymbol, 'id'>>, required: true },
 });
 
 const emit = defineEmits(['save', 'close']);

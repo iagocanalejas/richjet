@@ -82,14 +82,14 @@
 
 <script setup lang="ts">
 import type { Account } from '@/types/user';
-import { ref } from 'vue';
+import { ref, type PropType } from 'vue';
 import AccountModal from '../modals/AccountModal.vue';
 import ConfirmationModal from '../modals/ConfirmationModal.vue';
 import { normalizeLimit } from '@/utils/utils';
 
 defineProps({
-    accounts: { type: Array as () => Account[], default: () => [] },
-    selected: { type: Object as () => Account | undefined, default: undefined },
+    accounts: { type: Array as PropType<Account[]>, default: () => [] },
+    selected: { type: Object as PropType<Account | undefined>, default: undefined },
     maxAccounts: { type: [Number, String], required: true },
 });
 

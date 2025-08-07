@@ -115,11 +115,11 @@
 import type { TransactionItem } from '@/types/portfolio';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import { normalizePriceInput, locale, formatDate } from '@/utils/utils';
-import { onMounted, reactive, ref, watch } from 'vue';
+import { onMounted, reactive, ref, watch, type PropType } from 'vue';
 
 const props = defineProps({
-    transaction: { type: Object as () => Omit<TransactionItem, 'id' | 'user_id'>, required: true },
-    mode: { type: String as () => 'buy' | 'sell' | 'edit', default: 'buy' },
+    transaction: { type: Object as PropType<Omit<TransactionItem, 'id' | 'user_id'>>, required: true },
+    mode: { type: String as PropType<'buy' | 'sell' | 'edit'>, default: 'buy' },
 });
 
 const emit = defineEmits(['buy', 'sell', 'save', 'close']);

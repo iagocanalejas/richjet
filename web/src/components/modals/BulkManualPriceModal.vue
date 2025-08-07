@@ -50,10 +50,10 @@
 import type { PortfolioItem } from '@/types/portfolio';
 import type { StockSymbol } from '@/types/stock';
 import { normalizePriceInput } from '@/utils/utils';
-import { ref, watch } from 'vue';
+import { ref, watch, type PropType } from 'vue';
 
 const props = defineProps({
-    values: { type: Array as () => PortfolioItem[], required: true },
+    values: { type: Array as PropType<PortfolioItem[]>, required: true },
 });
 
 const emit = defineEmits(['save', 'close']);

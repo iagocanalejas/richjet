@@ -64,13 +64,10 @@
 
 <script setup lang="ts">
 import type { Account, AccountType } from '@/types/user';
-import { ref } from 'vue';
+import { ref, type PropType } from 'vue';
 
 const props = defineProps({
-    accounts: {
-        type: Array as () => Account[],
-        required: true,
-    },
+    accounts: { type: Array as PropType<Account[]>, required: true },
 });
 
 const emit = defineEmits(['save', 'close']);

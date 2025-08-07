@@ -25,10 +25,10 @@ import type { PortfolioItem } from '@/types/portfolio';
 import { formatCurrency } from '@/utils/utils';
 import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
-import { computed } from 'vue';
+import { computed, type PropType } from 'vue';
 
 const props = defineProps({
-    item: { type: Object as () => PortfolioItem, required: true },
+    item: { type: Object as PropType<PortfolioItem>, required: true },
 });
 
 const { currency } = storeToRefs(useSettingsStore());

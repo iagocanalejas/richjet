@@ -49,13 +49,10 @@
 import type { Account } from '@/types/user';
 import { normalizePriceInput } from '@/utils/utils';
 import { isValidBalance } from '@/utils/validators';
-import { reactive, ref, watch } from 'vue';
+import { reactive, ref, watch, type PropType } from 'vue';
 
 const props = defineProps({
-    account: {
-        type: Object as () => Account,
-        required: true,
-    },
+    account: { type: Object as PropType<Account>, required: true },
 });
 
 const emit = defineEmits(['save', 'close']);

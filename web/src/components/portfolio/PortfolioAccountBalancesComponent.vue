@@ -53,12 +53,10 @@ import type { Account } from '@/types/user';
 import { textColorByRentability } from '@/utils/styles';
 import { formatCurrency, formatDate } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
+import type { PropType } from 'vue';
 
 const props = defineProps({
-    account: {
-        type: Object as () => Account,
-        required: true,
-    },
+    account: { type: Object as PropType<Account>, required: true },
 });
 defineEmits(['create', 'delete-balance']);
 

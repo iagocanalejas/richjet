@@ -46,10 +46,10 @@
 <script setup lang="ts">
 import type { PortfolioItem } from '@/types/portfolio';
 import { normalizePriceInput } from '@/utils/utils';
-import { ref } from 'vue';
+import { ref, type PropType } from 'vue';
 
 const props = defineProps({
-    item: { type: Object as () => PortfolioItem, required: true },
+    item: { type: Object as PropType<PortfolioItem>, required: true },
 });
 
 const emit = defineEmits(['set-price', 'close']);
