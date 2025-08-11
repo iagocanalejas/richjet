@@ -33,9 +33,7 @@
                 </div>
                 <div>
                     <h2 class="text-2xl font-semibold mb-4">🔐 Secure & Private</h2>
-                    <p class="text-gray-300">
-                        Your data stays yours. Data is saved in your google account and never shared with us.
-                    </p>
+                    <p class="text-gray-300">Your data stays yours. Data is never shared with third parties.</p>
                 </div>
             </div>
         </section>

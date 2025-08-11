@@ -40,7 +40,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
     allow_headers=["*"],
 )
 
@@ -222,3 +222,11 @@ async def stripe_webhook(request: Request, db=Depends(get_db)):
         unsubscribe(db, customer_id)
 
     return {"status": "success"}
+
+
+@app.get("/healthz")
+async def health_check():
+    """
+    Health check endpoint to verify the API is running.
+    """
+    return {"status": "ok"}
