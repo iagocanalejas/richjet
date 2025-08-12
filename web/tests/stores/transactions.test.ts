@@ -15,12 +15,13 @@ vi.mock('@/stores/stocks', () => ({
 
 vi.mock('@/stores/settings', () => ({
     useSettingsStore: () => ({
-        conversionRate: ref(1),
         account: ref(undefined),
         accounts: ref([
             { id: '1', name: 'default' },
             { id: '2', name: 'brokerage' },
         ]),
+        loadConvertionRate: vi.fn(() => Promise.resolve(1)),
+        getConvertionRate: vi.fn(() => 1),
     }),
 }));
 

@@ -8,9 +8,8 @@ import StripeService from './api/stripe';
 
 export const useSettingsStore = defineStore('settings', () => {
     const _settings = ref<Settings>(DEFAULT_SETTINGS);
-    const conversionRate = ref<number>(1.0);
     const account = ref<Account | undefined>();
-    const subscription_plans = ref<SubscriptionPlan[]>([]);
+    const subscriptionPlans = ref<SubscriptionPlan[]>([]);
 
     const currency = computed({
         get() {
@@ -19,11 +18,12 @@ export const useSettingsStore = defineStore('settings', () => {
         async set(currency: string) {
             _settings.value.currency = currency;
             await _updateCurrency();
-            await _getConvertionRate(currency);
         },
     });
 
     const accounts = computed(() => _settings.value.accounts);
+
+    const _conversionCache = new Map<string, number>();
 
     async function init() {
         const [settings, accounts] = await Promise.all([
@@ -36,14 +36,16 @@ export const useSettingsStore = defineStore('settings', () => {
         }
 
         _settings.value = { ..._settings.value, ...settings, accounts: accounts };
-        await _getConvertionRate(_settings.value.currency);
+        for (const cur of new Set(accounts.map((a) => a.currency))) {
+            await loadConvertionRate(cur);
+        }
     }
 
     async function loadPlans() {
-        if (subscription_plans.value.length > 0) return;
+        if (subscriptionPlans.value.length > 0) return;
         const data = await StripeService.getPlans(_settings.value.currency);
         if (!data) return;
-        subscription_plans.value = data;
+        subscriptionPlans.value = data;
     }
 
     async function createAccount(a: Account) {
@@ -98,29 +100,37 @@ export const useSettingsStore = defineStore('settings', () => {
         };
     }
 
-    async function _updateCurrency() {
-        await UsersService.updateUserCurrency(_settings.value.currency);
+    async function loadConvertionRate(from_currency: string, to_currency?: string) {
+        if (!to_currency) to_currency = _settings.value.currency;
+        if (from_currency === to_currency) return;
+
+        const cacheKey = `${from_currency}:${to_currency}`;
+        if (_conversionCache.has(cacheKey)) return;
+
+        const conversion = await StocksService.retrieveConversionRate(from_currency, to_currency);
+        if (conversion) _conversionCache.set(cacheKey, conversion);
     }
 
-    async function _getConvertionRate(currency: string) {
-        if (currency === 'USD') {
-            conversionRate.value = 1.0;
-            return;
-        }
+    function getConvertionRate(from_currency: string, to_currency?: string) {
+        if (!to_currency) to_currency = _settings.value.currency;
+        if (from_currency === to_currency) return 1.0;
+        return _conversionCache.get(`${from_currency}:${to_currency}`) ?? 1.0;
+    }
 
-        const conversion = await StocksService.retrieveConversionRate(currency);
-        conversionRate.value = conversion || 1.0;
+    async function _updateCurrency() {
+        await UsersService.updateUserCurrency(_settings.value.currency);
     }
 
     return {
         init,
         settings: _settings,
         currency,
-        conversionRate,
         accounts,
         account,
-        subscription_plans,
+        subscriptionPlans,
         loadPlans,
+        loadConvertionRate,
+        getConvertionRate,
         createAccount,
         updateAccount,
         deleteAccount,

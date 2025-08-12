@@ -7,8 +7,8 @@ const addError = (e: CustomError) => useErrorsStore().addError(e);
 
 // NOTE: Don't use safeFetch in this module.
 
-async function retrieveConversionRate(currency: string) {
-    const url = `${BASE_URL}/exchangerate/${currency}`;
+async function retrieveConversionRate(from_currency: string, to_currency: string) {
+    const url = `${BASE_URL}/exchangerate/${from_currency}/${to_currency}`;
     try {
         const res = await fetch(url, { method: 'GET' });
         if (!res.ok) {

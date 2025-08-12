@@ -82,13 +82,16 @@ import { type StockSymbolForDisplay } from '@/types/stock';
 import { formatCurrency } from '@/utils/utils';
 import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
-import type { PropType } from 'vue';
+import { computed, type PropType } from 'vue';
 
-defineProps({
+const props = defineProps({
     item: { type: Object as PropType<StockSymbolForDisplay>, required: true },
 });
 
 const emit = defineEmits(['favorite', 'image-error']);
 
-const { currency, conversionRate } = storeToRefs(useSettingsStore());
+const settingsStore = useSettingsStore();
+const { currency } = storeToRefs(settingsStore);
+
+const conversionRate = computed(() => settingsStore.getConvertionRate(props.item.currency));
 </script>

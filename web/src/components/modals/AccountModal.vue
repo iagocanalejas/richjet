@@ -44,6 +44,26 @@
                 <p v-if="$errors.account_type" class="mt-1 text-sm text-red-400">{{ $errors.account_type }}</p>
             </div>
 
+            <div v-if="account.account_type === 'BANK'">
+                <label class="block text-sm font-medium text-gray-300 mb-1">
+                    <span class="text-sm">*</span> Balance
+                </label>
+                <input
+                    v-model="priceInput"
+                    type="text"
+                    inputmode="decimal"
+                    pattern="[0-9]*[.,]?[0-9]*"
+                    class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
+                    @input="account.balance = normalizePriceInput(priceInput)"
+                    :class="{
+                        'border-red-500 focus:ring-red-500': $errors.balance,
+                        'border-gray-700 focus:ring-blue-500': !$errors.balance,
+                    }"
+                    required
+                />
+                <p v-if="$errors.balance" class="mt-1 text-sm text-red-400">{{ $errors.balance }}</p>
+            </div>
+
             <div class="flex flex-col gap-2 pt-2">
                 <button
                     @click="save()"
@@ -63,19 +83,26 @@
 </template>
 
 <script setup lang="ts">
+import { useSettingsStore } from '@/stores/settings';
 import type { Account, AccountType } from '@/types/user';
+import { normalizePriceInput } from '@/utils/utils';
+import { storeToRefs } from 'pinia';
 import { ref, type PropType } from 'vue';
 
 const props = defineProps({
     accounts: { type: Array as PropType<Account[]>, required: true },
 });
 
+const { currency } = storeToRefs(useSettingsStore());
+
 const emit = defineEmits(['save', 'close']);
 
+const priceInput = ref('0');
 const account = ref<Omit<Account, 'id' | 'user_id'>>({
     name: '',
     account_type: 'BROKER',
-    currency: 'USD',
+    currency: currency.value,
+    balance: 0,
     balance_history: [],
 });
 const $errors = ref<Partial<Record<keyof Account, string>>>({});
@@ -92,15 +119,16 @@ function save() {
         $errors.value.name = 'Name already exists.';
     }
     if (!account.value.account_type) $errors.value.account_type = 'Account type is required.';
+    if (account.value.balance <= 0) $errors.value.balance = 'Balance must be greater than 0.';
 
     if (Object.keys($errors.value).length > 0) return;
     emit('save', { ...account.value });
-    account.value = { name: '', account_type: 'BROKER', currency: 'USD', balance_history: [] };
+    account.value = { name: '', account_type: 'BROKER', currency: currency.value, balance_history: [], balance: 0 };
 }
 
 function close() {
     $errors.value = {};
-    account.value = { name: '', account_type: 'BROKER', currency: 'USD', balance_history: [] };
+    account.value = { name: '', account_type: 'BROKER', currency: currency.value, balance_history: [], balance: 0 };
     emit('close');
 }
 </script>

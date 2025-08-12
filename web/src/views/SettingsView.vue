@@ -150,11 +150,11 @@ import { ref } from 'vue';
 import { isLite, isPro, isMax } from '@/utils/rules';
 
 const settingsStore = useSettingsStore();
-const { subscription_plans, settings } = storeToRefs(settingsStore);
+const { subscriptionPlans, settings } = storeToRefs(settingsStore);
 
 const billingPeriod = ref<'month' | 'year'>('month');
 const prices = computed(() => {
-    return subscription_plans.value
+    return subscriptionPlans.value
         .filter((plan) => plan.recurring.interval === billingPeriod.value)
         .sort((a, b) => a.unit_amount - b.unit_amount);
 });

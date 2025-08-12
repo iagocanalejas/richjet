@@ -53,14 +53,17 @@ import type { Account } from '@/types/user';
 import { textColorByRentability } from '@/utils/styles';
 import { formatCurrency, formatDate } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
-import type { PropType } from 'vue';
+import { computed, type PropType } from 'vue';
 
 const props = defineProps({
     account: { type: Object as PropType<Account>, required: true },
 });
 defineEmits(['create', 'delete-balance']);
 
-const { currency, conversionRate } = storeToRefs(useSettingsStore());
+const settingsStore = useSettingsStore();
+const { currency } = storeToRefs(settingsStore);
+
+const conversionRate = computed(() => settingsStore.getConvertionRate(props.account.currency));
 
 function historyBalancePoint(index: number) {
     return props.account.balance_history[index]?.balance || 0;

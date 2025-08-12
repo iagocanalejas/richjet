@@ -128,13 +128,16 @@ def create_account(db: Connection, user_id: str, account: Account) -> Account:
     if account.account_type not in [AccountType.BROKER, AccountType.BANK]:
         raise HTTPException(status_code=400, detail=f"invalid account type: {account.account_type}")
 
+    if account.account_type == AccountType.BANK and (account.balance is None or account.balance < 0):
+        raise HTTPException(status_code=400, detail="balance cannot be negative for bank accounts")
+
     sql = """
         INSERT INTO accounts (user_id, name, account_type, balance, currency)
         VALUES (%s, %s, %s, %s, (SELECT currency FROM users WHERE id = %s::uuid))
         RETURNING id
     """
 
-    balance = 0.0 if account.account_type == AccountType.BANK else None
+    balance = account.balance if account.account_type == AccountType.BANK else None
     with db.cursor() as cursor:
         cursor.execute(sql, (user_id, account.name, account.account_type.value, balance, user_id))
 
@@ -147,7 +150,7 @@ def create_account(db: Connection, user_id: str, account: Account) -> Account:
 
     account.id = row[0]
     db.commit()
-    return account
+    return get_account_by_id(db, user_id, account.id)
 
 
 def update_account(db: Connection, user_id: str, account: Account, account_id: str) -> Account:

@@ -9,9 +9,10 @@ import { useSettingsStore } from './settings';
 import { useWatchlistStore } from './watchlist';
 
 export const useTransactionsStore = defineStore('transactions', () => {
+    const settingsStore = useSettingsStore();
     const { addError } = useErrorsStore();
     const { getStockQuote } = useStocksStore();
-    const { account, accounts } = storeToRefs(useSettingsStore());
+    const { account, accounts } = storeToRefs(settingsStore);
     const { updateSymbolManualPrice } = useWatchlistStore();
 
     const transactions = ref<Readonly<TransactionItem>[]>([]);
@@ -32,6 +33,10 @@ export const useTransactionsStore = defineStore('transactions', () => {
         for (let i = 0; i < symbols.length; i += 5) {
             const batch = symbols.slice(i, i + 5);
             await Promise.all(batch.map((symbol) => getStockQuote(symbol)));
+        }
+
+        for (const cur of new Set(trs.map((t) => t.currency))) {
+            await settingsStore.loadConvertionRate(cur);
         }
     }
 

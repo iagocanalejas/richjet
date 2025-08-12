@@ -59,8 +59,8 @@ for name, enabled, client_class, api_key in services:
 
 
 @alru_cache(maxsize=128)
-async def _cached_get_exchange_rate(target: str):
-    url = f"{'https://v6.exchangerate-api.com/v6'}/{EXCHANGERATE_API_KEY}/pair/USD/{target}"
+async def _cached_get_exchange_rate(from_currency: str, to_currency: str):
+    url = f"{'https://v6.exchangerate-api.com/v6'}/{EXCHANGERATE_API_KEY}/pair/{from_currency}/{to_currency}"
     async with httpx.AsyncClient(timeout=3) as client:
         response = await client.get(url)
     if response.status_code != 200:
@@ -68,12 +68,12 @@ async def _cached_get_exchange_rate(target: str):
     return response.json()
 
 
-@app.get("/exchangerate/{target}")
-async def get_exchange_rate(target: str):
+@app.get("/exchangerate/{from_currency}/{to_currency}")
+async def get_exchange_rate(from_currency: str, to_currency: str):
     """
     Fetches the exchange rate for the given target currency.
     """
-    return await _cached_get_exchange_rate(target)
+    return await _cached_get_exchange_rate(from_currency, to_currency)
 
 
 @app.get("/search")

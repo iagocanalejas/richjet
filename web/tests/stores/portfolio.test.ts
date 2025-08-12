@@ -27,9 +27,10 @@ const mockAccount = ref<Account | undefined>(undefined);
 const mockAccounts = ref<Account[]>([]);
 vi.mock('@/stores/settings', () => ({
     useSettingsStore: () => ({
-        conversionRate: ref(1),
         account: mockAccount,
         accounts: mockAccounts,
+        loadConvertionRate: vi.fn(() => Promise.resolve(1)),
+        getConvertionRate: vi.fn(() => 1),
     }),
 }));
 
@@ -153,12 +154,12 @@ describe('usePortfolioStore', () => {
             expect(store.savingAccountsValue).toBe(1000);
         });
 
-        it('should include savings value in portfolioCurrentValue', () => {
+        it('should not include savings value in portfolioCurrentValue', () => {
             mockTransactions.value = [createTransaction({ quantity: 10, price: 50 })];
             mockAccounts.value.push({ id: 'acc-2', name: 'savings', balance: 50, account_type: 'BANK' } as Account);
 
             expect(store.portfolio).toHaveLength(1);
-            expect(store.portfolioCurrentValue).toBe(10 * MOCK_CURRENT_PRICE + 50);
+            expect(store.portfolioCurrentValue).toBe(10 * MOCK_CURRENT_PRICE);
         });
 
         it('should calculate closedPositions after sell', () => {

@@ -7,9 +7,9 @@ import { useTransactionsStore } from './transactions';
 import { isSavingsAccount } from '@/utils/rules';
 
 export const usePortfolioStore = defineStore('portfolio', () => {
+    const settingsStore = useSettingsStore();
     const { transactions, cashDividends } = storeToRefs(useTransactionsStore());
-    const { account, accounts } = storeToRefs(useSettingsStore());
-    const { conversionRate } = storeToRefs(useSettingsStore());
+    const { account, accounts } = storeToRefs(settingsStore);
     const { getStockQuoteSync } = useStocksStore();
 
     const _accountKey = computed(() => account.value?.name ?? 'all');
@@ -45,8 +45,9 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             throw new Error(`First transaction for symbol ${firstTr.symbol.ticker} must be a BUY transaction`);
         }
 
+        const conversionRate = settingsStore.getConvertionRate(firstTr.symbol.currency);
         const currentPrice = !firstTr.symbol.manual_price
-            ? (getStockQuoteSync(firstTr.symbol)?.current || 0) * conversionRate.value
+            ? (getStockQuoteSync(firstTr.symbol)?.current || 0) * conversionRate
             : firstTr.symbol.manual_price;
 
         const portfolioItem = {
@@ -115,16 +116,19 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     });
 
     const portfolioCurrentValue = computed(() => {
-        if (!portfolio.value.length) return savingAccountsValue.value;
+        if (!portfolio.value.length) return 0.0;
         const portfoliosValue = portfolio.value
             .filter((p) => p.quantity > 0)
             .reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
-        return portfoliosValue + savingAccountsValue.value;
+        return portfoliosValue;
     });
 
     const savingAccountsValue = computed(() => {
-        const money = accounts.value.filter((a) => isSavingsAccount(a)).reduce((acc, a) => acc + a.balance!, 0) ?? 0;
-        return money * conversionRate.value;
+        const money =
+            accounts.value
+                .filter((a) => isSavingsAccount(a))
+                .reduce((acc, a) => acc + a.balance! * settingsStore.getConvertionRate(a.currency), 0) ?? 0;
+        return money;
     });
 
     const closedPositions = computed(() => {

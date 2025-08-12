@@ -24,7 +24,7 @@ export type Account = {
     user_id: string;
     account_type: AccountType;
     currency: string;
-    balance?: number;
+    balance: number;
     balance_history: AccountBalance[];
 };
 

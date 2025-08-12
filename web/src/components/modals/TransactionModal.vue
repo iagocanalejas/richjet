@@ -134,6 +134,10 @@ import { onMounted, reactive, ref, watch, type PropType } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 import { storeToRefs } from 'pinia';
 
+// TODO: allow to add a balance account from where the transaction is paid
+// something should be saved in the transaction as this should be reversible
+// something should be displayed in the account balance history
+
 const props = defineProps({
     transaction: { type: Object as PropType<Omit<TransactionItem, 'id' | 'user_id'>>, required: true },
     mode: { type: String as PropType<'buy' | 'sell' | 'edit'>, default: 'buy' },
