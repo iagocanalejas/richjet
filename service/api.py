@@ -5,7 +5,7 @@ import stripe
 from async_lru import alru_cache
 from clients import CNBCClient, FinnhubClient, OpenFIGIClient, VantageClient
 from db import get_db
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from log import logger
 from models.quote import StockQuote
@@ -224,9 +224,6 @@ async def stripe_webhook(request: Request, db=Depends(get_db)):
     return {"status": "success"}
 
 
-@app.get("/healthz")
+@app.head("/healthz")
 async def health_check():
-    """
-    Health check endpoint to verify the API is running.
-    """
-    return {"status": "ok"}
+    return Response(status_code=200)
