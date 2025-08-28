@@ -89,9 +89,7 @@ import { normalizePriceInput } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
 import { ref, type PropType } from 'vue';
 
-const props = defineProps({
-    accounts: { type: Array as PropType<Account[]>, required: true },
-});
+const props = defineProps({ accounts: { type: Array as PropType<Account[]>, required: true } });
 
 const { currency } = storeToRefs(useSettingsStore());
 
@@ -107,10 +105,7 @@ const account = ref<Omit<Account, 'id' | 'user_id'>>({
 });
 const $errors = ref<Partial<Record<keyof Account, string>>>({});
 
-const accountTypeLabels: Record<AccountType, string> = {
-    BROKER: 'Brokerage Account',
-    BANK: 'Bank Account',
-};
+const accountTypeLabels: Record<AccountType, string> = { BROKER: 'Brokerage Account', BANK: 'Bank Account' };
 
 function save() {
     $errors.value = {};
@@ -119,7 +114,9 @@ function save() {
         $errors.value.name = 'Name already exists.';
     }
     if (!account.value.account_type) $errors.value.account_type = 'Account type is required.';
-    if (account.value.balance <= 0) $errors.value.balance = 'Balance must be greater than 0.';
+    if (account.value.account_type === 'BANK' && account.value.balance <= 0) {
+        $errors.value.balance = 'Balance must be greater than 0.';
+    }
 
     if (Object.keys($errors.value).length > 0) return;
     emit('save', { ...account.value });

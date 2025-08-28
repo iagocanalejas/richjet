@@ -37,7 +37,7 @@
                 :selected="selectedAccount"
                 :max-accounts="settings?.limits?.max_accounts ?? 0"
                 @select="selectedAccount = $event"
-                @add="createAccount"
+                @create="createAccount"
                 @delete="deleteAccount($event.id, true)"
             />
 

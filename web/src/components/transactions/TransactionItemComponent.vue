@@ -52,9 +52,7 @@ import { storeToRefs } from 'pinia';
 import { isDividend } from '@/utils/rules';
 import type { PropType } from 'vue';
 
-defineProps({
-    item: { type: Object as PropType<TransactionItem>, required: true },
-});
+defineProps({ item: { type: Object as PropType<TransactionItem>, required: true } });
 
 const emit = defineEmits(['edit', 'remove']);
 

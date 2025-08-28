@@ -93,7 +93,7 @@ defineProps({
     maxAccounts: { type: [Number, String], required: true },
 });
 
-const emit = defineEmits(['select', 'add', 'delete']);
+const emit = defineEmits(['select', 'create', 'delete']);
 
 const isDropdownOpen = ref(false);
 const isAccountModalOpen = ref(false);
@@ -118,7 +118,8 @@ function deleteAccount(account: Account, confirmed = false) {
 }
 
 function addAccount(account: Omit<Account, 'id' | 'user_id'>) {
-    emit('add', account);
+    emit('create', account);
+    console.log(account);
     isDropdownOpen.value = false;
     isAccountModalOpen.value = false;
 }

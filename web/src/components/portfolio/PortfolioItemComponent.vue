@@ -18,7 +18,7 @@
         </div>
     </div>
     <div class="text-sm text-right text-white">
-        {{ item.quantity }}
+        {{ Number(item.quantity).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }}
     </div>
     <div class="text-sm text-right">
         <div :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
@@ -42,9 +42,7 @@ import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
 import { computed, type PropType } from 'vue';
 
-const props = defineProps({
-    item: { type: Object as PropType<PortfolioItem>, required: true },
-});
+const props = defineProps({ item: { type: Object as PropType<PortfolioItem>, required: true } });
 
 const { currency } = storeToRefs(useSettingsStore());
 
