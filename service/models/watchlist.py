@@ -61,7 +61,7 @@ def get_watchlist_item_by_id(db: Connection, user_id: str, watchlist_item_id: st
     )
 
 
-def get_watchlist_by_user_id(db: Connection, user_id: str) -> list[Symbol]:
+def get_watchlist_by_user(db: Connection, user_id: str) -> list[Symbol]:
     """
     Retrieves a watchlist from the database by user ID.
     """

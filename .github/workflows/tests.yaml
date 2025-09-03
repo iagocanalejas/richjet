@@ -4,8 +4,8 @@ jobs:
     test-python:
         runs-on: ubuntu-latest
         defaults:
-          run:
-            working-directory: ./service
+            run:
+                working-directory: ./service
         strategy:
             matrix:
                 python-version: ["3.11", "3.13"]
@@ -23,13 +23,17 @@ jobs:
             - name: Install dependencies
               run: |
                   python -m pip install --upgrade pip
-                  pip install pytest coverage
+                  pip install pytest
                   if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+            - name: Pytest
+              run: |
+                  PYTHONPATH=. pytest
     test-vue:
         runs-on: ubuntu-latest
         defaults:
-          run:
-            working-directory: ./web
+            run:
+                working-directory: ./web
         strategy:
             matrix:
                 node-version: [22]
@@ -40,14 +44,14 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
               with:
-                version: ${{ matrix.pnpm-version }}
+                  version: ${{ matrix.pnpm-version }}
 
             - name: Set node version to 22
               uses: actions/setup-node@v4
               with:
-                node-version: ${{ matrix.node-version }}
-                cache: 'pnpm'
-                cache-dependency-path: ./web/pnpm-lock.yaml
+                  node-version: ${{ matrix.node-version }}
+                  cache: "pnpm"
+                  cache-dependency-path: ./web/pnpm-lock.yaml
 
             - run: pnpm install
 

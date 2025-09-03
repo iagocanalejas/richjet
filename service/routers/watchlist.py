@@ -4,7 +4,7 @@ from models._limits import LimitAction, enforce_limit
 from models.symbol import Symbol
 from models.watchlist import (
     create_watchlist_item,
-    get_watchlist_by_user_id,
+    get_watchlist_by_user,
     remove_watchlist_item,
     update_watchlist_item,
 )
@@ -19,7 +19,7 @@ async def api_get_watchlist(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    symbols = get_watchlist_by_user_id(db, session.user.id)
+    symbols = get_watchlist_by_user(db, session.user.id)
     return [s.to_dict() for s in symbols]
 
 

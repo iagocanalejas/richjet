@@ -4,7 +4,7 @@ from models._limits import LimitAction, enforce_limit
 from models.transactions import (
     Transaction,
     create_transaction,
-    get_transactions_by_user_id,
+    get_transactions_by_user,
     remove_transaction_by_id,
     update_stock_account,
     update_transaction,
@@ -20,7 +20,7 @@ async def api_get_transactions(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    transactions = get_transactions_by_user_id(db, session.user.id)
+    transactions = get_transactions_by_user(db, session.user.id)
     return [t.to_dict() for t in transactions]
 
 

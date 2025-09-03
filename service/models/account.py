@@ -85,7 +85,7 @@ def get_account_by_id(db: Connection, user_id: str, account_id: str) -> Account:
     return Account.from_row(row)
 
 
-def get_accounts_by_user_id(db: Connection, user_id: str) -> list[Account]:
+def get_accounts_by_user(db: Connection, user_id: str) -> list[Account]:
     """
     Retrieves accounts from the database by user ID.
     """

@@ -7,11 +7,7 @@ import { StockSymbol } from '../../src/types/stock';
 import { hasBoughtSharesIfNeeded } from '../../src/utils/rules';
 
 const getStockQuoteMock = vi.fn(() => Promise.resolve({ current: 100 }));
-vi.mock('@/stores/stocks', () => ({
-    useStocksStore: () => ({
-        getStockQuote: () => getStockQuoteMock(),
-    }),
-}));
+vi.mock('@/stores/stocks', () => ({ useStocksStore: () => ({ getStockQuote: () => getStockQuoteMock() }) }));
 
 vi.mock('@/stores/settings', () => ({
     useSettingsStore: () => ({
@@ -25,9 +21,10 @@ vi.mock('@/stores/settings', () => ({
     }),
 }));
 
-vi.mock('@/utils/rules', () => ({
-    hasBoughtSharesIfNeeded: vi.fn(),
-}));
+vi.mock('@/utils/rules', async (original) => {
+    const actual: any = await original(); // eslint-disable-line @typescript-eslint/no-explicit-any
+    return { ...actual, hasBoughtSharesIfNeeded: vi.fn() };
+});
 
 const mockSymbol: StockSymbol = {
     id: '1',
@@ -216,12 +213,7 @@ describe('useTransactionsStore', () => {
     describe('updates', () => {
         it('updates a buy transaction', async () => {
             const tx = await mockTransaction(store);
-            const updatedTx: TransactionItem = {
-                ...tx,
-                price: 160,
-                commission: 2,
-                date: new Date().toISOString(),
-            };
+            const updatedTx: TransactionItem = { ...tx, price: 160, commission: 2, date: new Date().toISOString() };
 
             vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => updatedTx }));
             await store.updateTransaction(updatedTx);
@@ -280,13 +272,7 @@ describe('useTransactionsStore', () => {
                 symbol: { ...mockSymbol, ticker: 'AAPL' },
                 account: { id: '1', name: 'default' },
             });
-            vi.stubGlobal(
-                'fetch',
-                vi.fn().mockResolvedValue({
-                    ok: true,
-                    json: async () => [tx.id],
-                })
-            );
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [tx.id] }));
             await store.transferStock('AAPL', '1', '2');
             expect(store.transactions[0].account.id).toBe('2');
         });
@@ -303,17 +289,17 @@ describe('useTransactionsStore', () => {
 
     describe('manual price updates', () => {
         it('updates manual price for a stock', async () => {
-            const tx = await mockTransaction(store, {
-                symbol: { ...mockSymbol, ticker: 'AAPL' },
-            });
+            const tx = await mockTransaction(store, { symbol: { ...mockSymbol, ticker: 'AAPL' } });
             const newPrice = 200;
 
             vi.stubGlobal(
                 'fetch',
-                vi.fn().mockResolvedValue({
-                    ok: true,
-                    json: async () => ({ ...tx, symbol: { ...tx.symbol, manual_price: newPrice } }),
-                })
+                vi
+                    .fn()
+                    .mockResolvedValue({
+                        ok: true,
+                        json: async () => ({ ...tx, symbol: { ...tx.symbol, manual_price: newPrice } }),
+                    })
             );
             await store.updateManualPrice(tx.symbol.id, newPrice);
             expect(store.transactions[0].symbol.manual_price).toBe(newPrice);
@@ -326,19 +312,19 @@ describe('useTransactionsStore', () => {
                 symbol: { ...mockSymbol, id: '1', ticker: 'AAPL' },
                 date: new Date(Date.now()).toISOString(), // ensure this one is first
             });
-            const tx2 = await mockTransaction(store, {
-                symbol: { ...mockSymbol, id: '2', ticker: 'GOOG' },
-            });
+            const tx2 = await mockTransaction(store, { symbol: { ...mockSymbol, id: '2', ticker: 'GOOG' } });
             const updates = [
                 { symbol_id: tx1.symbol.id, price: 200 },
                 { symbol_id: tx2.symbol.id, price: 300 },
             ];
             vi.stubGlobal(
                 'fetch',
-                vi.fn().mockResolvedValue({
-                    ok: true,
-                    json: async () => updates.map((u) => ({ ...u, manual_price: u.price })),
-                })
+                vi
+                    .fn()
+                    .mockResolvedValue({
+                        ok: true,
+                        json: async () => updates.map((u) => ({ ...u, manual_price: u.price })),
+                    })
             );
 
             await store.bulkUpdateManualPrices(updates);

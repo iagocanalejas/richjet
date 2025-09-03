@@ -4,7 +4,7 @@ import { computed, ref, toRaw } from 'vue';
 import type { TransactionItem } from '@/types/portfolio';
 import TransactionsService from './api/transactions';
 import { useStocksStore } from './stocks';
-import { hasBoughtSharesIfNeeded } from '@/utils/rules';
+import { hasBoughtSharesIfNeeded, isDividend, isSell } from '@/utils/rules';
 import { useSettingsStore } from './settings';
 import { useWatchlistStore } from './watchlist';
 
@@ -41,8 +41,12 @@ export const useTransactionsStore = defineStore('transactions', () => {
     }
 
     async function addTransaction(t: TransactionItem) {
-        if (!hasBoughtSharesIfNeeded(t, transactions.value)) {
+        if (isDividend(t) && !hasBoughtSharesIfNeeded(t, transactions.value)) {
             addError({ readable_message: 'Trying to create a dividend for a stock that does not exist' });
+            return;
+        }
+        if (isSell(t) && !hasBoughtSharesIfNeeded(t, transactions.value)) {
+            addError({ readable_message: 'Trying to create a sell for a stock that does not exist' });
             return;
         }
 

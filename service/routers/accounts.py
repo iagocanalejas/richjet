@@ -4,7 +4,7 @@ from models._limits import LimitAction, enforce_limit
 from models.account import (
     Account,
     create_account,
-    get_accounts_by_user_id,
+    get_accounts_by_user,
     remove_account_balance_by_id,
     remove_account_by_id,
     update_account,
@@ -20,7 +20,7 @@ async def api_get_accounts(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    accounts = get_accounts_by_user_id(db, session.user.id)
+    accounts = get_accounts_by_user(db, session.user.id)
     return [a.to_dict() for a in accounts]
 
 
