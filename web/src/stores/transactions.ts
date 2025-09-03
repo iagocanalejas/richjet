@@ -41,6 +41,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
     }
 
     async function addTransaction(t: TransactionItem) {
+        t.account_id = t.account_id ?? t.account?.id ?? account.value?.id;
         if (isDividend(t) && !hasBoughtSharesIfNeeded(t, transactions.value)) {
             addError({ readable_message: 'Trying to create a dividend for a stock that does not exist' });
             return;
@@ -50,7 +51,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
             return;
         }
 
-        const transaction = await TransactionsService.addTransaction({ ...t, account_id: account.value?.id });
+        const transaction = await TransactionsService.addTransaction(t);
         if (!transaction) return;
 
         const trDate = new Date(transaction.date);
@@ -63,7 +64,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
     }
 
     async function updateTransaction(t: TransactionItem) {
-        const transaction = await TransactionsService.updateTransaction({ ...t, account_id: account.value?.id });
+        t.account_id = t.account_id ?? t.account?.id ?? account.value?.id;
+        const transaction = await TransactionsService.updateTransaction(t);
         if (!transaction) return;
 
         const index = transactions.value.findIndex((t) => t.id === transaction.id);
