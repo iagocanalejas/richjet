@@ -41,6 +41,7 @@ class VantageClient:
         return [
             Symbol(
                 ticker=result["1. symbol"],
+                display_name=result["1. symbol"],
                 name=result["2. name"],
                 security_type=SecurityType.from_str(result["3. type"]),
                 currency=result["8. currency"],

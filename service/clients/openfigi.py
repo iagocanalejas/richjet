@@ -38,6 +38,7 @@ class OpenFIGIClient:
         return [
             Symbol(
                 ticker=result["ticker"],
+                display_name=result["ticker"],
                 name=result["name"],
                 security_type=SecurityType.from_str(result["securityType"]),
                 currency="USD",

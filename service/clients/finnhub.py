@@ -21,6 +21,9 @@ class FinnhubClient:
 
     @alru_cache(maxsize=128)
     async def search_stock(self, q: str) -> list[Symbol]:
+        if len(q) > 20:
+            logger.error(f"{self.NAME}: search query too long: {q}")
+            return []
         async with httpx.AsyncClient(timeout=5) as client:
             # adding the 'exchange' to the query improves the results
             response = await client.get(
@@ -30,6 +33,7 @@ class FinnhubClient:
             )
 
         if response.status_code != 200:
+            print(response.text)
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_DATA}",
@@ -42,6 +46,7 @@ class FinnhubClient:
         return [
             Symbol(
                 ticker=result["symbol"],
+                display_name=result["symbol"],
                 name=result["description"],
                 security_type=SecurityType.from_str(result["type"]),
                 currency="USD",

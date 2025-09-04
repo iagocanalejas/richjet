@@ -43,6 +43,7 @@ class CNBCClient:
         return [
             Symbol(
                 ticker=result["symbolName"].upper(),
+                display_name=result["symbolName"].upper(),
                 name=result["companyName"],
                 security_type=SecurityType.from_str(result["issueType"]),
                 currency="USD",
