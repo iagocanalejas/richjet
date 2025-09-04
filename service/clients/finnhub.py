@@ -33,7 +33,6 @@ class FinnhubClient:
             )
 
         if response.status_code != 200:
-            print(response.text)
             raise HTTPException(
                 status_code=response.status_code,
                 detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_DATA}",

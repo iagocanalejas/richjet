@@ -45,6 +45,7 @@
                     :show-load-more="showLoadMore"
                     @favorite="toggleFavorite"
                     @load-more="debouncedFilterResults('', true)"
+                    @load-price="loadItemPrice"
                     @transact="addTransaction"
                 />
             </div>
@@ -148,13 +149,23 @@ function resetSearch() {
     filteredWatchlist.value = [...watchlist.value];
 }
 
-function toggleFavorite(result: StockSymbolForDisplay) {
-    result.isFavorite = !result.isFavorite;
-    if (result.isFavorite) {
-        addToWatchlist(result);
+function toggleFavorite(item: StockSymbolForDisplay) {
+    item.isFavorite = !item.isFavorite;
+    if (item.isFavorite) {
+        addToWatchlist(item);
     } else {
-        removeFromWatchlist(result);
+        removeFromWatchlist(item);
     }
+}
+
+async function loadItemPrice(item: StockSymbolForDisplay) {
+    console.log('Loading price for', item.ticker);
+    const quote = await stockStore.getStockQuote(item);
+    if (!quote || quote.current === 0) {
+        item.noPrice = true;
+    }
+    item.price = quote?.current;
+    item.openPrice = quote?.open;
 }
 
 function openShareModal() {

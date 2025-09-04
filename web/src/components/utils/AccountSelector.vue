@@ -119,7 +119,6 @@ function deleteAccount(account: Account, confirmed = false) {
 
 function addAccount(account: Omit<Account, 'id' | 'user_id'>) {
     emit('create', account);
-    console.log(account);
     isDropdownOpen.value = false;
     isAccountModalOpen.value = false;
 }

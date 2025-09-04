@@ -32,8 +32,29 @@
         </div>
 
         <button
+            v-if="!item.isFavorite && !item.price && !item.noPrice"
+            @click.stop="$emit('load-price', item)"
+            class="text-gray-400 hover:text-white"
+            title="Show Price"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                role="img"
+                aria-label="Show Price"
+            >
+                <title>Load Price</title>
+                <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v20" />
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </g>
+            </svg>
+        </button>
+        <button
             v-if="!item.isFavorite || item.id"
-            @click.stop="emit('favorite', item)"
+            @click.stop="$emit('favorite', item)"
             class="text-gray-400 hover:text-red-500 transition-colors"
             :title="item.isFavorite ? 'Unfavorite' : 'Favorite'"
         >
@@ -72,7 +93,7 @@
                 />
             </svg>
         </button>
-        <button class="text-gray-400 hover:text-white" title="Options">⋮</button>
+        <button v-if="item.isFavorite" class="text-gray-400 hover:text-white" title="Options">⋮</button>
     </div>
 </template>
 
@@ -84,11 +105,9 @@ import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
 import { computed, type PropType } from 'vue';
 
-const props = defineProps({
-    item: { type: Object as PropType<StockSymbolForDisplay>, required: true },
-});
+const props = defineProps({ item: { type: Object as PropType<StockSymbolForDisplay>, required: true } });
 
-const emit = defineEmits(['favorite', 'image-error']);
+defineEmits(['favorite', 'load-price', 'image-error']);
 
 const settingsStore = useSettingsStore();
 const { currency } = storeToRefs(settingsStore);
