@@ -12,11 +12,12 @@
                         <span class="text-sm">*</span> Quantity
                     </label>
                     <input
-                        v-model="transactionCopy.quantity"
-                        type="number"
-                        min="1"
-                        step="1"
+                        v-model="quantityInput"
+                        type="text"
+                        inputmode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
                         class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
+                        @input="transactionCopy.quantity = normalizeDecimalInput(quantityInput)"
                         :class="{
                             'border-red-500 focus:ring-red-500': $errors.quantity,
                             'border-gray-700 focus:ring-blue-500': !$errors.quantity,
@@ -36,7 +37,7 @@
                         inputmode="decimal"
                         pattern="[0-9]*[.,]?[0-9]*"
                         class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
-                        @input="transactionCopy.price = normalizePriceInput(priceInput)"
+                        @input="transactionCopy.price = normalizeDecimalInput(priceInput)"
                         :class="{
                             'border-red-500 focus:ring-red-500': $errors.price,
                             'border-gray-700 focus:ring-blue-500': !$errors.price,
@@ -129,7 +130,7 @@
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/portfolio';
 import VueDatePicker from '@vuepic/vue-datepicker';
-import { normalizePriceInput, locale, formatDate } from '@/utils/utils';
+import { normalizeDecimalInput, locale, formatDate } from '@/utils/utils';
 import { onMounted, reactive, ref, watch, type PropType } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 import { storeToRefs } from 'pinia';
@@ -148,12 +149,14 @@ const emit = defineEmits(['buy', 'sell', 'save', 'close']);
 const { accounts } = storeToRefs(useSettingsStore());
 
 const priceInput = ref('');
+const quantityInput = ref('');
 const transactionCopy = reactive({ ...props.transaction });
 const $errors = ref<{ price?: string; quantity?: string }>({});
 
 onMounted(() => {
     Object.assign(transactionCopy, props.transaction);
     priceInput.value = transactionCopy.price ? transactionCopy.price.toString() : '';
+    quantityInput.value = transactionCopy.quantity ? transactionCopy.quantity.toString() : '';
     transactionCopy.date = transactionCopy.date ? new Date(transactionCopy.date).toISOString().split('T')[0] : '';
 });
 watch(
@@ -161,6 +164,7 @@ watch(
     (newVal) => {
         Object.assign(transactionCopy, newVal);
         priceInput.value = newVal.price ? newVal.price.toString() : '';
+        quantityInput.value = newVal.quantity ? newVal.quantity.toString() : '';
         transactionCopy.date = newVal.date ? new Date(newVal.date).toISOString().split('T')[0] : '';
     }
 );

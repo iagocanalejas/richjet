@@ -49,12 +49,10 @@
 <script setup lang="ts">
 import type { PortfolioItem } from '@/types/portfolio';
 import type { StockSymbol } from '@/types/stock';
-import { normalizePriceInput } from '@/utils/utils';
+import { normalizeDecimalInput } from '@/utils/utils';
 import { ref, watch, type PropType } from 'vue';
 
-const props = defineProps({
-    values: { type: Array as PropType<PortfolioItem[]>, required: true },
-});
+const props = defineProps({ values: { type: Array as PropType<PortfolioItem[]>, required: true } });
 
 const emit = defineEmits(['save', 'close']);
 
@@ -89,8 +87,8 @@ function classForItem(item: ItemType) {
 
 function handlePriceChange(item: ItemType) {
     const original = props.values.find((v) => v.symbol.id === item.symbol.id)?.symbol.manual_price;
-    item.edited = normalizePriceInput(item.str_price) !== original;
-    item.price = normalizePriceInput(item.str_price);
+    item.edited = normalizeDecimalInput(item.str_price) !== original;
+    item.price = normalizeDecimalInput(item.str_price);
 }
 
 function save() {
@@ -114,11 +112,5 @@ function close() {
     emit('close');
 }
 
-type ItemType = {
-    symbol: StockSymbol;
-    price: number;
-    str_price: string;
-    edited: boolean;
-    error: string;
-};
+type ItemType = { symbol: StockSymbol; price: number; str_price: string; edited: boolean; error: string };
 </script>

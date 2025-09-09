@@ -16,7 +16,7 @@
                         inputmode="decimal"
                         pattern="[0-9]*[.,]?[0-9]*"
                         class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
-                        @input="accountCopy.balance = normalizePriceInput(priceInput)"
+                        @input="accountCopy.balance = normalizeDecimalInput(priceInput)"
                         :class="{
                             'border-red-500 focus:ring-red-500': $errors.balance,
                             'border-gray-700 focus:ring-blue-500': !$errors.balance,
@@ -47,13 +47,11 @@
 
 <script setup lang="ts">
 import type { Account } from '@/types/user';
-import { normalizePriceInput } from '@/utils/utils';
+import { normalizeDecimalInput } from '@/utils/utils';
 import { isValidBalance } from '@/utils/validators';
 import { reactive, ref, watch, type PropType } from 'vue';
 
-const props = defineProps({
-    account: { type: Object as PropType<Account>, required: true },
-});
+const props = defineProps({ account: { type: Object as PropType<Account>, required: true } });
 
 const emit = defineEmits(['save', 'close']);
 

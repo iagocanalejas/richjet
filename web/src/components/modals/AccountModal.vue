@@ -54,7 +54,7 @@
                     inputmode="decimal"
                     pattern="[0-9]*[.,]?[0-9]*"
                     class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
-                    @input="account.balance = normalizePriceInput(priceInput)"
+                    @input="account.balance = normalizeDecimalInput(priceInput)"
                     :class="{
                         'border-red-500 focus:ring-red-500': $errors.balance,
                         'border-gray-700 focus:ring-blue-500': !$errors.balance,
@@ -85,7 +85,7 @@
 <script setup lang="ts">
 import { useSettingsStore } from '@/stores/settings';
 import type { Account, AccountType } from '@/types/user';
-import { normalizePriceInput } from '@/utils/utils';
+import { normalizeDecimalInput } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
 import { ref, type PropType } from 'vue';
 

@@ -15,7 +15,7 @@
                         inputmode="decimal"
                         pattern="[0-9]*[.,]?[0-9]*"
                         class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
-                        @input="price = normalizePriceInput(priceInput)"
+                        @input="price = normalizeDecimalInput(priceInput)"
                         :class="{
                             'border-red-500 focus:ring-red-500': $errors.price,
                             'border-gray-700 focus:ring-blue-500': !$errors.price,
@@ -45,12 +45,10 @@
 
 <script setup lang="ts">
 import type { PortfolioItem } from '@/types/portfolio';
-import { normalizePriceInput } from '@/utils/utils';
+import { normalizeDecimalInput } from '@/utils/utils';
 import { ref, type PropType } from 'vue';
 
-const props = defineProps({
-    item: { type: Object as PropType<PortfolioItem>, required: true },
-});
+const props = defineProps({ item: { type: Object as PropType<PortfolioItem>, required: true } });
 
 const emit = defineEmits(['set-price', 'close']);
 

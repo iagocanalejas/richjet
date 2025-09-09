@@ -33,7 +33,7 @@
                         inputmode="decimal"
                         pattern="[0-9]*[.,]?[0-9]*"
                         class="w-full bg-gray-800 text-white px-3 py-2 rounded-lg border border-gray-700 focus:outline-none focus:ring-2"
-                        @input="transactionCopy.price = normalizePriceInput(priceInput)"
+                        @input="transactionCopy.price = normalizeDecimalInput(priceInput)"
                         :class="{
                             'border-red-500 focus:ring-red-500': $errors.price,
                             'border-gray-700 focus:ring-blue-500': !$errors.price,
@@ -140,7 +140,7 @@
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/portfolio';
 import VueDatePicker from '@vuepic/vue-datepicker';
-import { normalizePriceInput, locale } from '@/utils/utils';
+import { normalizeDecimalInput, locale } from '@/utils/utils';
 import { reactive, ref, watch, type PropType } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSettingsStore } from '@/stores/settings';

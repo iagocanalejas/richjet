@@ -37,7 +37,7 @@ function mapWeirdLocales(locale: string) {
     }
 }
 
-export function normalizePriceInput(value: string): number {
+export function normalizeDecimalInput(value: string): number {
     const normalized = value.replace(',', '.');
     const parsed = parseFloat(normalized);
     return isNaN(parsed) ? 0 : parsed;
