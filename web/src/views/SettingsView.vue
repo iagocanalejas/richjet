@@ -78,13 +78,13 @@
             <p v-if="!settings.subscription.cancel_at_period_end" class="text-lg text-gray-300">
                 Next billing date:
                 <strong class="text-white">
-                    {{ formatDate(settings.subscription.items.data[0].current_period_end) }}
+                    {{ formatDate(settings.subscription.items.data[0]!.current_period_end) }}
                 </strong>
             </p>
             <p v-else class="text-lg text-gray-300">
                 Your subscription will end on
                 <strong class="text-white">
-                    {{ formatDate(settings.subscription.items.data[0].current_period_end) }}.
+                    {{ formatDate(settings.subscription.items.data[0]!.current_period_end) }}.
                 </strong>
                 <br />
                 You can still use your plan until then.

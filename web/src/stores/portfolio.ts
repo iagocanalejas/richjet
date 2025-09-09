@@ -23,12 +23,11 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
         const trsBySymbol: Record<string, TransactionItem[]> = {};
         for (const tr of accountTransactions) {
-            trsBySymbol[tr.symbol.id] = trsBySymbol[tr.symbol.id] || [];
-            trsBySymbol[tr.symbol.id].push(tr);
+            (trsBySymbol[tr.symbol.id] ??= []).push(tr);
         }
 
         for (const symbolId in trsBySymbol) {
-            _portfolio.push(_createPortfolioItem(trsBySymbol[symbolId].reverse()));
+            _portfolio.push(_createPortfolioItem(trsBySymbol[symbolId]!.reverse()));
         }
 
         _portfolio.sort((a, b) => {
@@ -79,6 +78,8 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                     // Apply FIFO: consume from earliest buys first
                     while (remainingToSell > 0 && portfolioItem.sortedBuys.length > 0) {
                         const buy = portfolioItem.sortedBuys[0];
+                        if (!buy) break; // typescript is being a douchebag here
+
                         if (buy.quantity <= remainingToSell) {
                             // Fully consume this buy
                             costBasis += buy.quantity * buy.price;

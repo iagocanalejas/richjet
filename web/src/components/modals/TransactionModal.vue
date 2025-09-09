@@ -157,7 +157,7 @@ onMounted(() => {
     Object.assign(transactionCopy, props.transaction);
     priceInput.value = transactionCopy.price ? transactionCopy.price.toString() : '';
     quantityInput.value = transactionCopy.quantity ? transactionCopy.quantity.toString() : '';
-    transactionCopy.date = transactionCopy.date ? new Date(transactionCopy.date).toISOString().split('T')[0] : '';
+    transactionCopy.date = transactionCopy.date ? new Date(transactionCopy.date).toISOString().split('T')[0]! : '';
 });
 watch(
     () => props.transaction,
@@ -165,7 +165,7 @@ watch(
         Object.assign(transactionCopy, newVal);
         priceInput.value = newVal.price ? newVal.price.toString() : '';
         quantityInput.value = newVal.quantity ? newVal.quantity.toString() : '';
-        transactionCopy.date = newVal.date ? new Date(newVal.date).toISOString().split('T')[0] : '';
+        transactionCopy.date = newVal.date ? new Date(newVal.date).toISOString().split('T')[0]! : '';
     }
 );
 

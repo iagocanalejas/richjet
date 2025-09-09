@@ -102,7 +102,7 @@ function openTransactionModal(item: StockSymbolForDisplay) {
         commission: 0,
         currency: currency.value,
         transaction_type: 'BUY',
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split('T')[0]!,
         account: selectedAccount.value,
     };
 }

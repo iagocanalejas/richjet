@@ -146,12 +146,7 @@ function showContextMenu(event: MouseEvent, item: PortfolioItem) {
     event.preventDefault();
     event.stopPropagation();
 
-    contextMenu.value = {
-        visible: true,
-        x: event.clientX + window.scrollX,
-        y: event.clientY + window.scrollY,
-        item,
-    };
+    contextMenu.value = { visible: true, x: event.clientX + window.scrollX, y: event.clientY + window.scrollY, item };
 }
 
 function openDividendsModal(item: PortfolioItem) {
@@ -162,7 +157,7 @@ function openDividendsModal(item: PortfolioItem) {
         price: 0,
         quantity: 0,
         commission: 0,
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split('T')[0]!,
         transaction_type: 'DIVIDEND-CASH',
         currency: currency.value,
     };
@@ -179,7 +174,7 @@ function openTransactionsModal(item: PortfolioItem, mode: 'buy' | 'sell') {
         price: 0,
         quantity: 0,
         commission: 0,
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split('T')[0]!,
         transaction_type: 'BUY',
         currency: currency.value,
     };

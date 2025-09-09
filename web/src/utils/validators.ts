@@ -20,7 +20,7 @@ export function isValidISIN(isin: string): boolean {
     let double = false;
 
     for (let i = full.length - 1; i >= 0; i--) {
-        let digit = parseInt(full[i], 10);
+        let digit = parseInt(full[i]!, 10);
         if (double) {
             digit *= 2;
             if (digit > 9) digit -= 9;
