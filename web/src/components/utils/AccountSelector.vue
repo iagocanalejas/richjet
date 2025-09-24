@@ -1,5 +1,5 @@
 <template>
-    <div v-if="accounts.length" class="relative inline-block text-center text-white">
+    <div ref="dropdown" v-if="accounts.length" class="relative inline-block text-center text-white">
         <button
             @click="isDropdownOpen = !isDropdownOpen"
             class="inline-flex items-center justify-between bg-gray-800 px-4 py-2 rounded-md hover:bg-gray-700"
@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import type { Account } from '@/types/user';
-import { ref, type PropType } from 'vue';
+import { onBeforeUnmount, onMounted, ref, type PropType } from 'vue';
 import AccountModal from '../modals/AccountModal.vue';
 import ConfirmationModal from '../modals/ConfirmationModal.vue';
 import { normalizeLimit } from '@/utils/utils';
@@ -98,6 +98,7 @@ const emit = defineEmits(['select', 'create', 'delete']);
 const isDropdownOpen = ref(false);
 const isAccountModalOpen = ref(false);
 const confirmationModal = ref<InstanceType<typeof ConfirmationModal> | null>(null);
+const dropdown = ref<HTMLElement | null>(null);
 
 function select(item?: Account) {
     emit('select', item);
@@ -122,4 +123,18 @@ function addAccount(account: Omit<Account, 'id' | 'user_id'>) {
     isDropdownOpen.value = false;
     isAccountModalOpen.value = false;
 }
+
+function handleClickOutside(event: MouseEvent) {
+    if (dropdown.value && !dropdown.value.contains(event.target as Node)) {
+        isDropdownOpen.value = false;
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutside);
+});
 </script>

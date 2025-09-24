@@ -4,7 +4,10 @@
             <img src="@/assets/logo.png" alt="Logo" class="h-10 w-10" />
             <span class="text-xl font-semibold text-white">RichJet</span>
         </RouterLink>
-        <nav class="flex space-x-4 ml-auto">
+
+        <MobileHeader />
+
+        <nav class="hidden md:flex space-x-4 ml-auto items-center">
             <RouterLink
                 v-if="isLogged"
                 to="/"
@@ -41,15 +44,7 @@
                 @delete="deleteAccount($event.id, true)"
             />
 
-            <div v-if="isLogged" class="relative">
-                <select
-                    v-model="currency"
-                    class="appearance-none bg-gray-700 text-white pl-8 py-2 rounded-lg pr-8 focus:outline-none focus:ring-2 focus:ring-gray-500 cursor-pointer"
-                >
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                </select>
-            </div>
+            <CurrencySelector v-if="isLogged" :selected="currency" @select="currency = $event" />
 
             <div class="relative" v-if="user?.picture">
                 <img
@@ -126,6 +121,8 @@ import { useErrorsStore } from './stores/errors';
 import WakingUpModal from './components/modals/WakingUpModal.vue';
 import { useLoadingStore } from './stores/loading';
 import { useTransactionsStore } from './stores/transactions';
+import MobileHeader from './components/header/MobileHeader.vue';
+import CurrencySelector from './components/utils/CurrencySelector.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
