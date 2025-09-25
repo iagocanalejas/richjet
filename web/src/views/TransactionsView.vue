@@ -1,7 +1,18 @@
 <template>
     <main class="justify-center min-h-[calc(100vh-144px)] bg-gray-900 text-white p-6">
         <div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
-            <SearchComponent @on-search="query = $event" />
+            <div class="flex items-center justify-center w-full gap-4">
+                <SearchComponent @on-search="query = $event" />
+                <select
+                    v-model="selectedType"
+                    class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"
+                >
+                    <option value="">All Types</option>
+                    <option value="BUY">Buy</option>
+                    <option value="SELL">Sell</option>
+                    <option value="DIVIDEND">Dividend</option>
+                </select>
+            </div>
         </div>
         <div class="flex flex-col justify-center items-center w-full max-w-2xl mx-auto">
             <TransactionsListComponent
@@ -38,10 +49,12 @@ const { transactions } = storeToRefs(transactionsStore);
 const { account: selectedAccount } = storeToRefs(useSettingsStore());
 
 const query = ref('');
+const selectedType = ref<'BUY' | 'SELL' | 'DIVIDEND' | ''>('');
 const filteredTransactions = computed(() =>
     transactions.value
         .filter((tx) => !selectedAccount.value?.id || tx.account?.id === selectedAccount.value.id)
         .filter((tx) => tx.symbol.ticker.toLowerCase().includes(query.value.toLowerCase()))
+        .filter((tx) => (selectedType.value ? isTransactionOfType(selectedType.value, tx) : true))
 );
 
 const confirmationModal = ref<InstanceType<typeof ConfirmationModal> | null>(null);
@@ -59,5 +72,12 @@ function openTransactionModal(item: TransactionItem) {
 function saveTransaction(transaction: TransactionItem) {
     updateTransaction(transaction);
     isOpenTransactionModal.value = false;
+}
+
+function isTransactionOfType(type: 'BUY' | 'SELL' | 'DIVIDEND', transaction: TransactionItem): boolean {
+    if (type === 'DIVIDEND') {
+        return transaction.transaction_type === 'DIVIDEND' || transaction.transaction_type === 'DIVIDEND-CASH';
+    }
+    return transaction.transaction_type === type;
 }
 </script>
