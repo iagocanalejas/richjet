@@ -1,7 +1,9 @@
 <template>
     <LoadingSpinner />
     <div v-if="values.length" class="mt-6 w-full">
-        <div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
+        <div
+            class="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white"
+        >
             <div>Asset</div>
             <div class="text-right">Date</div>
             <div class="text-right">Price</div>
@@ -13,7 +15,7 @@
             <li
                 v-for="(item, index) in visibleItems"
                 :key="index"
-                class="relative grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center p-4 rounded-lg cursor-pointer transition-colors border-l-4"
+                class="relative rounded-lg cursor-pointer transition-colors border-l-4 p-4 md:grid md:grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] md:gap-4 md:items-center"
                 :class="[borderByTransactionType(item.transaction_type)]"
             >
                 <TransactionItemComponent :item="item" @remove="emit('remove', item)" @edit="emit('edit', item)" />
@@ -43,9 +45,7 @@ const { isLoading } = storeToRefs(useLoadingStore());
 
 const ITEMS_PER_PATE = 20;
 
-const props = defineProps({
-    values: { type: Array as PropType<TransactionItem[]>, default: () => [] },
-});
+const props = defineProps({ values: { type: Array as PropType<TransactionItem[]>, default: () => [] } });
 
 const currentPage = ref(0);
 const visibleItems = computed(() => {
