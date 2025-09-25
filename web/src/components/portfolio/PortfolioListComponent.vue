@@ -1,6 +1,8 @@
 <template>
     <div v-if="portfolio.length" class="w-full">
-        <div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_0.2fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
+        <div
+            class="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_0.2fr] gap-4 px-4 py-2 text-sm font-semibold text-white"
+        >
             <div>Asset</div>
             <div class="text-right">Avg Price</div>
             <div class="text-right">Quantity</div>
@@ -12,8 +14,8 @@
             <li
                 v-for="item in portfolio"
                 :key="item.symbol.ticker"
-                @click="showContextMenu($event, item)"
-                class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_0.2fr] gap-4 items-center bg-gray-800 p-4 rounded-lg"
+                @click.stop="showContextMenu($event, item)"
+                class="p-4 rounded-lg bg-gray-800 md:grid md:grid-cols-[2fr_1fr_1fr_1fr_1fr_0.2fr] md:gap-4 md:items-center"
             >
                 <PortfolioItemComponent v-if="!isTradePortfolioItem(item)" :item="item" />
                 <PortfolioTradeItemComponent v-else :item="item" />

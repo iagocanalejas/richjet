@@ -2,7 +2,7 @@
     <div
         v-if="visible"
         ref="menuRef"
-        :style="{ top: y + 'px', left: x + 'px' }"
+        :style="{ top: position.top + 'px', left: position.left + 'px' }"
         class="absolute z-50 bg-gray-900 text-white shadow-lg rounded-lg p-2 w-50 border border-gray-700"
         @click.stop
     >
@@ -11,17 +11,14 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-const props = defineProps<{
-    visible: boolean;
-    x: number;
-    y: number;
-}>();
+const props = defineProps<{ visible: boolean; x: number; y: number }>();
 
 const emit = defineEmits(['close']);
 
 const menuRef = ref<HTMLElement | null>(null);
+const position = ref({ top: 0, left: 0 });
 
 function handleClickOutside(event: MouseEvent) {
     if (props.visible && menuRef.value && !menuRef.value.contains(event.target as HTMLElement)) {
@@ -29,11 +26,32 @@ function handleClickOutside(event: MouseEvent) {
     }
 }
 
+function adjustPosition() {
+    if (!menuRef.value) return;
+
+    const menuRect = menuRef.value.getBoundingClientRect();
+    const maxX = window.innerWidth - menuRect.width - 8; // padding from edge
+    const maxY = window.innerHeight - menuRect.height - 8;
+
+    position.value.left = Math.min(props.x, maxX);
+    position.value.top = Math.min(props.y, maxY);
+}
+
+watch(
+    () => props.visible,
+    async (val) => {
+        if (val) {
+            await nextTick();
+            adjustPosition();
+        }
+    }
+);
+
 onMounted(() => {
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('pointerdown', handleClickOutside);
 });
 
 onBeforeUnmount(() => {
-    document.removeEventListener('click', handleClickOutside);
+    document.removeEventListener('pointerdown', handleClickOutside);
 });
 </script>
