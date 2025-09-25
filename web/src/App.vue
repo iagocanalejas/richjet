@@ -5,7 +5,7 @@
             <span class="text-xl font-semibold text-white">RichJet</span>
         </RouterLink>
 
-        <MobileHeader />
+        <MobileHeader v-if="isLogged" />
 
         <nav class="hidden md:flex space-x-4 ml-auto items-center">
             <RouterLink
@@ -45,46 +45,9 @@
             />
 
             <CurrencySelector v-if="isLogged" :selected="currency" @select="currency = $event" />
-
-            <div class="relative" v-if="user?.picture">
-                <img
-                    :src="user.picture"
-                    alt="User"
-                    class="w-10 h-10 rounded-full object-cover border-2 border-blue-400 cursor-pointer"
-                    @click="showMenu = !showMenu"
-                />
-                <div
-                    v-if="showMenu"
-                    class="absolute right-0 mt-2 w-50 bg-gray-800 text-white rounded-lg shadow-lg z-50 border border-gray-700"
-                >
-                    <button
-                        @click="goToSettings"
-                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition"
-                    >
-                        Manage Subscription
-                    </button>
-                    <button
-                        @click="signOut"
-                        class="block w-full text-left px-4 py-2 hover:bg-gray-700 rounded-b-lg transition"
-                    >
-                        Sign out
-                    </button>
-                </div>
-            </div>
-
-            <div v-else>
-                <button
-                    @click="signIn"
-                    class="flex items-center gap-2 bg-white text-gray-700 px-3 py-3 rounded-full shadow hover:shadow-md transition hover:bg-gray-100"
-                >
-                    <img
-                        src="https://developers.google.com/identity/images/g-logo.png"
-                        alt="Google logo"
-                        class="w-5 h-5"
-                    />
-                </button>
-            </div>
         </nav>
+
+        <UserSelector />
     </header>
 
     <LoadingBar v-if="isLoading" />
@@ -107,10 +70,10 @@
 </template>
 
 <script setup lang="ts">
-import { RouterLink, RouterView, useRouter } from 'vue-router';
+import { RouterLink, RouterView } from 'vue-router';
 import { useSettingsStore } from './stores/settings';
 import { storeToRefs } from 'pinia';
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useWatchlistStore } from './stores/watchlist';
 import { useAuthStore } from './stores/auth';
 import LoadingBar from './components/LoadingBar.vue';
@@ -123,31 +86,19 @@ import { useLoadingStore } from './stores/loading';
 import { useTransactionsStore } from './stores/transactions';
 import MobileHeader from './components/header/MobileHeader.vue';
 import CurrencySelector from './components/utils/CurrencySelector.vue';
+import UserSelector from './components/header/UserSelector.vue';
 
-const router = useRouter();
 const authStore = useAuthStore();
 const settingsStore = useSettingsStore();
-const { user, isLogged } = storeToRefs(authStore);
+const { isLogged } = storeToRefs(authStore);
 const { currency, accounts, account: selectedAccount, settings } = storeToRefs(settingsStore);
 const { createAccount, deleteAccount } = settingsStore;
 const { isLoading, isFirstLoadCompleted } = storeToRefs(useLoadingStore());
 const { hasErrors: isShowingErrorsModal } = storeToRefs(useErrorsStore());
 const currentYear = new Date().getFullYear();
 
-const showMenu = ref(false);
-
 function signIn() {
     authStore.login();
-}
-
-function signOut(): void {
-    authStore.logout();
-    showMenu.value = false;
-}
-
-function goToSettings() {
-    router.push('/settings');
-    showMenu.value = false;
 }
 
 watch(
