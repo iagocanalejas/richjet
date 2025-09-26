@@ -386,6 +386,7 @@ def _validate_sell_transaction(db: Connection, user_id: str, transaction: Transa
         account_id=transaction.account_id,
     )
     transactions = [t for t in transactions if t.transaction_type in {TransactionType.BUY, TransactionType.SELL}]
+    transactions.reverse()
     if transaction.id:  # if we are updating an existing transaction, exclude it from the check
         idx = next(i for i, t in enumerate(transactions) if t.id == transaction.id)
         transactions = transactions[:idx]

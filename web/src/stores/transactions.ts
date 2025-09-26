@@ -42,6 +42,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
     async function addTransaction(t: TransactionItem) {
         t.account_id = t.account_id ?? t.account?.id ?? account.value?.id;
+        t.symbol_id = t.symbol_id ?? t.symbol?.id;
         if (isDividend(t) && !hasBoughtSharesIfNeeded(t, transactions.value)) {
             addError({ readable_message: 'Trying to create a dividend for a stock that does not exist' });
             return;
@@ -65,6 +66,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
 
     async function updateTransaction(t: TransactionItem) {
         t.account_id = t.account_id ?? t.account?.id ?? account.value?.id;
+        t.symbol_id = t.symbol_id ?? t.symbol?.id;
         const transaction = await TransactionsService.updateTransaction(t);
         if (!transaction) return;
 

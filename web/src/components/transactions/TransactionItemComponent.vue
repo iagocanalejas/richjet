@@ -24,7 +24,7 @@
         {{ item.quantity ? item.quantity : '---' }}
     </div>
     <div class="hidden md:block text-sm text-right">
-        {{ !isDividend(item.transaction_type) ? formatCurrency(item.quantity * item.price, currency) : '---' }}
+        {{ !isDividend(item.transaction_type) ? formatCurrency(transactionTotal, currency) : '---' }}
     </div>
 
     <div class="hidden md:flex items-center justify-end text-gray-400">
@@ -117,7 +117,7 @@
         <div class="flex justify-between text-sm">
             <span class="text-gray-400 text-xs">Total</span>
             <span>
-                {{ !isDividend(item.transaction_type) ? formatCurrency(item.quantity * item.price, currency) : '---' }}
+                {{ !isDividend(item.transaction_type) ? formatCurrency(transactionTotal, currency) : '---' }}
             </span>
         </div>
     </div>
@@ -128,12 +128,20 @@ import { useSettingsStore } from '@/stores/settings';
 import type { TransactionItem } from '@/types/portfolio';
 import { formatCurrency, formatDate } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
-import { isDividend } from '@/utils/rules';
-import type { PropType } from 'vue';
+import { isBuy, isDividend, isSell } from '@/utils/rules';
+import { computed, type PropType } from 'vue';
 
-defineProps({ item: { type: Object as PropType<TransactionItem>, required: true } });
+const props = defineProps({ item: { type: Object as PropType<TransactionItem>, required: true } });
 
 const emit = defineEmits(['edit', 'remove']);
 
 const { currency } = storeToRefs(useSettingsStore());
+const transactionTotal = computed(() => {
+    const { quantity, price, commission } = props.item;
+    const base = quantity * price;
+
+    if (isBuy(props.item)) return base + commission;
+    if (isSell(props.item)) return base - commission;
+    return base;
+});
 </script>

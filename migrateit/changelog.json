@@ -97,6 +97,13 @@
             "parents": [
                 "0012_account_currency.sql"
             ]
+        },
+        {
+            "name": "0014_price_precission.sql",
+            "initial": false,
+            "parents": [
+                "0013_symbol_display_name.sql"
+            ]
         }
     ]
 }
