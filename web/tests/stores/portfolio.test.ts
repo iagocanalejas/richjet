@@ -5,22 +5,16 @@ import { type TransactionItem } from '../../src/types/portfolio';
 import { ref } from 'vue';
 import { StockSymbol } from '../../src/types/stock';
 import { Account } from '../../src/types/user';
+import { isDividend } from '../../src/utils/rules';
 
 const MOCK_CURRENT_PRICE = 200;
 const getStockQuoteMockSync = vi.fn(() => ({ current: MOCK_CURRENT_PRICE }));
-vi.mock('@/stores/stocks', () => ({
-    useStocksStore: () => ({
-        getStockQuoteSync: () => getStockQuoteMockSync(),
-    }),
-}));
+vi.mock('@/stores/stocks', () => ({ useStocksStore: () => ({ getStockQuoteSync: () => getStockQuoteMockSync() }) }));
 
 const mockTransactions = ref<TransactionItem[]>([]);
 const mockCashDividends = ref(0);
 vi.mock('@/stores/transactions', () => ({
-    useTransactionsStore: () => ({
-        transactions: mockTransactions,
-        cashDividends: mockCashDividends,
-    }),
+    useTransactionsStore: () => ({ transactions: mockTransactions, cashDividends: mockCashDividends }),
 }));
 
 const mockAccount = ref<Account | undefined>(undefined);
@@ -60,8 +54,8 @@ const createTransaction = (overrides: Partial<TransactionItem>): TransactionItem
     user_id: 'user-1',
     symbol: { ...mockSymbol },
     quantity: 1,
-    price: 100,
-    commission: 1,
+    price: !isDividend(overrides) ? 100 : 0,
+    commission: !isDividend(overrides) ? 1 : 0,
     currency: 'USD',
     transaction_type: 'BUY',
     date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
@@ -131,6 +125,21 @@ describe('usePortfolioStore', () => {
         const item = store.portfolio[0];
 
         expect(item.quantity).toBe(7);
+    });
+
+    it('should also use DIVIDEND shares for SELL transactions', () => {
+        mockTransactions.value = [
+            createTransaction({ transaction_type: 'SELL', quantity: 4, price: 200 }),
+            createTransaction({ transaction_type: 'DIVIDEND', quantity: 2 }),
+            createTransaction({ quantity: 2, price: 100 }),
+        ];
+
+        expect(store.portfolio).toHaveLength(1);
+        const item = store.portfolio[0];
+
+        expect(item.quantity).toBe(0);
+        expect(item.sortedSells).toHaveLength(1);
+        expect(item.sortedSells[0].costBasis).toBe(200);
     });
 
     it('should ignore quantity change for DIVIDEND-CASH', () => {

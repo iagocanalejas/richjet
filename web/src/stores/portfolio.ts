@@ -93,6 +93,11 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                         }
                     }
 
+                    if (remainingToSell > 0) {
+                        // NOTE: This situation should ideally never happen if data integrity is maintained.
+                        console.warn(`Not enough shares for ${tr.symbol.ticker}. Remaining : ${remainingToSell}`);
+                    }
+
                     portfolioItem.quantity -= tr.quantity;
                     portfolioItem.currentInvested -= costBasis;
                     portfolioItem.totalRetrieved += tr.price * tr.quantity;
@@ -101,6 +106,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                     break;
                 case 'DIVIDEND':
                     portfolioItem.quantity += tr.quantity;
+                    portfolioItem.sortedBuys.push(structuredClone(toRaw(tr)));
                     break;
                 case 'DIVIDEND-CASH':
                     break;
@@ -134,12 +140,12 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
     const closedPositions = computed(() => {
         if (!portfolio.value.length) return 0;
-        return portfolio.value.reduce((total, item) => {
-            const { quantity, totalRetrieved, totalInvested, currentInvested, commission } = item;
-            const currentlyInvested =
-                quantity === 0 ? totalInvested + commission : totalInvested - currentInvested + commission;
-            return total + (totalRetrieved - currentlyInvested);
-        }, 0);
+        return portfolio.value
+            .filter((p) => p.sortedSells.length > 0)
+            .reduce((total, p) => {
+                const earned = p.totalRetrieved - (p.totalInvested - p.currentInvested);
+                return total + earned - p.commission;
+            }, 0);
     });
 
     const rentability = computed(() => {
