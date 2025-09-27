@@ -52,7 +52,8 @@ class OpenFIGIClient:
 
     def _is_valid_result(self, r):
         return (
-            r["marketSector"].upper() in ["EQUITY"]
+            r["marketSector"] is not None
+            and r["marketSector"].upper() in ["EQUITY"]
             and r["securityType"].upper() in ["COMMON STOCK", "ETP", "ETF", "GDR"]
             and not any(r[k] == "None" for k in ["ticker", "name", "exchCode", "marketSector", "figi", "securityType"])
             and is_supported_ticker(r["ticker"])
