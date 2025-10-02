@@ -12,15 +12,18 @@ from clients._errors import (
 from pyutils.validators import is_valid_isin
 
 
+# NOTE: we are limited to 25 calls/day
 class VantageClient:
     NAME = "vantage"
     BASE_URL = "https://www.alphavantage.co/query"
 
     def __init__(self, api_key):
         self.api_key = api_key
+        self._call_count = 0
 
     @alru_cache(maxsize=128)
     async def search_stock(self, q: str) -> list[Symbol]:
+        self._call_count += 1
         async with httpx.AsyncClient(timeout=5) as client:
             response = await client.get(
                 f"{self.BASE_URL}/query",
@@ -57,6 +60,7 @@ class VantageClient:
 
     @alru_cache(maxsize=128)
     async def get_quote(self, symbol: str):
+        self._call_count += 1
         async with httpx.AsyncClient(timeout=5) as client:
             response = await client.get(
                 f"{self.BASE_URL}/query",
@@ -69,16 +73,19 @@ class VantageClient:
             )
 
         if response.status_code != 200:
+            logger.error(f"{self.NAME}: failed to fetch quote for {symbol}:\n {response.text}")
             raise HTTPException(
                 status_code=response.status_code,
-                detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_QUOTE}",
+                detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_QUOTE} - {symbol=}",
             )
 
         data = response.json().get("Global Quote", None)
         if not data:
+            logger.error(f"{self.NAME}: no quote data for {symbol} in call={self._call_count}")
+            logger.error(response.text.replace(self.api_key, "*****"))  # HACK: wtf are vantage doing
             raise HTTPException(
                 status_code=404,
-                detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_QUOTE}",
+                detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_QUOTE} - {symbol=}",
             )
 
         return StockQuote(

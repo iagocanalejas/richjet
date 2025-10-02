@@ -93,6 +93,9 @@ async def search_stock(
 
     if load_more:  # load more results from the APIs
         for client in clients.values():
+            if client.NAME == VantageClient.NAME:
+                # TODO: skip Vantage as we are limited to 25 calls/day
+                continue
             try:
                 symbols = await client.search_stock(q)
                 for symbol in symbols:
@@ -141,7 +144,7 @@ async def _get_stock_quote_or_none(client, symbol: str) -> StockQuote | None:
     try:
         return await client.get_quote(symbol)
     except HTTPException as e:
-        logger.error(f"{client.NAME}: {e.detail}")
+        logger.error(e.detail)
     except httpx.TimeoutException:
         logger.error(f"{client.NAME}: timeout")
     return None

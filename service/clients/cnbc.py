@@ -62,9 +62,11 @@ class CNBCClient:
             )
 
         if response.status_code != 200:
+            text = "\n" + response.text if "<HTML>" not in response.text.upper() else "HTML response"
+            logger.error(f"{self.NAME}: failed to fetch quote for {symbol}: {text}")
             raise HTTPException(
                 status_code=response.status_code,
-                detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_QUOTE}",
+                detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_QUOTE} - {symbol=}",
             )
 
         data = response.json().get("QuickQuoteResult", None)
@@ -73,7 +75,7 @@ class CNBCClient:
         if not data:
             raise HTTPException(
                 status_code=404,
-                detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_QUOTE}",
+                detail=f"{self.NAME}: {ERROR_FAILED_TO_FETCH_STOCK_QUOTE} - {symbol=}",
             )
 
         return StockQuote(
