@@ -14,11 +14,22 @@
             <li
                 v-for="item in portfolio"
                 :key="item.symbol.ticker"
-                @click.stop="showContextMenu($event, item)"
+                @click.stop="toggleDetails(item)"
                 class="p-4 rounded-lg bg-gray-800 md:grid md:grid-cols-[2fr_1fr_1fr_1fr_1fr_0.2fr] md:gap-4 md:items-center"
             >
-                <PortfolioItemComponent v-if="!isTradePortfolioItem(item)" :item="item" />
+                <PortfolioItemComponent
+                    v-if="!isTradePortfolioItem(item)"
+                    :item="item"
+                    @show-menu="showContextMenu($event, item)"
+                />
                 <PortfolioTradeItemComponent v-else :item="item" />
+
+                <div
+                    v-if="expandedItem?.symbol.ticker === item.symbol.ticker"
+                    class="col-span-full mt-4 p-3 rounded bg-gray-900"
+                >
+                    <PortfolioItemDetailsComponent :item="item" />
+                </div>
             </li>
         </ul>
     </div>
@@ -121,6 +132,7 @@ import TransactionModal from '../modals/TransactionModal.vue';
 import TransferStockModal from '../modals/TransferStockModal.vue';
 import type { Account } from '@/types/user';
 import { useTransactionsStore } from '@/stores/transactions';
+import PortfolioItemDetailsComponent from './PortfolioItemDetailsComponent.vue';
 
 const transactionStore = useTransactionsStore();
 const { portfolio } = storeToRefs(usePortfolioStore());
@@ -135,6 +147,7 @@ const isTransferStockModalOpen = ref(false);
 const transactionModalMode = ref<'buy' | 'sell'>('buy');
 const transaction = ref<Omit<TransactionItem, 'id' | 'user_id'> | undefined>();
 const selectedItem = ref<PortfolioItem | undefined>();
+const expandedItem = ref<PortfolioItem | null>(null);
 
 // context menu
 const contextMenu = ref<{ visible: boolean; x: number; y: number; item: PortfolioItem | undefined }>({
@@ -144,11 +157,11 @@ const contextMenu = ref<{ visible: boolean; x: number; y: number; item: Portfoli
     item: undefined,
 });
 
-function showContextMenu(event: MouseEvent, item: PortfolioItem) {
+async function showContextMenu(event: MouseEvent, item: PortfolioItem) {
     event.preventDefault();
     event.stopPropagation();
 
-    contextMenu.value = { visible: true, x: event.clientX + window.scrollX, y: event.clientY + window.scrollY, item };
+    contextMenu.value = { visible: true, x: event.clientX, y: event.clientY, item };
 }
 
 function openDividendsModal(item: PortfolioItem) {
@@ -190,6 +203,14 @@ function openTransferStockModal(item: PortfolioItem) {
 function openManualPriceModal(item: PortfolioItem) {
     selectedItem.value = item;
     isPriceModalOpen.value = true;
+}
+
+function toggleDetails(item: PortfolioItem) {
+    if (expandedItem.value?.symbol.ticker === item.symbol.ticker) {
+        expandedItem.value = null;
+    } else {
+        expandedItem.value = item;
+    }
 }
 
 async function addDividend(t: TransactionItem) {

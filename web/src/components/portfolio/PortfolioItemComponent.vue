@@ -40,7 +40,13 @@
         {{ rentability.toFixed(2) }} %
     </div>
 
-    <button class="hidden md:inline text-gray-400 hover:text-white" title="Options">⋮</button>
+    <button
+        class="hidden md:inline text-gray-400 hover:text-white"
+        title="Options"
+        @click.stop="$emit('show-menu', $event)"
+    >
+        ⋮
+    </button>
 
     <!-- Mobile card layout -->
     <div class="flex flex-col gap-2 md:hidden">
@@ -61,7 +67,9 @@
                 </div>
             </div>
 
-            <button class="text-gray-400 hover:text-white" title="Options">⋮</button>
+            <button class="text-gray-400 hover:text-white" title="Options" @click.stop="$emit('show-menu', $event)">
+                ⋮
+            </button>
         </div>
 
         <div class="flex justify-between text-sm">
@@ -122,6 +130,7 @@ import { storeToRefs } from 'pinia';
 import { computed, type PropType } from 'vue';
 
 const props = defineProps({ item: { type: Object as PropType<PortfolioItem>, required: true } });
+defineEmits(['show-menu']);
 
 const { currency } = storeToRefs(useSettingsStore());
 

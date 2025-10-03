@@ -3,7 +3,7 @@
         v-if="visible"
         ref="menuRef"
         :style="{ top: position.top + 'px', left: position.left + 'px' }"
-        class="absolute z-50 bg-gray-900 text-white shadow-lg rounded-lg p-2 w-50 border border-gray-700"
+        class="fixed z-50 bg-gray-900 text-white shadow-lg rounded-lg p-2 w-50 border border-gray-700"
         @click.stop
     >
         <slot />
