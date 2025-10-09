@@ -1,12 +1,12 @@
 <template>
-    <div class="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
+    <div class="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-2 text-sm font-semibold text-white">
         <div>Asset</div>
         <div class="text-right">Date</div>
         <div class="text-right">Price</div>
         <div class="text-right">Quantity</div>
         <div class="text-right">Total</div>
     </div>
-    <ul class="space-y-4">
+    <ul class="hidden md:block space-y-4">
         <li
             v-for="transaction of itemTransactions"
             :key="transaction.id"
@@ -46,6 +46,40 @@
             </div>
         </li>
     </ul>
+
+    <!-- Mobile layout (card style) -->
+    <div
+        v-for="transaction of itemTransactions"
+        :key="transaction.id"
+        class="flex flex-col gap-2 md:hidden bg-gray-800 p-4 my-3 border-l-4"
+        :class="[borderByTransactionType(transaction.transaction_type)]"
+    >
+        <div class="flex justify-between text-sm">
+            <span class="text-gray-400 text-xs">Date</span>
+            <span>{{ formatDate(transaction.date) }}</span>
+        </div>
+
+        <div class="flex justify-between text-sm">
+            <span class="text-gray-400 text-xs">Price</span>
+            <span>{{ transaction.price ? formatCurrency(transaction.price, currency) : '---' }}</span>
+        </div>
+
+        <div class="flex justify-between text-sm">
+            <span class="text-gray-400 text-xs">Quantity</span>
+            <span>{{ transaction.quantity ? transaction.quantity : '---' }}</span>
+        </div>
+
+        <div class="flex justify-between text-sm">
+            <span class="text-gray-400 text-xs">Total</span>
+            <span>
+                {{
+                    !isDividend(transaction.transaction_type)
+                        ? formatCurrency(transactionTotal(transaction), currency)
+                        : '---'
+                }}
+            </span>
+        </div>
+    </div>
 </template>
 
 <script lang="ts" setup>
