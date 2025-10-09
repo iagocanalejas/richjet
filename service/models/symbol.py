@@ -136,6 +136,9 @@ class Symbol:
 
     @classmethod
     def from_dict(cls, **kwargs) -> "Symbol":
+        if "display_name" not in kwargs or not kwargs["display_name"]:
+            kwargs["display_name"] = kwargs.get("name")
+
         item = cls(**{k: v for k, v in kwargs.items() if k in cls.__dataclass_fields__})
         if "security_type" in kwargs and kwargs["security_type"]:
             item.security_type = SecurityType(kwargs["security_type"])

@@ -96,12 +96,13 @@ def create_watchlist_item(db: Connection, user_id: str, symbol: Symbol) -> Symbo
     if not symbol.ticker:
         raise HTTPException(status_code=400, detail=required_msg("symbol.ticker"))
 
-    try:
-        symbol = get_symbol_by_ticker(db, symbol.ticker)
-    except HTTPException as e:
-        if e.status_code != 404:
-            raise e
-        symbol = create_symbol(db, symbol)
+    if not symbol.id:
+        try:
+            symbol = get_symbol_by_ticker(db, symbol.ticker)
+        except HTTPException as e:
+            if e.status_code != 404:
+                raise e
+            symbol = create_symbol(db, symbol)
 
     if not symbol.id:
         raise HTTPException(status_code=404, detail=f"Symbol {symbol.ticker} not found")
