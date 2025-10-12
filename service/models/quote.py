@@ -5,8 +5,5 @@ from dataclasses import dataclass
 class StockQuote:
     symbol: str
     current: float
-    high: float
-    low: float
-    open: float
-    previous_close: float
+    previous_close: float | None = None
     currency: str | None = None

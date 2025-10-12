@@ -45,8 +45,9 @@ const mockSymbol: StockSymbol = {
     name: 'Apple',
     currency: 'USD',
     source: 'NASDAQ',
-    security_type: 'STOCK',
     is_user_created: false,
+    is_manual_price: false,
+    is_favorite: true,
 };
 
 const createTransaction = (overrides: Partial<TransactionItem>): TransactionItem => ({
@@ -82,9 +83,9 @@ describe('usePortfolioStore', () => {
         const item = store.portfolio[0];
 
         expect(item.quantity).toBe(10);
-        expect(item.totalInvested).toBe(500);
+        expect(item.total_invested).toBe(500);
         expect(item.commission).toBe(1);
-        expect(item.currentPrice).toBe(200);
+        expect(item.current_price).toBe(200);
     });
 
     it('should aggregate multiple BUY transactions', () => {
@@ -97,7 +98,7 @@ describe('usePortfolioStore', () => {
         const item = store.portfolio[0];
 
         expect(item.quantity).toBe(15);
-        expect(item.totalInvested).toBe(1000);
+        expect(item.total_invested).toBe(1000);
     });
 
     it('should handle SELL transactions using FIFO', () => {
@@ -111,8 +112,8 @@ describe('usePortfolioStore', () => {
         const item = store.portfolio[0];
 
         expect(item.quantity).toBe(4);
-        expect(item.sortedSells).toHaveLength(1);
-        expect(item.sortedSells[0].costBasis).toBe(400);
+        expect(item.sorted_sells).toHaveLength(1);
+        expect(item.sorted_sells[0].cost_basis).toBe(400);
     });
 
     it('should increase quantity on DIVIDEND transaction', () => {
@@ -138,8 +139,8 @@ describe('usePortfolioStore', () => {
         const item = store.portfolio[0];
 
         expect(item.quantity).toBe(0);
-        expect(item.sortedSells).toHaveLength(1);
-        expect(item.sortedSells[0].costBasis).toBe(200);
+        expect(item.sorted_sells).toHaveLength(1);
+        expect(item.sorted_sells[0].cost_basis).toBe(200);
     });
 
     it('should ignore quantity change for DIVIDEND-CASH', () => {

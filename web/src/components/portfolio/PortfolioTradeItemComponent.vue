@@ -16,14 +16,14 @@
 
     <div
         class="hidden md:block text-sm text-right"
-        :class="textColorByRentability(winOrLoss, !!item.symbol.manual_price)"
+        :class="textColorByRentability(winOrLoss, item.symbol.is_manual_price)"
     >
         {{ formatCurrency(winOrLoss, currency) }}
     </div>
 
     <div
         class="hidden md:block text-sm text-right"
-        :class="textColorByRentability(rentability, !!item.symbol.manual_price)"
+        :class="textColorByRentability(rentability, item.symbol.is_manual_price)"
     >
         {{ rentability.toFixed(2) }} %
     </div>
@@ -51,14 +51,14 @@
 
         <div class="flex justify-between text-sm">
             <span class="text-gray-400 text-xs">Win/Loss</span>
-            <span :class="textColorByRentability(winOrLoss, !!item.symbol.manual_price)">
+            <span :class="textColorByRentability(winOrLoss, item.symbol.is_manual_price)">
                 {{ formatCurrency(winOrLoss, currency) }}
             </span>
         </div>
 
         <div class="flex justify-between text-sm">
             <span class="text-gray-400 text-xs">Rentability</span>
-            <span :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
+            <span :class="textColorByRentability(rentability, item.symbol.is_manual_price)">
                 {{ rentability.toFixed(2) }} %
             </span>
         </div>
@@ -78,11 +78,11 @@ const props = defineProps({ item: { type: Object as PropType<PortfolioItem>, req
 const { currency } = storeToRefs(useSettingsStore());
 
 const winOrLoss = computed(() => {
-    return props.item.totalRetrieved - (props.item.totalInvested + props.item.commission);
+    return props.item.total_retrieved - (props.item.total_invested + props.item.commission);
 });
 
 const rentability = computed(() => {
-    const totalPayed = props.item.totalInvested + props.item.commission;
-    return ((props.item.totalRetrieved - totalPayed) / totalPayed) * 100;
+    const totalPayed = props.item.total_invested + props.item.commission;
+    return ((props.item.total_retrieved - totalPayed) / totalPayed) * 100;
 });
 </script>

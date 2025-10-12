@@ -10,7 +10,7 @@ export const useStocksStore = defineStore('stocks', () => {
     }
 
     async function getStockQuote(symbol: StockSymbol) {
-        if (!symbol.source || !symbol || symbol.is_user_created || symbol.manual_price) return;
+        if (!symbol.source || !symbol || symbol.is_user_created || symbol.is_manual_price) return;
         if (_quoteCache.has(symbol.ticker)) return _quoteCache.get(symbol.ticker)!;
 
         const data = await StocksService.getStockQuote(symbol);
@@ -20,7 +20,7 @@ export const useStocksStore = defineStore('stocks', () => {
     }
 
     function getStockQuoteSync(symbol: StockSymbol) {
-        if (!symbol.source || !symbol || symbol.is_user_created || symbol.manual_price) return;
+        if (!symbol || !symbol.source || symbol.is_user_created || symbol.is_manual_price) return;
         return _quoteCache.get(symbol.ticker);
     }
 

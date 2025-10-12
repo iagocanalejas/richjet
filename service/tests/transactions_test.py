@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
-from models.symbol import SecurityType, Symbol
+from models.symbol import Symbol
 from models.transactions import (
     Transaction,
     TransactionType,
@@ -67,7 +67,6 @@ def test_validate_transaction_types(ttype, price, qty, expect_error):
                     display_name="Test",
                     currency="USD",
                     source="manual",
-                    security_type=SecurityType.COMMON_STOCK,
                 ),
                 quantity=1,
                 price=10,
@@ -109,7 +108,6 @@ def test_validate_sell_transaction_not_enough():
                     display_name="Test",
                     currency="USD",
                     source="manual",
-                    security_type=SecurityType.COMMON_STOCK,
                 ),
                 quantity=5,
                 price=10,
@@ -147,7 +145,6 @@ def test_update_sell_transaction_beyond_limits():
             display_name="Test",
             currency="USD",
             source="manual",
-            security_type=SecurityType.COMMON_STOCK,
         ),
         quantity=4,
         price=10,
@@ -170,7 +167,6 @@ def test_update_sell_transaction_beyond_limits():
                         display_name="Test",
                         currency="USD",
                         source="manual",
-                        security_type=SecurityType.COMMON_STOCK,
                     ),
                     quantity=1,
                     price=10,
@@ -189,7 +185,6 @@ def test_update_sell_transaction_beyond_limits():
                         display_name="Test",
                         currency="USD",
                         source="manual",
-                        security_type=SecurityType.COMMON_STOCK,
                     ),
                     quantity=5,
                     price=10,

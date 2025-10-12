@@ -21,13 +21,13 @@ export interface PortfolioItem {
     symbol: StockSymbol;
     currency: string;
     quantity: number;
-    currentPrice: number;
-    currentInvested: number;
-    totalInvested: number;
-    totalRetrieved: number;
+    current_price: number;
+    current_invested: number;
+    total_invested: number;
+    total_retrieved: number;
     commission: number;
 
     // should be use only for portfolio calculation
-    sortedBuys: TransactionItem[];
-    sortedSells: (TransactionItem & { costBasis: number })[];
+    sorted_buys: TransactionItem[];
+    sorted_sells: (TransactionItem & { cost_basis: number })[];
 }

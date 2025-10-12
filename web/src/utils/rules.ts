@@ -33,7 +33,7 @@ export function isTradePortfolioItem(item: PortfolioItem): boolean {
 }
 
 export function isPortfolioItemWithManualPrice(item: PortfolioItem): boolean {
-    return !!item.symbol.manual_price || item.currentPrice === 0;
+    return item.symbol.is_manual_price || item.current_price === 0;
 }
 
 export function isSavingsAccount(account?: Account): boolean {

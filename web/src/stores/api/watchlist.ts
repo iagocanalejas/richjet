@@ -1,12 +1,12 @@
-import { stockSymbolForDisplayDefaults, type StockSymbol, type StockSymbolForDisplay } from '@/types/stock';
+import { type StockSymbol } from '@/types/stock';
 import { safeFetch } from './_utils';
 
 const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
 
-async function retrieveWatchlist(): Promise<StockSymbolForDisplay[]> {
+async function retrieveWatchlist(): Promise<StockSymbol[]> {
     const f = fetch(`${BASE_URL}/watchlist`, { method: 'GET', credentials: 'include' });
     const data = await safeFetch<StockSymbol[]>(f, 'Failed to fetch watchlist', []);
-    return data.map((w: StockSymbol) => ({ ...w, ...stockSymbolForDisplayDefaults }));
+    return data.map((w: StockSymbol) => ({ ...w }));
 }
 
 function addToWatchlist(symbol: StockSymbol) {

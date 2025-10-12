@@ -12,54 +12,31 @@
                 <span class="text-sm font-medium tracking-wide text-white">{{ item.display_name }}</span>
                 <span class="text-xs text-gray-400">({{ item.ticker }})</span>
             </div>
-            <span v-if="item.name" class="text-xs text-gray-400">{{ item.name }}</span>
-            <div v-if="item.isin || item.figi" class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
-                <div v-if="item.isin" class="text-xs text-gray-300 sm:mt-0.5">ISIN: {{ item.isin }}</div>
-                <div v-if="item.figi" class="text-xs text-gray-300 sm:mt-0.5">FIGI: {{ item.figi }}</div>
+            <div v-if="item.isin" class="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                <div class="text-xs text-gray-300 sm:mt-0.5">ISIN: {{ item.isin }}</div>
             </div>
         </div>
     </div>
 
     <div class="flex items-center space-x-2 relative">
-        <div v-if="item.price" class="flex items-center text-sm me-5">
-            <div class="text-right" :class="textColorByRentability(item.price - item.openPrice!)">
+        <div v-if="!item.is_manual_price && item.price" class="flex items-center text-sm me-5">
+            <div class="text-right" :class="textColorByRentability(item.price - item.open_price!)">
                 <div class="font-semibold">{{ formatCurrency(item.price, currency, conversionRate) }}</div>
-                <div class="text-xs">
-                    {{ item.price - item.openPrice! > 0 ? '+' : '' }}
-                    {{ (((item.price - item.openPrice!) / item.openPrice!) * 100).toFixed(2) }}%
+                <div v-if="item.open_price" class="text-xs">
+                    {{ item.price - item.open_price > 0 ? '+' : '' }}
+                    {{ (((item.price - item.open_price) / item.open_price) * 100).toFixed(2) }}%
                 </div>
             </div>
         </div>
 
         <button
-            v-if="!item.isFavorite && !item.price && !item.noPrice"
-            @click.stop="$emit('load-price', item)"
-            class="text-gray-400 hover:text-white"
-            title="Show Price"
-        >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                role="img"
-                aria-label="Show Price"
-            >
-                <title>Load Price</title>
-                <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2v20" />
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </g>
-            </svg>
-        </button>
-        <button
-            v-if="!item.isFavorite || item.id"
+            v-if="!item.is_favorite || item.id"
             @click.stop="$emit('favorite', item)"
             class="text-gray-400 hover:text-red-500 transition-colors"
-            :title="item.isFavorite ? 'Unfavorite' : 'Favorite'"
+            :title="item.is_favorite ? 'Unfavorite' : 'Favorite'"
         >
             <svg
-                v-if="item.isFavorite"
+                v-if="item.is_favorite"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="currentColor"
                 viewBox="0 0 24 24"
@@ -93,19 +70,19 @@
                 />
             </svg>
         </button>
-        <button v-if="item.isFavorite" class="text-gray-400 hover:text-white" title="Options">⋮</button>
+        <button v-if="item.is_favorite" class="text-gray-400 hover:text-white" title="Options">⋮</button>
     </div>
 </template>
 
 <script lang="ts" setup>
 import { useSettingsStore } from '@/stores/settings';
-import { type StockSymbolForDisplay } from '@/types/stock';
+import { type StockSymbol } from '@/types/stock';
 import { formatCurrency } from '@/utils/utils';
 import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
 import { computed, type PropType } from 'vue';
 
-const props = defineProps({ item: { type: Object as PropType<StockSymbolForDisplay>, required: true } });
+const props = defineProps({ item: { type: Object as PropType<StockSymbol>, required: true } });
 
 defineEmits(['favorite', 'load-price', 'image-error']);
 

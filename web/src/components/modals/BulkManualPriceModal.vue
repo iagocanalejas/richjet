@@ -59,8 +59,8 @@ const emit = defineEmits(['save', 'close']);
 const newPrices = ref<ItemType[]>(
     props.values.map((i) => ({
         symbol: i.symbol,
-        price: i.symbol.manual_price ?? 0,
-        str_price: (i.symbol.manual_price ?? 0).toString(),
+        price: i.symbol.price ?? 0,
+        str_price: (i.symbol.price ?? 0).toString(),
         edited: false,
         error: '',
     }))
@@ -70,8 +70,8 @@ watch(
     (newVal) => {
         newPrices.value = newVal.map((i) => ({
             symbol: i.symbol,
-            price: i.symbol.manual_price ?? 0,
-            str_price: (i.symbol.manual_price ?? 0).toString(),
+            price: i.symbol.price ?? 0,
+            str_price: (i.symbol.price ?? 0).toString(),
             edited: false,
             error: '',
         }));
@@ -86,7 +86,7 @@ function classForItem(item: ItemType) {
 }
 
 function handlePriceChange(item: ItemType) {
-    const original = props.values.find((v) => v.symbol.id === item.symbol.id)?.symbol.manual_price;
+    const original = props.values.find((v) => v.symbol.id === item.symbol.id)?.symbol.price;
     item.edited = normalizeDecimalInput(item.str_price) !== original;
     item.price = normalizeDecimalInput(item.str_price);
 }

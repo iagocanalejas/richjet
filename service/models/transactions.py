@@ -29,10 +29,10 @@ class Transaction:
     date: str
 
     id: str = ""
-    account: Account | None = None
-    symbol: Symbol | None = None
-    symbol_id: str | None = None
     account_id: str | None = None
+    account: Account | None = None
+    symbol_id: str | None = None
+    symbol: Symbol | None = None
     created_at: str | None = None
 
     @classmethod
@@ -85,20 +85,25 @@ class Transaction:
         }
 
 
+_TRANSACTION_SELECT = """
+t.id, t.user_id, t.account_id, t.quantity, t.price, t.commission, t.currency, t.transaction_type, t.date, t.created_at,
+s.id AS symbol_id, s.name, s.ticker, s.display_name, s.currency AS symbol_currency, s.source, s.isin, s.picture,
+s.user_created, a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency,
+w.manual_price AS manual_price, TRUE AS is_favorite
+"""
+
+
 def get_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> Transaction:
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not transaction_id:
         raise HTTPException(status_code=400, detail=required_msg("transaction_id"))
 
-    sql = """
-        SELECT t.id, t.user_id, t.account_id, t.quantity, t.price, t.commission, t.currency,
-               t.transaction_type, t.date, t.created_at,
-               s.id AS symbol_id, s.name, s.ticker, s.display_name, s.currency AS symbol_currency, s.source,
-               s.security_type, s.market_sector, s.isin, s.figi, s.picture, s.user_created,
-               a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency
+    sql = f"""
+        SELECT {_TRANSACTION_SELECT}
         FROM transactions t
         JOIN symbols s ON t.symbol_id = s.id
+        JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
         LEFT JOIN accounts a ON t.account_id = a.id
         WHERE t.id = %s::uuid AND t.user_id = %s::uuid
     """
@@ -120,13 +125,8 @@ def get_transactions_by_user(db: Connection, user_id: str) -> list[Transaction]:
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
-    sql = """
-        SELECT t.id AS transaction_id, t.user_id, t.account_id, t.quantity, t.price, t.commission,
-               t.currency AS transaction_currency, t.transaction_type, t.date, t.created_at,
-               s.id AS symbol_id, s.name, s.ticker, s.display_name, s.currency AS symbol_currency,
-               s.source, s.security_type, s.market_sector, s.isin, s.figi, s.picture,
-               s.user_created, a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency,
-               w.manual_price
+    sql = f"""
+        SELECT {_TRANSACTION_SELECT}
         FROM transactions t
         JOIN symbols s ON t.symbol_id = s.id
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
@@ -154,13 +154,8 @@ def get_transactions_by_user_and_symbol_and_account(
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
-    sql = """
-        SELECT t.id AS transaction_id, t.user_id, t.account_id, t.quantity, t.price, t.commission,
-               t.currency AS transaction_currency, t.transaction_type, t.date, t.created_at,
-               s.id AS symbol_id, s.name, s.ticker, s.display_name, s.currency AS symbol_currency,
-               s.source, s.security_type, s.market_sector, s.isin, s.figi, s.picture,
-               s.user_created, a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency,
-               w.manual_price
+    sql = f"""
+        SELECT {_TRANSACTION_SELECT}
         FROM transactions t
         JOIN symbols s ON t.symbol_id = s.id
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id

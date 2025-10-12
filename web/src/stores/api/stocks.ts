@@ -24,10 +24,7 @@ async function retrieveConversionRate(from_currency: string, to_currency: string
     } catch (err) {
         addError({
             readable_message: 'Failed to fetch conversion rate',
-            trace: {
-                status: err instanceof Error ? err.message : String(err),
-                url: url,
-            },
+            trace: { status: err instanceof Error ? err.message : String(err), url: url },
         });
     }
 }
@@ -50,10 +47,7 @@ async function symbolSearch(query: string, is_load_more: boolean) {
         if (data.errors?.length) {
             addError({
                 readable_message: `Error searching for stock symbols: ${query}`,
-                trace: {
-                    statusText: data.errors.join(', '),
-                    url: url,
-                },
+                trace: { statusText: data.errors.join(', '), url: url },
             });
             return [];
         }
@@ -61,17 +55,14 @@ async function symbolSearch(query: string, is_load_more: boolean) {
     } catch (err) {
         addError({
             readable_message: `Error searching for stock symbols: ${query}`,
-            trace: {
-                status: err instanceof Error ? err.message : String(err),
-                url: url,
-            },
+            trace: { status: err instanceof Error ? err.message : String(err), url: url },
         });
     }
     return [];
 }
 
 async function getStockQuote(symbol: StockSymbol) {
-    const url = `${BASE_URL}/quote/${symbol.source}/${symbol.ticker}`;
+    const url = `${BASE_URL}/quote/${symbol.ticker}`;
     try {
         const opts = { method: 'GET', timeout: 15000 };
         const response = await fetch(url, opts);
@@ -113,17 +104,10 @@ async function getStockQuote(symbol: StockSymbol) {
     } catch (err) {
         addError({
             readable_message: `Error fetching stock quote for ${symbol.ticker}`,
-            trace: {
-                status: err instanceof Error ? err.message : String(err),
-                url: url,
-            },
+            trace: { status: err instanceof Error ? err.message : String(err), url: url },
         });
     }
 }
 
-const StocksService = {
-    retrieveConversionRate,
-    symbolSearch,
-    getStockQuote,
-};
+const StocksService = { retrieveConversionRate, symbolSearch, getStockQuote };
 export default StocksService;

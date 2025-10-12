@@ -3,7 +3,6 @@
         <div class="w-full max-w-md bg-gray-900 text-white rounded-2xl shadow-2xl p-6 space-y-6 animate-fadeIn">
             <div class="text-center space-y-1">
                 <h2 class="text-xl font-bold tracking-wide">New account for {{ item.symbol.ticker }}</h2>
-                <p class="text-sm text-gray-400">{{ item.symbol.security_type }}</p>
             </div>
 
             <div class="space-y-4">

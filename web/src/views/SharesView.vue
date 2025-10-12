@@ -65,7 +65,7 @@ import SearchComponent from '@/components/SearchComponent.vue';
 import SharesListComponent from '@/components/shares/SharesListComponent.vue';
 import { onMounted, ref, watch, type Ref } from 'vue';
 import { useStocksStore } from '@/stores/stocks';
-import { type StockSymbolForDisplay, type StockSymbol, stockSymbolForDisplayDefaults } from '@/types/stock';
+import { type StockSymbol } from '@/types/stock';
 import { debounce, normalizeLimit } from '@/utils/utils';
 import { useWatchlistStore } from '@/stores/watchlist';
 import { storeToRefs } from 'pinia';
@@ -82,8 +82,8 @@ const { currency, settings } = storeToRefs(useSettingsStore());
 
 const showFavorites = ref(true);
 const showLoadMore = ref(false);
-const filteredResults: Ref<StockSymbolForDisplay[]> = ref([]);
-const filteredWatchlist: Ref<StockSymbolForDisplay[]> = ref([]);
+const filteredResults: Ref<StockSymbol[]> = ref([]);
+const filteredWatchlist: Ref<StockSymbol[]> = ref([]);
 
 // modal
 const isShareModalOpen = ref(false);
@@ -126,12 +126,8 @@ async function _filterResults(query: string, is_load_more: boolean = false) {
 
     showFavorites.value = false;
     showLoadMore.value = !is_load_more;
-    const results = (await stockStore.symbolSearch(q.toUpperCase(), is_load_more)) as StockSymbolForDisplay[];
-    filteredResults.value = results.map((s) => ({
-        ...s,
-        ...stockSymbolForDisplayDefaults,
-        isFavorite: isInWatchlist(s),
-    }));
+    const results = await stockStore.symbolSearch(q.toUpperCase(), is_load_more);
+    filteredResults.value = results.map((s) => ({ ...s, is_favorite: isInWatchlist(s) }));
 }
 
 onMounted(() => (filteredWatchlist.value = [...watchlist.value]));
@@ -149,28 +145,25 @@ function resetSearch() {
     filteredWatchlist.value = [...watchlist.value];
 }
 
-function toggleFavorite(item: StockSymbolForDisplay) {
-    item.isFavorite = !item.isFavorite;
-    if (item.isFavorite) {
+function toggleFavorite(item: StockSymbol) {
+    item.is_favorite = !item.is_favorite;
+    if (item.is_favorite) {
         addToWatchlist(item);
     } else {
         removeFromWatchlist(item);
     }
 }
 
-async function loadItemPrice(item: StockSymbolForDisplay) {
+async function loadItemPrice(item: StockSymbol) {
     console.log('Loading price for', item.ticker);
     const quote = await stockStore.getStockQuote(item);
-    if (!quote || quote.current === 0) {
-        item.noPrice = true;
-    }
     item.price = quote?.current;
-    item.openPrice = quote?.open;
+    item.open_price = quote?.previous_close;
 }
 
 function openShareModal() {
     isShareModalOpen.value = true;
-    share.value = { source: 'created', currency: currency.value, manual_price: 0.0 } as Omit<StockSymbol, 'id'>;
+    share.value = { source: 'created', currency: currency.value, price: 0.0 } as Omit<StockSymbol, 'id'>;
 }
 
 function save(shareData: Omit<StockSymbol, 'id'>) {

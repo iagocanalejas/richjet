@@ -12,11 +12,11 @@
     </div>
 
     <div class="hidden md:block text-sm text-right">
-        <div :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
-            {{ formatCurrency(item.currentPrice, currency) }}
+        <div :class="textColorByRentability(rentability, item.symbol.is_manual_price)">
+            {{ formatCurrency(item.current_price, currency) }}
         </div>
         <div class="text-xs text-gray-400">
-            ({{ formatCurrency((item.currentInvested + item.commission) / item.quantity, currency) }})
+            ({{ formatCurrency((item.current_invested + item.commission) / item.quantity, currency) }})
         </div>
     </div>
 
@@ -25,17 +25,17 @@
     </div>
 
     <div class="hidden md:block text-sm text-right">
-        <div :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
-            {{ formatCurrency(item.currentPrice * item.quantity, currency) }}
+        <div :class="textColorByRentability(rentability, item.symbol.is_manual_price)">
+            {{ formatCurrency(item.current_price * item.quantity, currency) }}
         </div>
         <div class="text-xs text-gray-400">
-            ({{ formatCurrency(item.currentInvested + item.commission, currency) }})
+            ({{ formatCurrency(item.current_invested + item.commission, currency) }})
         </div>
     </div>
 
     <div
         class="hidden md:block text-sm text-right"
-        :class="textColorByRentability(rentability, !!item.symbol.manual_price)"
+        :class="textColorByRentability(rentability, item.symbol.is_manual_price)"
     >
         {{ rentability.toFixed(2) }} %
     </div>
@@ -75,14 +75,14 @@
         <div class="flex justify-between text-sm">
             <span class="text-gray-400 text-xs">Avg Price</span>
             <span class="text-xs">
-                {{ formatCurrency((item.currentInvested + item.commission) / item.quantity, currency) }}
+                {{ formatCurrency((item.current_invested + item.commission) / item.quantity, currency) }}
             </span>
         </div>
 
         <div class="flex justify-between text-sm">
             <span class="text-gray-400 text-xs">Current Price</span>
-            <span :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
-                {{ formatCurrency(item.currentPrice, currency) }}
+            <span :class="textColorByRentability(rentability, item.symbol.is_manual_price)">
+                {{ formatCurrency(item.current_price, currency) }}
             </span>
         </div>
 
@@ -100,21 +100,21 @@
 
         <div class="flex justify-between text-sm">
             <span class="text-gray-400 text-xs">Value</span>
-            <span :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
-                {{ formatCurrency(item.currentPrice * item.quantity, currency) }}
+            <span :class="textColorByRentability(rentability, item.symbol.is_manual_price)">
+                {{ formatCurrency(item.current_price * item.quantity, currency) }}
             </span>
         </div>
 
         <div class="flex justify-between text-sm">
             <span class="text-gray-400 text-xs">Invested</span>
             <span class="text-xs">
-                {{ formatCurrency(item.currentInvested + item.commission, currency) }}
+                {{ formatCurrency(item.current_invested + item.commission, currency) }}
             </span>
         </div>
 
         <div class="flex justify-between text-sm">
             <span class="text-gray-400 text-xs">Rentability</span>
-            <span :class="textColorByRentability(rentability, !!item.symbol.manual_price)">
+            <span :class="textColorByRentability(rentability, item.symbol.is_manual_price)">
                 {{ rentability.toFixed(2) }} %
             </span>
         </div>
@@ -135,7 +135,7 @@ defineEmits(['show-menu']);
 const { currency } = storeToRefs(useSettingsStore());
 
 const rentability = computed(() => {
-    const buyPrice = props.item.currentInvested + props.item.commission;
-    return ((props.item.currentPrice * props.item.quantity - buyPrice) / buyPrice) * 100;
+    const buyPrice = props.item.current_invested + props.item.commission;
+    return ((props.item.current_price * props.item.quantity - buyPrice) / buyPrice) * 100;
 });
 </script>

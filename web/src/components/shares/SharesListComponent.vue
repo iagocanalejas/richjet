@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { type StockSymbolForDisplay } from '@/types/stock';
+import { type StockSymbol } from '@/types/stock';
 import { computed, ref, type PropType } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSettingsStore } from '@/stores/settings';
@@ -69,7 +69,7 @@ import { useErrorsStore } from '@/stores/errors';
 const ITEMS_PER_PATE = 20;
 
 const props = defineProps({
-    values: { type: Array as PropType<StockSymbolForDisplay[]>, default: () => [] },
+    values: { type: Array as PropType<StockSymbol[]>, default: () => [] },
     showLoadMore: { type: Boolean, default: false },
 });
 const emit = defineEmits(['favorite', 'transact', 'load-more', 'load-price']);
@@ -86,8 +86,8 @@ const visibleItems = computed(() => props.values.slice(0, (currentPage.value + 1
 const isTransactionModalOpen = ref(false);
 const transaction = ref<Omit<TransactionItem, 'id' | 'user_id'> | undefined>();
 
-function openTransactionModal(item: StockSymbolForDisplay) {
-    if (!item.isFavorite) return;
+function openTransactionModal(item: StockSymbol) {
+    if (!item.is_favorite) return;
     if (!accountCanHaveShares(selectedAccount.value)) {
         addError({ readable_message: 'Invalid account type.' });
         return;
@@ -95,7 +95,7 @@ function openTransactionModal(item: StockSymbolForDisplay) {
 
     isTransactionModalOpen.value = true;
     transaction.value = {
-        symbol: item,
+        symbol: { ...item },
         symbol_id: item.id,
         quantity: 0,
         price: 0,

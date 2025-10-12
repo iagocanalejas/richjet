@@ -45,49 +45,49 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         }
 
         const conversionRate = settingsStore.getConvertionRate(firstTr.symbol.currency);
-        const currentPrice = !firstTr.symbol.manual_price
+        const currentPrice = !firstTr.symbol.price
             ? (getStockQuoteSync(firstTr.symbol)?.current || 0) * conversionRate
-            : firstTr.symbol.manual_price;
+            : firstTr.symbol.price;
 
-        const portfolioItem = {
+        const portfolioItem: PortfolioItem = {
             symbol: firstTr.symbol,
             currency: firstTr.currency,
             quantity: firstTr.quantity,
-            currentPrice: currentPrice,
-            currentInvested: firstTr.quantity * firstTr.price,
-            totalInvested: firstTr.quantity * firstTr.price,
-            totalRetrieved: 0,
+            current_price: currentPrice,
+            current_invested: firstTr.quantity * firstTr.price,
+            total_invested: firstTr.quantity * firstTr.price,
+            total_retrieved: 0,
             commission: firstTr.commission,
-            sortedBuys: [structuredClone(toRaw(firstTr))],
-            sortedSells: [] as (TransactionItem & { costBasis: number })[],
+            sorted_buys: [structuredClone(toRaw(firstTr))],
+            sorted_sells: [] as (TransactionItem & { cost_basis: number })[],
         };
 
         for (const tr of transactions) {
             switch (tr.transaction_type) {
                 case 'BUY':
                     portfolioItem.quantity += tr.quantity;
-                    portfolioItem.currentInvested += tr.quantity * tr.price;
-                    portfolioItem.totalInvested += tr.quantity * tr.price;
+                    portfolioItem.current_invested += tr.quantity * tr.price;
+                    portfolioItem.total_invested += tr.quantity * tr.price;
                     portfolioItem.commission += tr.commission;
-                    portfolioItem.sortedBuys.push(structuredClone(toRaw(tr)));
+                    portfolioItem.sorted_buys.push(structuredClone(toRaw(tr)));
                     break;
                 case 'SELL':
                     let remainingToSell = tr.quantity;
-                    let costBasis = 0;
+                    let cost_basis = 0;
 
                     // Apply FIFO: consume from earliest buys first
-                    while (remainingToSell > 0 && portfolioItem.sortedBuys.length > 0) {
-                        const buy = portfolioItem.sortedBuys[0];
+                    while (remainingToSell > 0 && portfolioItem.sorted_buys.length > 0) {
+                        const buy = portfolioItem.sorted_buys[0];
                         if (!buy) break; // typescript is being a douchebag here
 
                         if (buy.quantity <= remainingToSell) {
                             // Fully consume this buy
-                            costBasis += buy.quantity * buy.price;
+                            cost_basis += buy.quantity * buy.price;
                             remainingToSell -= buy.quantity;
-                            portfolioItem.sortedBuys.shift();
+                            portfolioItem.sorted_buys.shift();
                         } else {
                             // Partially consume this buy
-                            costBasis += remainingToSell * buy.price;
+                            cost_basis += remainingToSell * buy.price;
                             buy.quantity -= remainingToSell;
                             remainingToSell = 0;
                         }
@@ -99,14 +99,14 @@ export const usePortfolioStore = defineStore('portfolio', () => {
                     }
 
                     portfolioItem.quantity -= tr.quantity;
-                    portfolioItem.currentInvested -= costBasis;
-                    portfolioItem.totalRetrieved += tr.price * tr.quantity;
+                    portfolioItem.current_invested -= cost_basis;
+                    portfolioItem.total_retrieved += tr.price * tr.quantity;
                     portfolioItem.commission += tr.commission;
-                    portfolioItem.sortedSells.push({ ...structuredClone(toRaw(tr)), costBasis });
+                    portfolioItem.sorted_sells.push({ ...structuredClone(toRaw(tr)), cost_basis });
                     break;
                 case 'DIVIDEND':
                     portfolioItem.quantity += tr.quantity;
-                    portfolioItem.sortedBuys.push(structuredClone(toRaw(tr)));
+                    portfolioItem.sorted_buys.push(structuredClone(toRaw(tr)));
                     break;
                 case 'DIVIDEND-CASH':
                     break;
@@ -119,14 +119,14 @@ export const usePortfolioStore = defineStore('portfolio', () => {
         if (!portfolio.value.length) return 0;
         return portfolio.value
             .filter((p) => p.quantity > 0)
-            .reduce((acc, item) => acc + item.currentInvested + item.commission, 0);
+            .reduce((acc, item) => acc + item.current_invested + item.commission, 0);
     });
 
     const portfolioCurrentValue = computed(() => {
         if (!portfolio.value.length) return 0.0;
         const portfoliosValue = portfolio.value
             .filter((p) => p.quantity > 0)
-            .reduce((acc, item) => acc + item.currentPrice * item.quantity, 0);
+            .reduce((acc, item) => acc + item.current_price * item.quantity, 0);
         return portfoliosValue;
     });
 
@@ -141,9 +141,9 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     const closedPositions = computed(() => {
         if (!portfolio.value.length) return 0;
         return portfolio.value
-            .filter((p) => p.sortedSells.length > 0)
+            .filter((p) => p.sorted_sells.length > 0)
             .reduce((total, p) => {
-                const earned = p.totalRetrieved - (p.totalInvested - p.currentInvested);
+                const earned = p.total_retrieved - (p.total_invested - p.current_invested);
                 return total + earned - p.commission;
             }, 0);
     });
