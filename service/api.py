@@ -8,7 +8,7 @@ from db import get_db
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from log import logger
-from models.quote import StockQuote
+from models.quote import create_quote_history_point, get_quote_point
 from models.symbol import Symbol, search_symbol
 from models.user import unsubscribe, update_stripe_customer, update_stripe_plan
 from routers import accounts, auth, symbols, transactions, users, watchlist
@@ -98,27 +98,30 @@ async def search_stock(
 
 
 @app.get("/quote/{ticker}")
-async def get_quote(ticker: str):
+async def get_quote(ticker: str, db=Depends(get_db)):
     """
     Fetches the stock quote for the given symbol.
     """
-    quote: StockQuote | None = None
-    try:
-        quote = await client.get_quote(ticker)
-    except HTTPException as e:
-        logger.error(e.detail)
-    except httpx.TimeoutException:
-        logger.error(f"{client.NAME}: timeout")
+    quote = get_quote_point(db, ticker)
+    # TODO: receive a list of quotes to reduce the number of API calls
+
+    if not quote or not quote.current or quote.current <= 0:
+        try:
+            logger.info(f"fetching new quote for {ticker}")
+            new_quote = await client.get_quote(ticker)
+            if new_quote and new_quote.current and new_quote.current > 0:
+                create_quote_history_point(db, new_quote)
+            quote = quote.merge(new_quote) if quote else new_quote
+        except HTTPException as e:
+            logger.error(e.detail)
+        except httpx.TimeoutException:
+            logger.error(f"{client.NAME}: timeout")
 
     if not quote:
         raise HTTPException(status_code=404, detail=f"no quote found for {ticker}")
 
-    return {
-        "symbol": quote.symbol,
-        "current": quote.current,
-        "previous_close": quote.previous_close,
-        "currency": quote.currency,
-    }
+    # TODO: add fallback to https://markets.ft.com/data/funds/tearsheet/historical?s=IE00BD0NCM55:EUR
+    return quote.to_dict()
 
 
 @app.post("/webhook")

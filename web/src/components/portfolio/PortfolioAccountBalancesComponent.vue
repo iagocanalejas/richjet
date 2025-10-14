@@ -14,11 +14,11 @@
     >
         <div class="text-sm text-right text-white">{{ formatDate(item.updated_at) }}</div>
         <div class="text-sm font-semibold text-right text-white">
-            {{ formatCurrency(item.balance, currency, conversionRate) }}
+            {{ formatCurrency(toCurrency(item.balance, currency), currency) }}
         </div>
         <div class="text-sm text-right" :class="textColorByRentability(item.balance - historyBalancePoint(index + 1))">
             <span v-if="index < account.balance_history.length - 1">
-                {{ formatCurrency(item.balance - historyBalancePoint(index + 1), currency, conversionRate) }}
+                {{ formatCurrency(toCurrency(item.balance - historyBalancePoint(index + 1), currency), currency) }}
             </span>
             <span v-else class="text-gray-500">—</span>
         </div>
@@ -53,17 +53,14 @@ import type { Account } from '@/types/user';
 import { textColorByRentability } from '@/utils/styles';
 import { formatCurrency, formatDate } from '@/utils/utils';
 import { storeToRefs } from 'pinia';
-import { computed, type PropType } from 'vue';
+import { type PropType } from 'vue';
 
-const props = defineProps({
-    account: { type: Object as PropType<Account>, required: true },
-});
+const props = defineProps({ account: { type: Object as PropType<Account>, required: true } });
 defineEmits(['create', 'delete-balance']);
 
 const settingsStore = useSettingsStore();
 const { currency } = storeToRefs(settingsStore);
-
-const conversionRate = computed(() => settingsStore.getConvertionRate(props.account.currency));
+const { toCurrency } = settingsStore;
 
 function historyBalancePoint(index: number) {
     return props.account.balance_history[index]?.balance || 0;

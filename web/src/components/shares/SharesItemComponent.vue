@@ -21,7 +21,7 @@
     <div class="flex items-center space-x-2 relative">
         <div v-if="!item.is_manual_price && item.price" class="flex items-center text-sm me-5">
             <div class="text-right" :class="textColorByRentability(item.price - item.open_price!)">
-                <div class="font-semibold">{{ formatCurrency(item.price, currency, conversionRate) }}</div>
+                <div class="font-semibold">{{ formatCurrency(toCurrency(item.price, currency), currency) }}</div>
                 <div v-if="item.open_price" class="text-xs">
                     {{ item.price - item.open_price > 0 ? '+' : '' }}
                     {{ (((item.price - item.open_price) / item.open_price) * 100).toFixed(2) }}%
@@ -80,14 +80,12 @@ import { type StockSymbol } from '@/types/stock';
 import { formatCurrency } from '@/utils/utils';
 import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
-import { computed, type PropType } from 'vue';
+import { type PropType } from 'vue';
 
-const props = defineProps({ item: { type: Object as PropType<StockSymbol>, required: true } });
-
+defineProps({ item: { type: Object as PropType<StockSymbol>, required: true } });
 defineEmits(['favorite', 'load-price', 'image-error']);
 
 const settingsStore = useSettingsStore();
 const { currency } = storeToRefs(settingsStore);
-
-const conversionRate = computed(() => settingsStore.getConvertionRate(props.item.currency));
+const { toCurrency } = settingsStore;
 </script>

@@ -104,6 +104,20 @@
             "parents": [
                 "0013_symbol_display_name.sql"
             ]
+        },
+        {
+            "name": "0015_remove_symbol_columns.sql",
+            "initial": false,
+            "parents": [
+                "0014_price_precission.sql"
+            ]
+        },
+        {
+            "name": "0016_quote_history.sql",
+            "initial": false,
+            "parents": [
+                "0015_remove_symbol_columns.sql"
+            ]
         }
     ]
 }

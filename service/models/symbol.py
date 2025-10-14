@@ -57,7 +57,7 @@ class Symbol:
             isin=row["isin"],
             currency=row["symbol_currency"] if "symbol_currency" in row else row["currency"],
             picture=row["picture"],
-            price=row["manual_price"],
+            price=row.get("manual_price", None),
             is_user_created=row["user_created"],
             is_manual_price=bool(row.get("manual_price", False)),
             is_favorite=row.get("is_favorite", False),

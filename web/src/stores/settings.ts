@@ -111,10 +111,11 @@ export const useSettingsStore = defineStore('settings', () => {
         if (conversion) _conversionCache.set(cacheKey, conversion);
     }
 
-    function getConvertionRate(from_currency: string, to_currency?: string) {
-        if (!to_currency) to_currency = _settings.value.currency;
-        if (from_currency === to_currency) return 1.0;
-        return _conversionCache.get(`${from_currency}:${to_currency}`) ?? 1.0;
+    function toCurrency(amount: number | undefined, from_currency: string) {
+        if (!amount) return 0.0;
+        if (from_currency === _settings.value.currency) return amount;
+        const rate = _conversionCache.get(`${from_currency}:${_settings.value.currency}`) ?? 1.0;
+        return amount * rate;
     }
 
     async function _updateCurrency() {
@@ -130,7 +131,7 @@ export const useSettingsStore = defineStore('settings', () => {
         subscriptionPlans,
         loadPlans,
         loadConvertionRate,
-        getConvertionRate,
+        toCurrency,
         createAccount,
         updateAccount,
         deleteAccount,

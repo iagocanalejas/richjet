@@ -7,7 +7,7 @@ export function debounce<T extends (...args: any[]) => void>(fn: T, delay = 300)
     };
 }
 
-export function formatCurrency(value: number, currency: string, convertionRate?: number): string {
+export function formatCurrency(value: number, currency: string): string {
     const userLocale = mapWeirdLocales(navigator.language || 'en-US');
     const formatter = new Intl.NumberFormat(userLocale, {
         style: 'currency',
@@ -15,7 +15,7 @@ export function formatCurrency(value: number, currency: string, convertionRate?:
         minimumFractionDigits: 2,
         maximumFractionDigits: 3,
     });
-    return formatter.format(value * (convertionRate ?? 1));
+    return formatter.format(value);
 }
 
 export function formatDate(date: Date | string | number, options?: Intl.DateTimeFormatOptions): string {

@@ -17,7 +17,7 @@ vi.mock('@/stores/settings', () => ({
             { id: '2', name: 'brokerage' },
         ]),
         loadConvertionRate: vi.fn(() => Promise.resolve(1)),
-        getConvertionRate: vi.fn(() => 1),
+        toCurrency: vi.fn((a, _) => a),
     }),
 }));
 
@@ -33,8 +33,9 @@ const mockSymbol: StockSymbol = {
     name: 'Apple',
     currency: 'USD',
     source: 'NASDAQ',
-    security_type: 'STOCK',
     is_user_created: false,
+    is_manual_price: false,
+    is_favorite: true,
 };
 
 async function mockTransaction(store: ReturnType<typeof useTransactionsStore>, overrides = {}) {

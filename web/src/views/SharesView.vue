@@ -78,7 +78,9 @@ const { addTransaction } = useTransactionsStore();
 const watchlistStore = useWatchlistStore();
 const { watchlist } = storeToRefs(watchlistStore);
 const { isInWatchlist, addToWatchlist, removeFromWatchlist } = watchlistStore;
-const { currency, settings } = storeToRefs(useSettingsStore());
+const settingsStore = useSettingsStore();
+const { currency, settings } = storeToRefs(settingsStore);
+const { toCurrency } = settingsStore;
 
 const showFavorites = ref(true);
 const showLoadMore = ref(false);
@@ -157,8 +159,11 @@ function toggleFavorite(item: StockSymbol) {
 async function loadItemPrice(item: StockSymbol) {
     console.log('Loading price for', item.ticker);
     const quote = await stockStore.getStockQuote(item);
-    item.price = quote?.current;
-    item.open_price = quote?.previous_close;
+    item.price = quote ? toCurrency(quote.current, quote.currency) : undefined;
+    item.open_price =
+        quote && quote.previous_close_currency
+            ? toCurrency(quote.previous_close, quote.previous_close_currency)
+            : undefined;
 }
 
 function openShareModal() {

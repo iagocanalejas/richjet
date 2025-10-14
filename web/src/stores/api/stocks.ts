@@ -81,7 +81,7 @@ async function getStockQuote(symbol: StockSymbol) {
             return;
         }
 
-        let data = await response.json();
+        const data = await response.json();
         if (data.errors?.length) {
             addError({
                 readable_message: `Error fetching stock quote for ${symbol.ticker}`,
@@ -93,13 +93,6 @@ async function getStockQuote(symbol: StockSymbol) {
             return;
         }
 
-        data = {
-            current: data.current,
-            high: data.high,
-            low: data.low,
-            open: data.open,
-            previpus_close: data.previpus_close,
-        };
         return data as StockQuote;
     } catch (err) {
         addError({

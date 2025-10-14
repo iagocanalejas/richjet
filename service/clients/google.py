@@ -74,7 +74,6 @@ class GoogleClient:
 
     @alru_cache(maxsize=128)
     async def get_quote(self, symbol: str) -> StockQuote:
-        # TODO: save previous_close and current price for each symbol searched
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get(
                 f"{self.BASE_URL}/{symbol}",
@@ -100,7 +99,7 @@ class GoogleClient:
         currency, price = split_money(currency.get(""))
 
         return StockQuote(
-            symbol=symbol,
+            ticker=symbol,
             current=price or 0.0,
             currency=symbol_to_currency(currency) if currency else "USD",
         )

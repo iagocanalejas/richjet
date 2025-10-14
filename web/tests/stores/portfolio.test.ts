@@ -8,7 +8,7 @@ import { Account } from '../../src/types/user';
 import { isDividend } from '../../src/utils/rules';
 
 const MOCK_CURRENT_PRICE = 200;
-const getStockQuoteMockSync = vi.fn(() => ({ current: MOCK_CURRENT_PRICE }));
+const getStockQuoteMockSync = vi.fn(() => ({ current: MOCK_CURRENT_PRICE, currency: 'USD' }));
 vi.mock('@/stores/stocks', () => ({ useStocksStore: () => ({ getStockQuoteSync: () => getStockQuoteMockSync() }) }));
 
 const mockTransactions = ref<TransactionItem[]>([]);
@@ -24,7 +24,7 @@ vi.mock('@/stores/settings', () => ({
         account: mockAccount,
         accounts: mockAccounts,
         loadConvertionRate: vi.fn(() => Promise.resolve(1)),
-        getConvertionRate: vi.fn(() => 1),
+        toCurrency: vi.fn((a, _) => a),
     }),
 }));
 

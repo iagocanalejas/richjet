@@ -15,8 +15,9 @@ export interface StockSymbol {
 }
 
 export interface StockQuote {
-    symbol: string;
+    ticker: string;
     current: number;
+    currency: string;
     previous_close?: number;
-    currency?: string;
+    previous_close_currency?: string;
 }

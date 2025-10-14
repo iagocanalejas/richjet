@@ -3,10 +3,12 @@ import { type StockSymbol } from '@/types/stock';
 import { ref } from 'vue';
 import { useStocksStore } from './stocks';
 import WatchlistService from './api/watchlist';
+import { useSettingsStore } from './settings';
 
 export const useWatchlistStore = defineStore('watchlist', () => {
     const watchlist = ref<StockSymbol[]>([]);
     const stockStore = useStocksStore();
+    const { toCurrency } = useSettingsStore();
 
     async function init() {
         const tempWatchlist = await WatchlistService.retrieveWatchlist();
@@ -16,8 +18,10 @@ export const useWatchlistStore = defineStore('watchlist', () => {
             if (!quote) {
                 continue;
             }
-            item.price = quote?.current;
-            item.open_price = quote?.previous_close;
+            item.price = toCurrency(quote.current, quote.currency);
+            item.open_price = quote.previous_close_currency
+                ? toCurrency(quote.previous_close, quote.previous_close_currency)
+                : undefined;
         }
 
         watchlist.value = tempWatchlist;
@@ -32,7 +36,14 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         if (!newSymbol) return;
         const quote = await stockStore.getStockQuote(item);
 
-        watchlist.value.push({ ...newSymbol, price: quote?.current, open_price: quote?.previous_close });
+        watchlist.value.push({
+            ...newSymbol,
+            price: quote ? toCurrency(quote.current, quote.currency) : undefined,
+            open_price:
+                quote && quote.previous_close_currency
+                    ? toCurrency(quote.previous_close, quote.previous_close_currency)
+                    : undefined,
+        });
         watchlist.value.sort((a, b) => a.display_name.localeCompare(b.display_name));
     }
 
