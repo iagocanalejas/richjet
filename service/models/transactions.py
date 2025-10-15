@@ -136,10 +136,11 @@ def get_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> 
         raise HTTPException(status_code=404, detail="Transaction not found")
 
     transaction = Transaction.from_row(result)
-    # NOTE: not taking currency from quote into account
     assert transaction.symbol is not None
-    transaction.symbol.price = result.get("symbol_price", None)
-    transaction.symbol.open_price = result.get("open_price", None)
+    if not transaction.symbol.is_manual_price:
+        # NOTE: not taking currency from quote into account
+        transaction.symbol.price = result.get("symbol_price", None)
+        transaction.symbol.open_price = result.get("open_price", None)
     return transaction
 
 
@@ -168,10 +169,11 @@ def get_transactions_by_user(db: Connection, user_id: str) -> list[Transaction]:
     transactions = []
     for row in rows:
         transaction = Transaction.from_row(row)
-        # NOTE: not taking currency from quote into account
         assert transaction.symbol is not None
-        transaction.symbol.price = row.get("symbol_price", None)
-        transaction.symbol.open_price = row.get("open_price", None)
+        if not transaction.symbol.is_manual_price:
+            # NOTE: not taking currency from quote into account
+            transaction.symbol.price = row.get("symbol_price", None)
+            transaction.symbol.open_price = row.get("open_price", None)
         transactions.append(transaction)
     return transactions
 
@@ -208,10 +210,11 @@ def get_transactions_by_user_and_symbol_and_account(
     transactions = []
     for row in rows:
         transaction = Transaction.from_row(row)
-        # NOTE: not taking currency from quote into account
         assert transaction.symbol is not None
-        transaction.symbol.price = row.get("symbol_price", None)
-        transaction.symbol.open_price = row.get("open_price", None)
+        if not transaction.symbol.is_manual_price:
+            # NOTE: not taking currency from quote into account
+            transaction.symbol.price = row.get("symbol_price", None)
+            transaction.symbol.open_price = row.get("open_price", None)
         transactions.append(transaction)
     return transactions
 

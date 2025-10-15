@@ -51,9 +51,10 @@ def get_symbol_by_watchlist_id(db: Connection, user_id: str, watchlist_item_id: 
         raise HTTPException(status_code=404, detail="Watchlist item not found")
 
     symbol = Symbol.from_row(row)
-    # NOTE: not taking currency from quote into account
-    symbol.price = row.get("price", None)
-    symbol.open_price = row.get("open_price", None)
+    if not symbol.is_manual_price:
+        # NOTE: not taking currency from quote into account
+        symbol.price = row.get("price", None)
+        symbol.open_price = row.get("open_price", None)
     return symbol
 
 
@@ -98,9 +99,10 @@ def get_watchlist_by_user(db: Connection, user_id: str) -> list[Symbol]:
     symbols = []
     for row in rows:
         symbol = Symbol.from_row(row)
-        # NOTE: not taking currency from quote into account
-        symbol.price = row.get("price", None)
-        symbol.open_price = row.get("open_price", None)
+        if not symbol.is_manual_price:
+            # NOTE: not taking currency from quote into account
+            symbol.price = row.get("price", None)
+            symbol.open_price = row.get("open_price", None)
         symbols.append(symbol)
     return symbols
 
