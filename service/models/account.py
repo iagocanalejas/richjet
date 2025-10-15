@@ -29,7 +29,7 @@ class Account:
             user_id=row["user_id"],
             name=row["account_name"] if "account_name" in row else row["name"],
             account_type=AccountType(row["account_type"]),
-            currency=row["currency"],
+            currency=row["account_currency"] if "account_currency" in row else row["currency"],
             balance=row.get("balance", None),
             balance_history=row.get("balance_history", []),
         )

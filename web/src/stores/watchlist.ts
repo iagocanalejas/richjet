@@ -14,10 +14,11 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         const tempWatchlist = await WatchlistService.retrieveWatchlist();
 
         for (const item of tempWatchlist) {
+            if (item.price) continue;
+
             const quote = await stockStore.getStockQuote(item);
-            if (!quote) {
-                continue;
-            }
+            if (!quote) continue;
+
             item.price = toCurrency(quote.current, quote.currency);
             item.open_price = quote.previous_close_currency
                 ? toCurrency(quote.previous_close, quote.previous_close_currency)

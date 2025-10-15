@@ -88,8 +88,27 @@ class Transaction:
 _TRANSACTION_SELECT = """
 t.id, t.user_id, t.account_id, t.quantity, t.price, t.commission, t.currency, t.transaction_type, t.date, t.created_at,
 s.id AS symbol_id, s.name, s.ticker, s.display_name, s.currency AS symbol_currency, s.source, s.isin, s.picture,
-s.user_created, a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency,
-w.manual_price AS manual_price, TRUE AS is_favorite
+s.user_created, a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency as account_currency,
+w.manual_price AS manual_price, TRUE AS is_favorite, qp_today.price AS symbol_price, qp_yesterday.price AS open_price
+"""
+
+_QUOTE_SUBQUERY = """
+LEFT JOIN LATERAL (
+    SELECT price
+    FROM quote_history
+    WHERE symbol_id = s.id
+      AND created_at::date = CURRENT_DATE
+    ORDER BY created_at DESC
+    LIMIT 1
+) qp_today ON TRUE
+LEFT JOIN LATERAL (
+    SELECT price
+    FROM quote_history
+    WHERE symbol_id = s.id
+      AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
+    ORDER BY created_at DESC
+    LIMIT 1
+) qp_yesterday ON TRUE
 """
 
 
@@ -105,6 +124,7 @@ def get_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> 
         JOIN symbols s ON t.symbol_id = s.id
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
         LEFT JOIN accounts a ON t.account_id = a.id
+        {_QUOTE_SUBQUERY}
         WHERE t.id = %s::uuid AND t.user_id = %s::uuid
     """
 
@@ -115,7 +135,12 @@ def get_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> 
     if not result:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    return Transaction.from_row(result)
+    transaction = Transaction.from_row(result)
+    # NOTE: not taking currency from quote into account
+    assert transaction.symbol is not None
+    transaction.symbol.price = result.get("symbol_price", None)
+    transaction.symbol.open_price = result.get("open_price", None)
+    return transaction
 
 
 def get_transactions_by_user(db: Connection, user_id: str) -> list[Transaction]:
@@ -131,6 +156,7 @@ def get_transactions_by_user(db: Connection, user_id: str) -> list[Transaction]:
         JOIN symbols s ON t.symbol_id = s.id
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
         LEFT JOIN accounts a ON t.account_id = a.id
+        {_QUOTE_SUBQUERY}
         WHERE t.user_id = %s::uuid
         ORDER BY t.date DESC
     """
@@ -139,7 +165,15 @@ def get_transactions_by_user(db: Connection, user_id: str) -> list[Transaction]:
         cursor.execute(sql, (user_id,))
         rows = cursor.fetchall()
 
-    return [Transaction.from_row(row) for row in rows]
+    transactions = []
+    for row in rows:
+        transaction = Transaction.from_row(row)
+        # NOTE: not taking currency from quote into account
+        assert transaction.symbol is not None
+        transaction.symbol.price = row.get("symbol_price", None)
+        transaction.symbol.open_price = row.get("open_price", None)
+        transactions.append(transaction)
+    return transactions
 
 
 def get_transactions_by_user_and_symbol_and_account(
@@ -160,6 +194,7 @@ def get_transactions_by_user_and_symbol_and_account(
         JOIN symbols s ON t.symbol_id = s.id
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
         LEFT JOIN accounts a ON t.account_id = a.id
+        {_QUOTE_SUBQUERY}
         WHERE t.user_id = %s::uuid
             AND t.symbol_id = %s
             AND t.account_id IS NOT DISTINCT FROM %s::uuid
@@ -170,7 +205,15 @@ def get_transactions_by_user_and_symbol_and_account(
         cursor.execute(sql, (user_id, symbol_id, account_id))
         rows = cursor.fetchall()
 
-    return [Transaction.from_row(row) for row in rows]
+    transactions = []
+    for row in rows:
+        transaction = Transaction.from_row(row)
+        # NOTE: not taking currency from quote into account
+        assert transaction.symbol is not None
+        transaction.symbol.price = row.get("symbol_price", None)
+        transaction.symbol.open_price = row.get("open_price", None)
+        transactions.append(transaction)
+    return transactions
 
 
 def create_transaction(db: Connection, user_id: str, transaction: Transaction) -> Transaction:

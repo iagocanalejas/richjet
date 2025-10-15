@@ -29,7 +29,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         const trs = await TransactionsService.loadTransactions();
         transactions.value = structuredClone(trs);
 
-        const symbols = [...new Set(trs.map((t) => t.symbol))];
+        const symbols = [...new Set(trs.map((t) => t.symbol).filter((s) => !s.price))];
         for (let i = 0; i < symbols.length; i += 5) {
             const batch = symbols.slice(i, i + 5);
             await Promise.all(batch.map((symbol) => getStockQuote(symbol)));

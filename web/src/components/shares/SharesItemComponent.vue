@@ -83,7 +83,7 @@ import { storeToRefs } from 'pinia';
 import { type PropType } from 'vue';
 
 defineProps({ item: { type: Object as PropType<StockSymbol>, required: true } });
-defineEmits(['favorite', 'load-price', 'image-error']);
+defineEmits(['favorite', 'image-error']);
 
 const settingsStore = useSettingsStore();
 const { currency } = storeToRefs(settingsStore);

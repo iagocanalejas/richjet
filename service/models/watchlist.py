@@ -21,9 +21,25 @@ def get_symbol_by_watchlist_id(db: Connection, user_id: str, watchlist_item_id: 
         raise HTTPException(status_code=400, detail=required_msg("watchlist_item_id"))
 
     sql = f"""
-        SELECT {_WATCHLIST_SELECT}
+        SELECT {_WATCHLIST_SELECT}, qp_today.price AS price, qp_yesterday.price AS open_price
         FROM watchlist w
         JOIN symbols s ON w.symbol_id = s.id
+        LEFT JOIN LATERAL (
+            SELECT price
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = CURRENT_DATE
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp_today ON TRUE
+        LEFT JOIN LATERAL (
+            SELECT price
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp_yesterday ON TRUE
         WHERE w.user_id = %s::uuid AND w.id = %s::uuid
     """
 
@@ -34,7 +50,11 @@ def get_symbol_by_watchlist_id(db: Connection, user_id: str, watchlist_item_id: 
     if not row:
         raise HTTPException(status_code=404, detail="Watchlist item not found")
 
-    return Symbol.from_row(row)
+    symbol = Symbol.from_row(row)
+    # NOTE: not taking currency from quote into account
+    symbol.price = row.get("price", None)
+    symbol.open_price = row.get("open_price", None)
+    return symbol
 
 
 def get_watchlist_by_user(db: Connection, user_id: str) -> list[Symbol]:
@@ -45,9 +65,25 @@ def get_watchlist_by_user(db: Connection, user_id: str) -> list[Symbol]:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
     sql = f"""
-        SELECT {_WATCHLIST_SELECT}
+        SELECT {_WATCHLIST_SELECT}, qp_today.price AS price, qp_yesterday.price AS open_price
         FROM watchlist w
         JOIN symbols s ON w.symbol_id = s.id
+        LEFT JOIN LATERAL (
+            SELECT price
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = CURRENT_DATE
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp_today ON TRUE
+        LEFT JOIN LATERAL (
+            SELECT price
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp_yesterday ON TRUE
         WHERE w.user_id = %s::uuid
         ORDER BY s.display_name
     """
@@ -59,7 +95,14 @@ def get_watchlist_by_user(db: Connection, user_id: str) -> list[Symbol]:
     if not rows:
         return []
 
-    return [Symbol.from_row(row) for row in rows]
+    symbols = []
+    for row in rows:
+        symbol = Symbol.from_row(row)
+        # NOTE: not taking currency from quote into account
+        symbol.price = row.get("price", None)
+        symbol.open_price = row.get("open_price", None)
+        symbols.append(symbol)
+    return symbols
 
 
 def create_watchlist_item(db: Connection, user_id: str, symbol: Symbol) -> Symbol:

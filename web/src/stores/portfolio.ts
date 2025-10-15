@@ -130,7 +130,6 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
     const portfolioCurrentValue = computed(() => {
         if (!portfolio.value.length) return 0.0;
-        console.log(portfolio.value);
         const portfoliosValue = portfolio.value
             .filter((p) => p.quantity > 0)
             .reduce((acc, item) => acc + item.current_price * item.quantity, 0);

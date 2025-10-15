@@ -16,7 +16,6 @@
                 <SharesItemComponent
                     :item="item"
                     @favorite="$emit('favorite', item)"
-                    @load-price="$emit('load-price', item)"
                     @image-error="item.picture = undefined"
                 />
             </li>
@@ -72,7 +71,7 @@ const props = defineProps({
     values: { type: Array as PropType<StockSymbol[]>, default: () => [] },
     showLoadMore: { type: Boolean, default: false },
 });
-const emit = defineEmits(['favorite', 'transact', 'load-more', 'load-price']);
+const emit = defineEmits(['favorite', 'transact', 'load-more']);
 
 const { currency, account: selectedAccount } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());
