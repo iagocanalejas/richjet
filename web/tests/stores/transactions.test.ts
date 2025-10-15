@@ -299,11 +299,11 @@ describe('useTransactionsStore', () => {
                     .fn()
                     .mockResolvedValue({
                         ok: true,
-                        json: async () => ({ ...tx, symbol: { ...tx.symbol, manual_price: newPrice } }),
+                        json: async () => ({ ...tx, symbol: { ...tx.symbol, price: newPrice } }),
                     })
             );
             await store.updateManualPrice(tx.symbol.id, newPrice);
-            expect(store.transactions[0].symbol.manual_price).toBe(newPrice);
+            expect(store.transactions[0].symbol.price).toBe(newPrice);
         });
     });
 

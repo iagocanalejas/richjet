@@ -122,6 +122,29 @@ def search_symbol(db: Connection, query: str) -> list[Symbol]:
     return [Symbol.from_row(row) for row in rows]
 
 
+def get_symbol_by_id(db: Connection, id: str) -> Symbol:
+    """
+    Gets a symbol by its id from the database.
+    """
+    if not id:
+        raise HTTPException(status_code=400, detail=required_msg("id"))
+
+    sql = """
+        SELECT id, ticker, display_name, name, source, isin, currency, picture, user_created
+        FROM symbols
+        WHERE id = %s
+    """
+
+    with db.cursor(cursor_factory=RealDictCursor) as cursor:
+        cursor.execute(sql, (id,))
+        result = cursor.fetchone()
+
+    if not result:
+        raise HTTPException(status_code=404, detail=f"Symbol {id=} not found")
+
+    return Symbol.from_row(result)
+
+
 def get_symbol_by_ticker(db: Connection, ticker: str) -> Symbol:
     """
     Gets a symbol by its ticker from the database.
@@ -132,7 +155,7 @@ def get_symbol_by_ticker(db: Connection, ticker: str) -> Symbol:
     sql = """
         SELECT id, ticker, display_name, name, source, isin, currency, picture, user_created
         FROM symbols
-        WHERE NOT user_created AND ticker = %s
+        WHERE NOT user_created AND ticker ILIKE %s
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -158,9 +181,10 @@ def create_symbol(db: Connection, symbol: Symbol) -> Symbol:
     if not symbol.source:
         raise HTTPException(status_code=400, detail=required_msg("symbol.source"))
 
+    # TODO: allow different security types?
     sql = """
-        INSERT INTO symbols (ticker, name, currency, source, isin, picture, user_created)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO symbols (ticker, name, display_name, currency, source, isin, picture, user_created, security_type)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'STOCK')
         RETURNING id
     """
 
@@ -170,6 +194,7 @@ def create_symbol(db: Connection, symbol: Symbol) -> Symbol:
             (
                 symbol.ticker,
                 symbol.name,
+                symbol.display_name or symbol.name,
                 symbol.currency,
                 symbol.source,
                 symbol.isin,
@@ -182,6 +207,5 @@ def create_symbol(db: Connection, symbol: Symbol) -> Symbol:
     if not row:
         raise HTTPException(status_code=500, detail="Failed to create symbol")
 
-    symbol.id = row[0]
     db.commit()
-    return symbol
+    return get_symbol_by_id(db, row[0])
