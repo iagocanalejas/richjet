@@ -107,12 +107,12 @@ export const useTransactionsStore = defineStore('transactions', () => {
     }
 
     async function updateManualPrice(symbolId: string, price: number) {
-        const symbol = updateSymbolManualPrice(symbolId, price);
+        const symbol = await updateSymbolManualPrice(symbolId, price);
         if (!symbol) return;
 
         transactions.value = transactions.value.map((transaction) =>
             transaction.symbol.id === symbolId
-                ? { ...structuredClone(toRaw(transaction)), symbol: { ...transaction.symbol, manual_price: price } }
+                ? { ...structuredClone(toRaw(transaction)), symbol: { ...transaction.symbol, price } }
                 : transaction
         );
     }

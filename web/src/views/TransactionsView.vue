@@ -59,6 +59,7 @@ const filteredTransactions = computed(() =>
 
 const confirmationModal = ref<InstanceType<typeof ConfirmationModal> | null>(null);
 function showConfirmationModal(transaction: TransactionItem) {
+    // TODO: show in red not green
     confirmationModal.value?.show('Delete Transaction', 'This action cannot be undone.', [transaction]);
 }
 
