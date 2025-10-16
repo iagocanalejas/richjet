@@ -2,7 +2,7 @@
     <div v-if="isVisible" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
         <div class="w-full max-w-md bg-gray-900 text-white rounded-2xl shadow-2xl p-6 space-y-3 animate-fadeIn">
             <div class="text-center space-y-1">
-                <h2 class="text-xl font-bold tracking-wide text-green-400">{{ internalTitle }}</h2>
+                <h2 class="text-xl font-bold tracking-wide" :class="[titleColorClass]">{{ internalTitle }}</h2>
                 <p v-if="internalMessage" class="text-sm text-gray-300">{{ internalMessage }}</p>
             </div>
 
@@ -54,9 +54,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-const props = defineProps({
-    showReconfirmation: { type: Boolean, default: false },
-});
+const props = defineProps({ showReconfirmation: { type: Boolean, default: false } });
 
 const emit = defineEmits(['confirm', 'cancel']);
 defineExpose({ show });
@@ -64,12 +62,28 @@ defineExpose({ show });
 const isVisible = ref(false);
 const internalTitle = ref('');
 const internalMessage = ref();
+const titleColorClass = ref('text-green-400');
 const isShowingReconfirmationModal = ref(false);
 const _confirmationArgs = ref<unknown[]>([]);
 
-function show(title: string, message?: string, confirmationArgs?: unknown[]) {
+type SUPPORTED_STYLES = 'success' | 'warning' | 'error';
+
+function show(title: string, message?: string, confirmationArgs?: unknown[], style: SUPPORTED_STYLES = 'success') {
     internalTitle.value = title;
     internalMessage.value = message;
+    switch (style) {
+        case 'success':
+            titleColorClass.value = 'text-green-400';
+            break;
+        case 'warning':
+            titleColorClass.value = 'text-yellow-400';
+            break;
+        case 'error':
+            titleColorClass.value = 'text-red-400';
+            break;
+        default:
+            titleColorClass.value = 'text-green-400';
+    }
     isShowingReconfirmationModal.value = false;
     _confirmationArgs.value = confirmationArgs || [];
     isVisible.value = true;
