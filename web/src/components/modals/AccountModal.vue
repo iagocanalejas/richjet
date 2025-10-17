@@ -114,7 +114,7 @@ function save() {
         $errors.value.name = 'Name already exists.';
     }
     if (!account.value.account_type) $errors.value.account_type = 'Account type is required.';
-    if (account.value.account_type === 'BANK' && account.value.balance <= 0) {
+    if (account.value.account_type === 'BANK' && account.value.balance < 0) {
         $errors.value.balance = 'Balance must be greater than 0.';
     }
 
