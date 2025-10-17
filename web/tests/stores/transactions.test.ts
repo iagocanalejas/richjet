@@ -16,8 +16,6 @@ vi.mock('@/stores/settings', () => ({
             { id: '1', name: 'default' },
             { id: '2', name: 'brokerage' },
         ]),
-        loadConvertionRate: vi.fn(() => Promise.resolve(1)),
-        toCurrency: vi.fn((a, _) => a),
     }),
 }));
 

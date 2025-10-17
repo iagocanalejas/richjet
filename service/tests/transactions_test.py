@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
+from models.session import Session
 from models.symbol import Symbol
 from models.transactions import (
     Transaction,
@@ -10,6 +11,7 @@ from models.transactions import (
     _validate_transaction_by_type,
     update_transaction,
 )
+from models.user import User
 
 
 @pytest.fixture
@@ -44,6 +46,21 @@ def sample_row():
     }
 
 
+session = Session(
+    session_id="sess-1",
+    user=User(
+        id="u1",
+        email="",
+        given_name="Test",
+        family_name="User",
+        picture="",
+    ),
+    currency="USD",
+    tokens={},
+    expires=1700000000.0,
+)
+
+
 @pytest.mark.parametrize(
     "ttype, price, qty, expect_error",
     [
@@ -53,7 +70,8 @@ def sample_row():
         (TransactionType.DIVIDEND_CASH, 10, 0, False),
     ],
 )
-def test_validate_transaction_types(ttype, price, qty, expect_error):
+@pytest.mark.asyncio
+async def test_validate_transaction_types(ttype, price, qty, expect_error):
     db = MagicMock()
     with patch(
         "models.transactions.get_transactions_by_user",
@@ -89,12 +107,13 @@ def test_validate_transaction_types(ttype, price, qty, expect_error):
         )
         if expect_error:
             with pytest.raises(HTTPException):
-                _validate_transaction_by_type(db, "u1", tx)
+                await _validate_transaction_by_type(db, session, tx)
         else:
-            _validate_transaction_by_type(db, "u1", tx)
+            await _validate_transaction_by_type(db, session, tx)
 
 
-def test_validate_sell_transaction_not_enough():
+@pytest.mark.asyncio
+async def test_validate_sell_transaction_not_enough():
     db = MagicMock()
     with patch(
         "models.transactions.get_transactions_by_user_and_symbol_and_account",
@@ -130,10 +149,11 @@ def test_validate_sell_transaction_not_enough():
             date="2024-01-01",
         )
         with pytest.raises(HTTPException):
-            _validate_sell_transaction(db, "u1", tx)
+            await _validate_sell_transaction(db, session, tx)
 
 
-def test_update_sell_transaction_beyond_limits():
+@pytest.mark.asyncio
+async def test_update_sell_transaction_beyond_limits():
     db = MagicMock()
     sell = Transaction(
         id="tx-sell-1",
@@ -199,8 +219,8 @@ def test_update_sell_transaction_beyond_limits():
     ):
         sell.symbol_id = getattr(sell.symbol, "id", "sym-1")
         sell.quantity = 3  # valid update, total sold = 4, total bought before the sell = 5
-        update_transaction(db, "u1", sell)
+        await update_transaction(db, session, sell)
 
         sell.quantity = 6  # invalid update, total sold = 6, total bought before the sell = 5
         with pytest.raises(HTTPException):
-            update_transaction(db, "u1", sell)
+            await update_transaction(db, session, sell)

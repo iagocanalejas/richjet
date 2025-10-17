@@ -14,11 +14,11 @@
     >
         <div class="text-sm text-right text-white">{{ formatDate(item.updated_at) }}</div>
         <div class="text-sm font-semibold text-right text-white">
-            {{ formatCurrency(toCurrency(item.balance, currency), currency) }}
+            {{ formatCurrency(item.balance, currency) }}
         </div>
         <div class="text-sm text-right" :class="textColorByRentability(item.balance - historyBalancePoint(index + 1))">
             <span v-if="index < account.balance_history.length - 1">
-                {{ formatCurrency(toCurrency(item.balance - historyBalancePoint(index + 1), currency), currency) }}
+                {{ formatCurrency(item.balance - historyBalancePoint(index + 1), currency) }}
             </span>
             <span v-else class="text-gray-500">—</span>
         </div>
@@ -60,7 +60,6 @@ defineEmits(['create', 'delete-balance']);
 
 const settingsStore = useSettingsStore();
 const { currency } = storeToRefs(settingsStore);
-const { toCurrency } = settingsStore;
 
 function historyBalancePoint(index: number) {
     return props.account.balance_history[index]?.balance || 0;

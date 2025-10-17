@@ -3,7 +3,6 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import AccountsService from './api/accounts';
 import UsersService from './api/users';
-import StocksService from './api/stocks';
 import StripeService from './api/stripe';
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -18,12 +17,12 @@ export const useSettingsStore = defineStore('settings', () => {
         async set(currency: string) {
             _settings.value.currency = currency;
             await _updateCurrency();
+            // NOTE: required as all currency conversions are done in the backend so we need to reload everything
+            window.location.reload();
         },
     });
 
     const accounts = computed(() => _settings.value.accounts);
-
-    const _conversionCache = new Map<string, number>();
 
     async function init() {
         const [settings, accounts] = await Promise.all([
@@ -36,9 +35,6 @@ export const useSettingsStore = defineStore('settings', () => {
         }
 
         _settings.value = { ..._settings.value, ...settings, accounts: accounts };
-        for (const cur of new Set(accounts.map((a) => a.currency))) {
-            await loadConvertionRate(cur);
-        }
     }
 
     async function loadPlans() {
@@ -100,24 +96,6 @@ export const useSettingsStore = defineStore('settings', () => {
         };
     }
 
-    async function loadConvertionRate(from_currency: string, to_currency?: string) {
-        if (!to_currency) to_currency = _settings.value.currency;
-        if (from_currency === to_currency) return;
-
-        const cacheKey = `${from_currency}:${to_currency}`;
-        if (_conversionCache.has(cacheKey)) return;
-
-        const conversion = await StocksService.retrieveConversionRate(from_currency, to_currency);
-        if (conversion) _conversionCache.set(cacheKey, conversion);
-    }
-
-    function toCurrency(amount: number | undefined, from_currency: string) {
-        if (!amount) return 0.0;
-        if (from_currency === _settings.value.currency) return amount;
-        const rate = _conversionCache.get(`${from_currency}:${_settings.value.currency}`) ?? 1.0;
-        return amount * rate;
-    }
-
     async function _updateCurrency() {
         await UsersService.updateUserCurrency(_settings.value.currency);
     }
@@ -130,8 +108,6 @@ export const useSettingsStore = defineStore('settings', () => {
         account,
         subscriptionPlans,
         loadPlans,
-        loadConvertionRate,
-        toCurrency,
         createAccount,
         updateAccount,
         deleteAccount,

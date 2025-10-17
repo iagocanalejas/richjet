@@ -34,10 +34,6 @@ export const useTransactionsStore = defineStore('transactions', () => {
             const batch = symbols.slice(i, i + 5);
             await Promise.all(batch.map((symbol) => getStockQuote(symbol)));
         }
-
-        for (const cur of new Set(trs.map((t) => t.currency))) {
-            await settingsStore.loadConvertionRate(cur);
-        }
     }
 
     async function addTransaction(t: TransactionItem) {

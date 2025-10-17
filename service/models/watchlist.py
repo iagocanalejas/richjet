@@ -3,6 +3,10 @@ from log.errors import required_msg
 from psycopg2.extensions import connection as Connection
 from psycopg2.extras import RealDictCursor
 
+from models.rates import convert_to_currency
+from models.session import Session
+from models.user import User
+
 from .symbol import Symbol, create_symbol, get_symbol_by_ticker
 
 _WATCHLIST_SELECT = """
@@ -10,22 +14,32 @@ s.id AS symbol_id, w.user_id, s.ticker, s.display_name, s.name, s.currency, s.so
 w.manual_price AS manual_price, s.user_created, TRUE AS is_favorite
 """
 
+_QP_SELECT = """
+qp_today.price AS price, qp_today.currency AS currency,
+qp_yesterday.price AS open_price, qp_yesterday.currency AS open_currency
+"""
 
-def get_symbol_by_watchlist_id(db: Connection, user_id: str, watchlist_item_id: str) -> Symbol:
+
+async def get_symbol_by_watchlist_id(
+    db: Connection,
+    session: Session,
+    watchlist_item_id: str,
+) -> Symbol:
     """
     Retrieves a watchlist item from the database by user ID and watchlist item ID.
     """
+    user_id = session.user.id if isinstance(session.user, User) else None
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not watchlist_item_id:
         raise HTTPException(status_code=400, detail=required_msg("watchlist_item_id"))
 
     sql = f"""
-        SELECT {_WATCHLIST_SELECT}, qp_today.price AS price, qp_yesterday.price AS open_price
+        SELECT {_WATCHLIST_SELECT}, {_QP_SELECT}
         FROM watchlist w
         JOIN symbols s ON w.symbol_id = s.id
         LEFT JOIN LATERAL (
-            SELECT price
+            SELECT price, currency
             FROM quote_history
             WHERE symbol_id = s.id
               AND created_at::date = CURRENT_DATE
@@ -33,7 +47,7 @@ def get_symbol_by_watchlist_id(db: Connection, user_id: str, watchlist_item_id: 
             LIMIT 1
         ) qp_today ON TRUE
         LEFT JOIN LATERAL (
-            SELECT price
+            SELECT price, currency
             FROM quote_history
             WHERE symbol_id = s.id
               AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
@@ -52,25 +66,30 @@ def get_symbol_by_watchlist_id(db: Connection, user_id: str, watchlist_item_id: 
 
     symbol = Symbol.from_row(row)
     if not symbol.is_manual_price:
-        # NOTE: not taking currency from quote into account
-        symbol.price = row.get("price", None)
-        symbol.open_price = row.get("open_price", None)
+        symbol.price, _ = await convert_to_currency(session, row.get("price", None), row.get("currency", None))
+        symbol.open_price, _ = await convert_to_currency(
+            session,
+            row.get("open_price", None),
+            row.get("open_currency", None),
+        )
+        symbol.currency = session.currency
     return symbol
 
 
-def get_watchlist_by_user(db: Connection, user_id: str) -> list[Symbol]:
+async def get_watchlist_by_user(db: Connection, session: Session) -> list[Symbol]:
     """
     Retrieves a watchlist from the database by user ID.
     """
+    user_id = session.user.id if isinstance(session.user, User) else None
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
     sql = f"""
-        SELECT {_WATCHLIST_SELECT}, qp_today.price AS price, qp_yesterday.price AS open_price
+        SELECT {_WATCHLIST_SELECT}, {_QP_SELECT}
         FROM watchlist w
         JOIN symbols s ON w.symbol_id = s.id
         LEFT JOIN LATERAL (
-            SELECT price
+            SELECT price, currency
             FROM quote_history
             WHERE symbol_id = s.id
               AND created_at::date = CURRENT_DATE
@@ -78,7 +97,7 @@ def get_watchlist_by_user(db: Connection, user_id: str) -> list[Symbol]:
             LIMIT 1
         ) qp_today ON TRUE
         LEFT JOIN LATERAL (
-            SELECT price
+            SELECT price, currency
             FROM quote_history
             WHERE symbol_id = s.id
               AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
@@ -100,17 +119,22 @@ def get_watchlist_by_user(db: Connection, user_id: str) -> list[Symbol]:
     for row in rows:
         symbol = Symbol.from_row(row)
         if not symbol.is_manual_price:
-            # NOTE: not taking currency from quote into account
-            symbol.price = row.get("price", None)
-            symbol.open_price = row.get("open_price", None)
+            symbol.price, _ = await convert_to_currency(session, row.get("price", None), row.get("currency", None))
+            symbol.open_price, _ = await convert_to_currency(
+                session,
+                row.get("open_price", None),
+                row.get("open_currency", None),
+            )
+            symbol.currency = session.currency
         symbols.append(symbol)
     return symbols
 
 
-def create_watchlist_item(db: Connection, user_id: str, symbol: Symbol) -> Symbol:
+def create_watchlist_item(db: Connection, session: Session, symbol: Symbol) -> Symbol:
     """
     Adds a symbol to the watchlist in the database.
     """
+    user_id = session.user.id if isinstance(session.user, User) else None
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol.ticker:
@@ -144,10 +168,16 @@ def create_watchlist_item(db: Connection, user_id: str, symbol: Symbol) -> Symbo
     return symbol
 
 
-def update_watchlist_item(db: Connection, user_id: str, symbol_id: str, new_price: float | None) -> Symbol:
+async def update_watchlist_item(
+    db: Connection,
+    session: Session,
+    symbol_id: str,
+    new_price: float | None,
+) -> Symbol:
     """
     Updates the price of a watchlist item in the database.
     """
+    user_id = session.user.id if isinstance(session.user, User) else None
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol_id:
@@ -169,14 +199,15 @@ def update_watchlist_item(db: Connection, user_id: str, symbol_id: str, new_pric
         raise HTTPException(status_code=500, detail="Failed to update watchlist item")
 
     db.commit()
-    return get_symbol_by_watchlist_id(db, user_id, result[0])
+    return await get_symbol_by_watchlist_id(db, session, result[0])
 
 
-def remove_watchlist_item(db: Connection, user_id: str, symbol_id: str) -> None:
+def remove_watchlist_item(db: Connection, session: Session, symbol_id: str) -> None:
     """
     Removes a symbol from the watchlist in the database.
     Also deletes user-created symbols if no longer referenced.
     """
+    user_id = session.user.id if isinstance(session.user, User) else None
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol_id:

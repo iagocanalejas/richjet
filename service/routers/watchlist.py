@@ -19,7 +19,7 @@ async def api_get_watchlist(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    symbols = get_watchlist_by_user(db, session.user.id)
+    symbols = await get_watchlist_by_user(db, session)
     return [s.to_dict() for s in symbols]
 
 
@@ -31,7 +31,7 @@ async def api_create_watchlist_item(
     session=Depends(get_session),
 ):
     symbol = Symbol.from_dict(**symbol_data)
-    watchlist = create_watchlist_item(db, session.user.id, symbol)
+    watchlist = create_watchlist_item(db, session, symbol)
     return watchlist.to_dict()
 
 
@@ -43,7 +43,7 @@ async def api_update_watchlist_item(
     session=Depends(get_session),
 ):
     price = symbol_data.get("price", None)
-    symbol = update_watchlist_item(db, session.user.id, symbol_id, price)
+    symbol = await update_watchlist_item(db, session, symbol_id, price)
     return symbol.to_dict()
 
 
@@ -53,4 +53,4 @@ async def api_remove_watchlist_item(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    remove_watchlist_item(db, session.user.id, symbol_id)
+    remove_watchlist_item(db, session, symbol_id)

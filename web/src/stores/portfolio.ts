@@ -7,11 +7,9 @@ import { useTransactionsStore } from './transactions';
 import { isSavingsAccount } from '@/utils/rules';
 
 export const usePortfolioStore = defineStore('portfolio', () => {
-    const settingsStore = useSettingsStore();
     const { transactions, cashDividends } = storeToRefs(useTransactionsStore());
-    const { account, accounts } = storeToRefs(settingsStore);
+    const { account, accounts } = storeToRefs(useSettingsStore());
     const { getStockQuoteSync } = useStocksStore();
-    const { toCurrency } = settingsStore;
 
     const _accountKey = computed(() => account.value?.name ?? 'all');
 
@@ -45,11 +43,11 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             throw new Error(`First transaction for symbol ${firstTr.symbol.ticker} must be a BUY transaction`);
         }
 
-        let currentPrice = toCurrency(firstTr.symbol.price, firstTr.symbol.currency);
+        let currentPrice = firstTr.symbol.price;
         if (!currentPrice) {
             const quote = getStockQuoteSync(firstTr.symbol);
             if (quote && quote.current) {
-                currentPrice = toCurrency(quote.current, quote.currency);
+                currentPrice = quote.current;
             } else {
                 currentPrice = 0.0;
             }
@@ -60,10 +58,10 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             currency: firstTr.currency,
             quantity: firstTr.quantity,
             current_price: currentPrice,
-            current_invested: firstTr.quantity * toCurrency(firstTr.price, firstTr.currency),
-            total_invested: firstTr.quantity * toCurrency(firstTr.price, firstTr.currency),
+            current_invested: firstTr.quantity * firstTr.price,
+            total_invested: firstTr.quantity * firstTr.price,
             total_retrieved: 0,
-            commission: toCurrency(firstTr.commission, firstTr.currency),
+            commission: firstTr.commission,
             sorted_buys: [structuredClone(toRaw(firstTr))],
             sorted_sells: [] as (TransactionItem & { cost_basis: number })[],
         };
@@ -72,9 +70,9 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             switch (tr.transaction_type) {
                 case 'BUY':
                     portfolioItem.quantity += tr.quantity;
-                    portfolioItem.current_invested += tr.quantity * toCurrency(tr.price, tr.currency);
-                    portfolioItem.total_invested += tr.quantity * toCurrency(tr.price, tr.currency);
-                    portfolioItem.commission += toCurrency(tr.commission, tr.currency);
+                    portfolioItem.current_invested += tr.quantity * tr.price;
+                    portfolioItem.total_invested += tr.quantity * tr.price;
+                    portfolioItem.commission += tr.commission;
                     portfolioItem.sorted_buys.push(structuredClone(toRaw(tr)));
                     break;
                 case 'SELL':
@@ -88,12 +86,12 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
                         if (buy.quantity <= remainingToSell) {
                             // Fully consume this buy
-                            cost_basis += buy.quantity * toCurrency(buy.price, buy.currency);
+                            cost_basis += buy.quantity * buy.price;
                             remainingToSell -= buy.quantity;
                             portfolioItem.sorted_buys.shift();
                         } else {
                             // Partially consume this buy
-                            cost_basis += remainingToSell * toCurrency(buy.price, buy.currency);
+                            cost_basis += remainingToSell * buy.price;
                             buy.quantity -= remainingToSell;
                             remainingToSell = 0;
                         }
@@ -106,8 +104,8 @@ export const usePortfolioStore = defineStore('portfolio', () => {
 
                     portfolioItem.quantity -= tr.quantity;
                     portfolioItem.current_invested -= cost_basis;
-                    portfolioItem.total_retrieved += tr.quantity * toCurrency(tr.price, tr.currency);
-                    portfolioItem.commission += toCurrency(tr.commission, tr.currency);
+                    portfolioItem.total_retrieved += tr.quantity * tr.price;
+                    portfolioItem.commission += tr.commission;
                     portfolioItem.sorted_sells.push({ ...structuredClone(toRaw(tr)), cost_basis });
                     break;
                 case 'DIVIDEND':
@@ -137,10 +135,7 @@ export const usePortfolioStore = defineStore('portfolio', () => {
     });
 
     const savingAccountsValue = computed(() => {
-        const money =
-            accounts.value
-                .filter((a) => isSavingsAccount(a))
-                .reduce((acc, a) => acc + toCurrency(a.balance, a.currency), 0) ?? 0;
+        const money = accounts.value.filter((a) => isSavingsAccount(a)).reduce((acc, a) => acc + a.balance, 0) ?? 0;
         return money;
     });
 

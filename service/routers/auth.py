@@ -49,7 +49,7 @@ async def get_session(request: Request, db=Depends(get_db)) -> Session:
             session.expires = payload.get("exp", 0)
             update_session(db, session)
 
-        assert isinstance(session.user, User), "User must be an instance of User"
+        assert isinstance(session.user, User), "user must be an instance of User"
         return session
 
     except Exception as e:
@@ -125,6 +125,7 @@ async def auth_callback(code: str, state: str, request: Request, db=Depends(get_
                 user=user.id,
                 tokens=tokens,
                 expires=payload.get("exp", 0),
+                currency="unused",
             ),
         )
 

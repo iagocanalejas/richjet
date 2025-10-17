@@ -8,7 +8,10 @@ from psycopg2.extensions import connection as Connection
 from psycopg2.extras import RealDictCursor, RealDictRow
 
 from models.account import Account, get_accounts_by_user
+from models.rates import convert_to_currency
+from models.session import Session
 from models.symbol import Symbol
+from models.user import User
 
 
 class TransactionType(Enum):
@@ -88,13 +91,15 @@ class Transaction:
 _TRANSACTION_SELECT = """
 t.id, t.user_id, t.account_id, t.quantity, t.price, t.commission, t.currency, t.transaction_type, t.date, t.created_at,
 s.id AS symbol_id, s.name, s.ticker, s.display_name, s.currency AS symbol_currency, s.source, s.isin, s.picture,
-s.user_created, a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency as account_currency,
-w.manual_price AS manual_price, TRUE AS is_favorite, qp_today.price AS symbol_price, qp_yesterday.price AS open_price
+s.user_created, w.manual_price AS manual_price, TRUE AS is_favorite,
+a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency as account_currency,
+qp_today.price AS symbol_price, qp_today.currency AS symbol_currency,
+qp_yesterday.price AS open_price, qp_yesterday.currency AS open_currency
 """
 
 _QUOTE_SUBQUERY = """
 LEFT JOIN LATERAL (
-    SELECT price
+    SELECT price, currency
     FROM quote_history
     WHERE symbol_id = s.id
       AND created_at::date = CURRENT_DATE
@@ -102,7 +107,7 @@ LEFT JOIN LATERAL (
     LIMIT 1
 ) qp_today ON TRUE
 LEFT JOIN LATERAL (
-    SELECT price
+    SELECT price, currency
     FROM quote_history
     WHERE symbol_id = s.id
       AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
@@ -112,9 +117,7 @@ LEFT JOIN LATERAL (
 """
 
 
-def get_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> Transaction:
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+async def get_transaction_by_id(db: Connection, session: Session, transaction_id: str) -> Transaction:
     if not transaction_id:
         raise HTTPException(status_code=400, detail=required_msg("transaction_id"))
 
@@ -129,28 +132,33 @@ def get_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> 
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
-        cursor.execute(sql, (transaction_id, user_id))
-        result = cursor.fetchone()
+        cursor.execute(sql, (transaction_id, session.user_id))
+        row = cursor.fetchone()
 
-    if not result:
+    if not row:
         raise HTTPException(status_code=404, detail="Transaction not found")
 
-    transaction = Transaction.from_row(result)
+    transaction = Transaction.from_row(row)
     assert transaction.symbol is not None
     if not transaction.symbol.is_manual_price:
-        # NOTE: not taking currency from quote into account
-        transaction.symbol.price = result.get("symbol_price", None)
-        transaction.symbol.open_price = result.get("open_price", None)
+        transaction.symbol.price, _ = await convert_to_currency(
+            session,
+            row.get("symbol_price", None),
+            row.get("symbol_currency", None),
+        )
+        transaction.symbol.open_price, _ = await convert_to_currency(
+            session,
+            row.get("open_price", None),
+            row.get("open_currency", None),
+        )
+        transaction.symbol.currency = session.currency
     return transaction
 
 
-def get_transactions_by_user(db: Connection, user_id: str) -> list[Transaction]:
+async def get_transactions_by_user(db: Connection, session: Session) -> list[Transaction]:
     """
     Get all transactions for a user.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
-
     sql = f"""
         SELECT {_TRANSACTION_SELECT}
         FROM transactions t
@@ -163,7 +171,7 @@ def get_transactions_by_user(db: Connection, user_id: str) -> list[Transaction]:
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
-        cursor.execute(sql, (user_id,))
+        cursor.execute(sql, (session.user_id,))
         rows = cursor.fetchall()
 
     transactions = []
@@ -171,25 +179,30 @@ def get_transactions_by_user(db: Connection, user_id: str) -> list[Transaction]:
         transaction = Transaction.from_row(row)
         assert transaction.symbol is not None
         if not transaction.symbol.is_manual_price:
-            # NOTE: not taking currency from quote into account
-            transaction.symbol.price = row.get("symbol_price", None)
-            transaction.symbol.open_price = row.get("open_price", None)
+            transaction.symbol.price, _ = await convert_to_currency(
+                session,
+                row.get("symbol_price", None),
+                row.get("symbol_currency", None),
+            )
+            transaction.symbol.open_price, _ = await convert_to_currency(
+                session,
+                row.get("open_price", None),
+                row.get("open_currency", None),
+            )
+            transaction.symbol.currency = session.currency
         transactions.append(transaction)
     return transactions
 
 
-def get_transactions_by_user_and_symbol_and_account(
+async def get_transactions_by_user_and_symbol_and_account(
     db: Connection,
-    user_id: str,
+    session: Session,
     symbol_id: str,
     account_id: str | None,
 ) -> list[Transaction]:
     """
     Get all transactions for a user in an account.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
-
     sql = f"""
         SELECT {_TRANSACTION_SELECT}
         FROM transactions t
@@ -204,7 +217,7 @@ def get_transactions_by_user_and_symbol_and_account(
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
-        cursor.execute(sql, (user_id, symbol_id, account_id))
+        cursor.execute(sql, (session.user_id, symbol_id, account_id))
         rows = cursor.fetchall()
 
     transactions = []
@@ -212,30 +225,36 @@ def get_transactions_by_user_and_symbol_and_account(
         transaction = Transaction.from_row(row)
         assert transaction.symbol is not None
         if not transaction.symbol.is_manual_price:
-            # NOTE: not taking currency from quote into account
-            transaction.symbol.price = row.get("symbol_price", None)
-            transaction.symbol.open_price = row.get("open_price", None)
+            transaction.symbol.price, _ = await convert_to_currency(
+                session,
+                row.get("symbol_price", None),
+                row.get("symbol_currency", None),
+            )
+            transaction.symbol.open_price, _ = await convert_to_currency(
+                session,
+                row.get("open_price", None),
+                row.get("open_currency", None),
+            )
+            transaction.symbol.currency = session.currency
         transactions.append(transaction)
     return transactions
 
 
-def create_transaction(db: Connection, user_id: str, transaction: Transaction) -> Transaction:
+async def create_transaction(db: Connection, session: Session, transaction: Transaction) -> Transaction:
     """
     Creates a transaction in the database.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not transaction.symbol_id:
         raise HTTPException(status_code=400, detail=required_msg("transaction.symbol_id"))
 
     if transaction.account_id:
-        accounts = get_accounts_by_user(db, user_id)
+        accounts = await get_accounts_by_user(db, session)
         if not any(a.id == transaction.account_id for a in accounts):
-            msg = f"Account '{transaction.account_id}' not found for user '{user_id}'"
+            msg = f"Account '{transaction.account_id}' not found for user '{session.user_id}'"
             raise HTTPException(status_code=400, detail=msg)
 
-    _validate_transaction_by_type(db, user_id, transaction)
-    _validate_sell_transaction(db, user_id, transaction)
+    await _validate_transaction_by_type(db, session, transaction)
+    await _validate_sell_transaction(db, session, transaction)
 
     sql = """
         INSERT INTO transactions (
@@ -249,7 +268,7 @@ def create_transaction(db: Connection, user_id: str, transaction: Transaction) -
         cursor.execute(
             sql,
             (
-                user_id,
+                session.user_id,
                 transaction.symbol_id,
                 transaction.account_id,
                 transaction.quantity,
@@ -270,17 +289,15 @@ def create_transaction(db: Connection, user_id: str, transaction: Transaction) -
     return transaction
 
 
-def update_transaction(db: Connection, user_id: str, transaction: Transaction) -> Transaction:
+async def update_transaction(db: Connection, session: Session, transaction: Transaction) -> Transaction:
     """
     Updates a transaction in the database.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not transaction.id:
         raise HTTPException(status_code=400, detail=required_msg("transaction.id"))
 
-    _validate_transaction_by_type(db, user_id, transaction)
-    _validate_sell_transaction(db, user_id, transaction)
+    await _validate_transaction_by_type(db, session, transaction)
+    await _validate_sell_transaction(db, session, transaction)
 
     sql = """
         UPDATE transactions
@@ -305,9 +322,9 @@ def update_transaction(db: Connection, user_id: str, transaction: Transaction) -
                 transaction.commission,
                 transaction.account_id,
                 transaction.account_id,
-                user_id,
+                session.user_id,
                 transaction.id,
-                user_id,
+                session.user_id,
             ),
         )
         row = cursor.fetchone()
@@ -316,12 +333,12 @@ def update_transaction(db: Connection, user_id: str, transaction: Transaction) -
         raise HTTPException(status_code=404, detail="Transaction not found")
 
     db.commit()
-    return get_transaction_by_id(db, user_id, row[0])
+    return await get_transaction_by_id(db, session, row[0])
 
 
-def update_stock_account(
+async def update_stock_account(
     db: Connection,
-    user_id: str,
+    session: Session,
     ticker: str,
     from_account_id: str | None,
     to_account_id: str | None,
@@ -329,6 +346,7 @@ def update_stock_account(
     """
     Updates the account for a transaction.
     """
+    user_id = session.user.id if isinstance(session.user, User) else None
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not ticker:
@@ -336,7 +354,7 @@ def update_stock_account(
     if from_account_id == to_account_id:
         raise HTTPException(status_code=400, detail="from_account_id and to_account_id cannot be the same")
 
-    valid_accounts = get_accounts_by_user(db, user_id)
+    valid_accounts = await get_accounts_by_user(db, session)
     if from_account_id is not None:
         if not any(a.id == from_account_id for a in valid_accounts):
             raise HTTPException(status_code=400, detail=f"Account '{from_account_id}' not found for user '{user_id}'")
@@ -367,10 +385,11 @@ def update_stock_account(
     return [row[0] for row in rows]
 
 
-def remove_transaction_by_id(db: Connection, user_id: str, transaction_id: str) -> None:
+def remove_transaction_by_id(db: Connection, session: Session, transaction_id: str) -> None:
     """
     Removes a transaction from the database.
     """
+    user_id = session.user.id if isinstance(session.user, User) else None
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not transaction_id:
@@ -387,7 +406,7 @@ def remove_transaction_by_id(db: Connection, user_id: str, transaction_id: str) 
         db.commit()
 
 
-def _validate_transaction_by_type(db: Connection, user_id: str, transaction: Transaction) -> None:
+async def _validate_transaction_by_type(db: Connection, session: Session, transaction: Transaction) -> None:
     if transaction.transaction_type not in set(TransactionType):
         raise HTTPException(status_code=400, detail=f"Invalid transaction type: {transaction.transaction_type}")
 
@@ -403,7 +422,7 @@ def _validate_transaction_by_type(db: Connection, user_id: str, transaction: Tra
 
     # check for at least one BUY transaction for the given symbol
     if transaction.transaction_type in {TransactionType.DIVIDEND, TransactionType.DIVIDEND_CASH}:
-        transactions = get_transactions_by_user(db, user_id)
+        transactions = await get_transactions_by_user(db, session)
         _has_buy_transaction = any(
             t.transaction_type == TransactionType.BUY
             and getattr(t.account, "id", None) == transaction.account_id
@@ -415,14 +434,14 @@ def _validate_transaction_by_type(db: Connection, user_id: str, transaction: Tra
             raise HTTPException(status_code=400, detail=f"No BUY transaction found for symbol {ticker}")
 
 
-def _validate_sell_transaction(db: Connection, user_id: str, transaction: Transaction) -> None:
+async def _validate_sell_transaction(db: Connection, session: Session, transaction: Transaction) -> None:
     if transaction.transaction_type != TransactionType.SELL:
         return
 
     assert transaction.symbol_id is not None
-    transactions = get_transactions_by_user_and_symbol_and_account(
+    transactions = await get_transactions_by_user_and_symbol_and_account(
         db,
-        user_id,
+        session,
         symbol_id=transaction.symbol_id,
         account_id=transaction.account_id,
     )

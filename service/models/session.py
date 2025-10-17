@@ -13,8 +13,13 @@ from models.user import User
 class Session:
     session_id: str
     user: User | str
+    currency: str
     tokens: dict
     expires: float
+
+    @property
+    def user_id(self) -> str:
+        return self.user.id if isinstance(self.user, User) else self.user
 
     def to_dict(self) -> dict:
         return {
@@ -34,7 +39,7 @@ def get_session_by_id(db: Connection, session_id: str) -> Session:
 
     sql = """
         SELECT s.id AS session_id, s.tokens, s.expires,
-               u.id AS user_id, u.stripe_id, u.email, u.given_name, u.family_name, u.picture, u.created_at,
+               u.id AS user_id, u.stripe_id, u.email, u.given_name, u.family_name, u.currency, u.picture, u.created_at,
                COALESCE(p.name, 'FREE') AS plan_name
         FROM sessions s
             JOIN users u ON s.user_id = u.id
@@ -59,6 +64,7 @@ def get_session_by_id(db: Connection, session_id: str) -> Session:
         tokens=tokens,
         expires=row["expires"],
         user=User.from_row(row),
+        currency=row.get("currency", "USD"),
     )
 
 

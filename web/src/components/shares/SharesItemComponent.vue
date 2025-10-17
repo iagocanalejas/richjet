@@ -21,7 +21,7 @@
     <div class="flex items-center space-x-2 relative">
         <div v-if="!item.is_manual_price && item.price" class="flex items-center text-sm me-5">
             <div class="text-right" :class="textColorByRentability(item.price - item.open_price!)">
-                <div class="font-semibold">{{ formatCurrency(toCurrency(item.price, currency), currency) }}</div>
+                <div class="font-semibold">{{ formatCurrency(item.price, currency) }}</div>
                 <div v-if="item.open_price" class="text-xs">
                     {{ item.price - item.open_price > 0 ? '+' : '' }}
                     {{ (((item.price - item.open_price) / item.open_price) * 100).toFixed(2) }}%
@@ -87,5 +87,4 @@ defineEmits(['favorite', 'image-error']);
 
 const settingsStore = useSettingsStore();
 const { currency } = storeToRefs(settingsStore);
-const { toCurrency } = settingsStore;
 </script>

@@ -6,6 +6,9 @@ from log.errors import required_msg
 from psycopg2.extensions import connection as Connection
 from psycopg2.extras import RealDictCursor, RealDictRow
 
+from models.rates import convert_to_currency
+from models.session import Session
+
 
 class AccountType(Enum):
     BROKER = "BROKER"
@@ -53,12 +56,10 @@ class Account:
         }
 
 
-def get_account_by_id(db: Connection, user_id: str, account_id: str) -> Account:
+async def get_account_by_id(db: Connection, session: Session, account_id: str) -> Account:
     """
     Retrieves an account from the database by user ID and account ID.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not account_id:
         raise HTTPException(status_code=400, detail=required_msg("account_id"))
 
@@ -76,22 +77,22 @@ def get_account_by_id(db: Connection, user_id: str, account_id: str) -> Account:
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
-        cursor.execute(sql, (account_id, user_id))
+        cursor.execute(sql, (account_id, session.user_id))
         row = cursor.fetchone()
 
     if not row:
         raise HTTPException(status_code=404, detail="Account not found")
 
-    return Account.from_row(row)
+    account = Account.from_row(row)
+    for balance_entry in account.balance_history:
+        balance_entry["balance"], _ = await convert_to_currency(session, balance_entry["balance"], account.currency)
+    return account
 
 
-def get_accounts_by_user(db: Connection, user_id: str) -> list[Account]:
+async def get_accounts_by_user(db: Connection, session: Session) -> list[Account]:
     """
     Retrieves accounts from the database by user ID.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
-
     sql = """
         SELECT a.id, user_id, name, account_type, a.balance, currency,
             COALESCE(
@@ -106,22 +107,23 @@ def get_accounts_by_user(db: Connection, user_id: str) -> list[Account]:
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
-        cursor.execute(sql, (user_id,))
+        cursor.execute(sql, (session.user_id,))
         rows = cursor.fetchall()
 
     if not rows:
         return []
 
-    return [Account.from_row(row) for row in rows]
+    accounts = [Account.from_row(row) for row in rows]
+    for account in accounts:
+        for balance_entry in account.balance_history:
+            balance_entry["balance"], _ = await convert_to_currency(session, balance_entry["balance"], account.currency)
+    return accounts
 
 
-def create_account(db: Connection, user_id: str, account: Account) -> Account:
+async def create_account(db: Connection, session: Session, account: Account) -> Account:
     """
     Adds an account to the database.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
-
     if not account.name:
         raise HTTPException(status_code=400, detail=required_msg("account.name"))
 
@@ -139,7 +141,7 @@ def create_account(db: Connection, user_id: str, account: Account) -> Account:
 
     balance = account.balance if account.account_type == AccountType.BANK else None
     with db.cursor() as cursor:
-        cursor.execute(sql, (user_id, account.name, account.account_type.value, balance, user_id))
+        cursor.execute(sql, (session.user_id, account.name, account.account_type.value, balance, session.user_id))
 
         row = cursor.fetchone()
         if not row:
@@ -150,16 +152,13 @@ def create_account(db: Connection, user_id: str, account: Account) -> Account:
 
     account.id = row[0]
     db.commit()
-    return get_account_by_id(db, user_id, account.id)
+    return await get_account_by_id(db, session, account.id)
 
 
-def update_account(db: Connection, user_id: str, account: Account, account_id: str) -> Account:
+async def update_account(db: Connection, session: Session, account: Account, account_id: str) -> Account:
     """
     Updates an existing account in the database.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
-
     if not account_id:
         raise HTTPException(status_code=400, detail=required_msg("account_id"))
 
@@ -177,7 +176,7 @@ def update_account(db: Connection, user_id: str, account: Account, account_id: s
     """
 
     with db.cursor() as cursor:
-        cursor.execute(sql, (account.balance, account_id, user_id))
+        cursor.execute(sql, (account.balance, account_id, session.user_id))
 
         row = cursor.fetchone()
         if not row:
@@ -187,21 +186,18 @@ def update_account(db: Connection, user_id: str, account: Account, account_id: s
             _update_balance_history(db, row[0], account.balance)
 
     db.commit()
-    return get_account_by_id(db, user_id, account_id)
+    return await get_account_by_id(db, session, account_id)
 
 
-def remove_account_by_id(db: Connection, user_id: str, account_id: str, forced: bool = False) -> None:
+def remove_account_by_id(db: Connection, session: Session, account_id: str, forced: bool = False) -> None:
     """
     Removes an account from the database by its ID.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
-
     if not account_id:
         raise HTTPException(status_code=400, detail=required_msg("account_id"))
 
     if forced:
-        _remove_account_forced(db, user_id, account_id)
+        _remove_account_forced(db, session.user_id, account_id)
         db.commit()
         return
 
@@ -220,20 +216,17 @@ def remove_account_by_id(db: Connection, user_id: str, account_id: str, forced: 
     """
 
     with db.cursor() as cursor:
-        cursor.execute(sql, (account_id, account_id, account_id, user_id))
+        cursor.execute(sql, (account_id, account_id, account_id, session.user_id))
         deleted = cursor.fetchone()
         if not deleted:
             raise HTTPException(status_code=400, detail="Cannot delete account with existing transactions or balances")
         db.commit()
 
 
-def remove_account_balance_by_id(db: Connection, user_id: str, account_id: str, balance_id: str) -> Account:
+async def remove_account_balance_by_id(db: Connection, session: Session, account_id: str, balance_id: str) -> Account:
     """
     Removes a specific balance entry from an account.
     """
-    if not user_id:
-        raise HTTPException(status_code=400, detail=required_msg("user_id"))
-
     if not account_id:
         raise HTTPException(status_code=400, detail=required_msg("account_id"))
 
@@ -259,7 +252,7 @@ def remove_account_balance_by_id(db: Connection, user_id: str, account_id: str, 
         all_balances = [(row[0], row[1]) for row in cursor.fetchall()]
 
         if not all_balances:
-            return get_account_by_id(db, user_id, account_id)
+            return await get_account_by_id(db, session, account_id)
 
         # can't delete the first balance entry if there are others
         if len(all_balances) > 1 and all_balances[0][0] == balance_id:
@@ -273,14 +266,14 @@ def remove_account_balance_by_id(db: Connection, user_id: str, account_id: str, 
                 SET balance = %s
                 WHERE id = %s::uuid AND user_id = %s::uuid
             """
-            cursor.execute(update_sql, (new_balance, account_id, user_id))
+            cursor.execute(update_sql, (new_balance, account_id, session.user_id))
 
-        cursor.execute(sql, (balance_id, account_id, user_id))
+        cursor.execute(sql, (balance_id, account_id, session.user_id))
         deleted = cursor.fetchone()
         if not deleted:
             raise HTTPException(status_code=404, detail="Balance entry not found or does not belong to the user")
         db.commit()
-    return get_account_by_id(db, user_id, account_id)
+    return await get_account_by_id(db, session, account_id)
 
 
 def _update_balance_history(db: Connection, account_id: str, balance: float) -> None:

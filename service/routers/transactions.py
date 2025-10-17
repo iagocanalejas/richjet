@@ -20,7 +20,7 @@ async def api_get_transactions(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    transactions = get_transactions_by_user(db, session.user.id)
+    transactions = await get_transactions_by_user(db, session)
     return [t.to_dict() for t in transactions]
 
 
@@ -33,7 +33,7 @@ async def api_create_transaction(
 ):
     transaction_data["user_id"] = session.user.id
     transaction = Transaction.from_dict(**transaction_data)
-    transaction = create_transaction(db, session.user.id, transaction)
+    transaction = await create_transaction(db, session, transaction)
     return transaction.to_dict()
 
 
@@ -47,7 +47,7 @@ async def api_update_transaction(
     transaction_data["id"] = transaction_id
     transaction_data["user_id"] = session.user.id
     transaction = Transaction.from_dict(**transaction_data)
-    transaction = update_transaction(db, session.user.id, transaction)
+    transaction = await update_transaction(db, session, transaction)
     return transaction.to_dict()
 
 
@@ -60,7 +60,7 @@ async def api_update_transaction_account(
 ):
     from_account = transaction_data.get("from_account", None)
     to_account = transaction_data.get("to_account", None)
-    return update_stock_account(db, session.user.id, ticker, from_account, to_account)
+    return await update_stock_account(db, session, ticker, from_account, to_account)
 
 
 @router.delete("/{transaction_id}")
@@ -69,4 +69,4 @@ async def api_remove_transaction(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    remove_transaction_by_id(db, session.user.id, transaction_id)
+    remove_transaction_by_id(db, session, transaction_id)

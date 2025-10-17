@@ -19,14 +19,7 @@ vi.mock('@/stores/transactions', () => ({
 
 const mockAccount = ref<Account | undefined>(undefined);
 const mockAccounts = ref<Account[]>([]);
-vi.mock('@/stores/settings', () => ({
-    useSettingsStore: () => ({
-        account: mockAccount,
-        accounts: mockAccounts,
-        loadConvertionRate: vi.fn(() => Promise.resolve(1)),
-        toCurrency: vi.fn((a, _) => a),
-    }),
-}));
+vi.mock('@/stores/settings', () => ({ useSettingsStore: () => ({ account: mockAccount, accounts: mockAccounts }) }));
 
 vi.mock('@/stores/watchlist', () => {
     return {
