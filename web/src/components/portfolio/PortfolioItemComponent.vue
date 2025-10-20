@@ -20,7 +20,7 @@
         </div>
     </div>
 
-    <div class="hidden md:block text-sm text-right text-white">
+    <div class="hidden md:block text-sm text-right text-white" :title="`${item.quantity}`">
         {{ Number(item.quantity).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }) }}
     </div>
 
