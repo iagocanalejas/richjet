@@ -98,10 +98,14 @@ class GoogleClient:
         currency = data.xpath("//*/div[1]/div[1]/c-wiz/div/div[1]/div/div[1]/div/div[1]/div/span/div/div/text()")
         currency, price = split_money(currency.get(""))
 
+        data = selector.xpath("/html/body/c-wiz[2]/div/div[4]/div/main/div[2]/div[2]/div/div[1]/text()").get("")
+        _, open_price = split_money(data)
+
         return StockQuote(
             ticker=symbol,
             current=price or 0.0,
             currency=symbol_to_currency(currency) if currency else "USD",
+            previous_close=open_price,
         )
 
     @staticmethod

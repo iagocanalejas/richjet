@@ -23,7 +23,7 @@ async def get_quote(
     """
     Fetches the stock quote for the given symbol.
     """
-    quote = get_quote_point(db, ticker)
+    quote = (await get_quote_point(db, session, [ticker]))[0]
 
     if not quote or not quote.current or quote.current <= 0:
         try:
@@ -40,10 +40,6 @@ async def get_quote(
     if not quote:
         raise HTTPException(status_code=404, detail=f"no quote found for {ticker}")
 
-    quote.current, quote.currency = await convert_to_currency(session, quote.current, quote.currency)
-    quote.previous_close, quote.previous_close_currency = await convert_to_currency(
-        session,
-        quote.previous_close,
-        quote.previous_close_currency,
-    )
+    quote.current, _ = await convert_to_currency(session, quote.current, quote.currency)
+    quote.previous_close, quote.currency = await convert_to_currency(session, quote.previous_close, quote.currency)
     return quote.to_dict()

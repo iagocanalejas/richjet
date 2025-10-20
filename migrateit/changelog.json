@@ -118,6 +118,13 @@
             "parents": [
                 "0015_remove_symbol_columns.sql"
             ]
+        },
+        {
+            "name": "0017_quote_history_close.sql",
+            "initial": false,
+            "parents": [
+                "0016_quote_history.sql"
+            ]
         }
     ]
 }

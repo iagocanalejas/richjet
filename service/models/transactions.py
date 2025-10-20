@@ -93,27 +93,7 @@ t.id, t.user_id, t.account_id, t.quantity, t.price, t.commission, t.currency, t.
 s.id AS symbol_id, s.name, s.ticker, s.display_name, s.currency AS symbol_currency, s.source, s.isin, s.picture,
 s.user_created, w.manual_price AS manual_price, TRUE AS is_favorite,
 a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency as account_currency,
-qp_today.price AS symbol_price, qp_today.currency AS symbol_currency,
-qp_yesterday.price AS open_price, qp_yesterday.currency AS open_currency
-"""
-
-_QUOTE_SUBQUERY = """
-LEFT JOIN LATERAL (
-    SELECT price, currency
-    FROM quote_history
-    WHERE symbol_id = s.id
-      AND created_at::date = CURRENT_DATE
-    ORDER BY created_at DESC
-    LIMIT 1
-) qp_today ON TRUE
-LEFT JOIN LATERAL (
-    SELECT price, currency
-    FROM quote_history
-    WHERE symbol_id = s.id
-      AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
-    ORDER BY created_at DESC
-    LIMIT 1
-) qp_yesterday ON TRUE
+qp.price as symbol_price, qp.previous_close, qp.currency as symbol_currency
 """
 
 
@@ -127,7 +107,14 @@ async def get_transaction_by_id(db: Connection, session: Session, transaction_id
         JOIN symbols s ON t.symbol_id = s.id
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
         LEFT JOIN accounts a ON t.account_id = a.id
-        {_QUOTE_SUBQUERY}
+        LEFT JOIN LATERAL (
+            SELECT price, previous_close, currency
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = CURRENT_DATE
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp ON TRUE
         WHERE t.id = %s::uuid AND t.user_id = %s::uuid
     """
 
@@ -148,8 +135,8 @@ async def get_transaction_by_id(db: Connection, session: Session, transaction_id
         )
         transaction.symbol.open_price, _ = await convert_to_currency(
             session,
-            row.get("open_price", None),
-            row.get("open_currency", None),
+            row.get("previous_close", None),
+            row.get("symbol_currency", None),
         )
         transaction.symbol.currency = session.currency
     return transaction
@@ -165,7 +152,14 @@ async def get_transactions_by_user(db: Connection, session: Session) -> list[Tra
         JOIN symbols s ON t.symbol_id = s.id
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
         LEFT JOIN accounts a ON t.account_id = a.id
-        {_QUOTE_SUBQUERY}
+        LEFT JOIN LATERAL (
+            SELECT price, previous_close, currency
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = CURRENT_DATE
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp ON TRUE
         WHERE t.user_id = %s::uuid
         ORDER BY t.date DESC
     """
@@ -186,8 +180,8 @@ async def get_transactions_by_user(db: Connection, session: Session) -> list[Tra
             )
             transaction.symbol.open_price, _ = await convert_to_currency(
                 session,
-                row.get("open_price", None),
-                row.get("open_currency", None),
+                row.get("previous_close", None),
+                row.get("symbol_currency", None),
             )
             transaction.symbol.currency = session.currency
         transactions.append(transaction)
@@ -209,7 +203,14 @@ async def get_transactions_by_user_and_symbol_and_account(
         JOIN symbols s ON t.symbol_id = s.id
         JOIN watchlist w ON t.symbol_id = w.symbol_id AND t.user_id = w.user_id
         LEFT JOIN accounts a ON t.account_id = a.id
-        {_QUOTE_SUBQUERY}
+        LEFT JOIN LATERAL (
+            SELECT price, previous_close, currency
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = CURRENT_DATE
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp ON TRUE
         WHERE t.user_id = %s::uuid
             AND t.symbol_id = %s
             AND t.account_id IS NOT DISTINCT FROM %s::uuid
@@ -232,8 +233,8 @@ async def get_transactions_by_user_and_symbol_and_account(
             )
             transaction.symbol.open_price, _ = await convert_to_currency(
                 session,
-                row.get("open_price", None),
-                row.get("open_currency", None),
+                row.get("previous_close", None),
+                row.get("symbol_currency", None),
             )
             transaction.symbol.currency = session.currency
         transactions.append(transaction)

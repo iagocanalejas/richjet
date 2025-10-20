@@ -11,12 +11,7 @@ from .symbol import Symbol, create_symbol, get_symbol_by_ticker
 
 _WATCHLIST_SELECT = """
 s.id AS symbol_id, w.user_id, s.ticker, s.display_name, s.name, s.currency, s.source, s.isin, s.picture,
-w.manual_price AS manual_price, s.user_created, TRUE AS is_favorite
-"""
-
-_QP_SELECT = """
-qp_today.price AS price, qp_today.currency AS currency,
-qp_yesterday.price AS open_price, qp_yesterday.currency AS open_currency
+w.manual_price AS manual_price, s.user_created, TRUE AS is_favorite, qp.price, qp.previous_close, qp.currency
 """
 
 
@@ -35,25 +30,17 @@ async def get_symbol_by_watchlist_id(
         raise HTTPException(status_code=400, detail=required_msg("watchlist_item_id"))
 
     sql = f"""
-        SELECT {_WATCHLIST_SELECT}, {_QP_SELECT}
+        SELECT {_WATCHLIST_SELECT}
         FROM watchlist w
         JOIN symbols s ON w.symbol_id = s.id
         LEFT JOIN LATERAL (
-            SELECT price, currency
+            SELECT price, previous_close, currency
             FROM quote_history
             WHERE symbol_id = s.id
               AND created_at::date = CURRENT_DATE
             ORDER BY created_at DESC
             LIMIT 1
-        ) qp_today ON TRUE
-        LEFT JOIN LATERAL (
-            SELECT price, currency
-            FROM quote_history
-            WHERE symbol_id = s.id
-              AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
-            ORDER BY created_at DESC
-            LIMIT 1
-        ) qp_yesterday ON TRUE
+        ) qp ON TRUE
         WHERE w.user_id = %s::uuid AND w.id = %s::uuid
     """
 
@@ -69,8 +56,8 @@ async def get_symbol_by_watchlist_id(
         symbol.price, _ = await convert_to_currency(session, row.get("price", None), row.get("currency", None))
         symbol.open_price, _ = await convert_to_currency(
             session,
-            row.get("open_price", None),
-            row.get("open_currency", None),
+            row.get("previous_close", None),
+            row.get("currency", None),
         )
         symbol.currency = session.currency
     return symbol
@@ -85,25 +72,17 @@ async def get_watchlist_by_user(db: Connection, session: Session) -> list[Symbol
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
     sql = f"""
-        SELECT {_WATCHLIST_SELECT}, {_QP_SELECT}
+        SELECT {_WATCHLIST_SELECT}
         FROM watchlist w
         JOIN symbols s ON w.symbol_id = s.id
         LEFT JOIN LATERAL (
-            SELECT price, currency
+            SELECT price, previous_close, currency
             FROM quote_history
             WHERE symbol_id = s.id
               AND created_at::date = CURRENT_DATE
             ORDER BY created_at DESC
             LIMIT 1
-        ) qp_today ON TRUE
-        LEFT JOIN LATERAL (
-            SELECT price, currency
-            FROM quote_history
-            WHERE symbol_id = s.id
-              AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
-            ORDER BY created_at DESC
-            LIMIT 1
-        ) qp_yesterday ON TRUE
+        ) qp ON TRUE
         WHERE w.user_id = %s::uuid
         ORDER BY s.display_name
     """
@@ -122,8 +101,8 @@ async def get_watchlist_by_user(db: Connection, session: Session) -> list[Symbol
             symbol.price, _ = await convert_to_currency(session, row.get("price", None), row.get("currency", None))
             symbol.open_price, _ = await convert_to_currency(
                 session,
-                row.get("open_price", None),
-                row.get("open_currency", None),
+                row.get("previous_close", None),
+                row.get("currency", None),
             )
             symbol.currency = session.currency
         symbols.append(symbol)
