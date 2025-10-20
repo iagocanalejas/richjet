@@ -6,7 +6,6 @@ import httpx
 from async_lru import alru_cache
 from log import logger
 
-from models.quote import StockQuote
 from models.session import Session
 
 EXCHANGERATE_API_KEY = os.getenv("EXCHANGERATE_API_KEY")
@@ -47,13 +46,3 @@ async def convert_to_currency(
         return amount, session.currency
     rate = await _get_exchange_rate(from_currency, session.currency)
     return amount * rate, session.currency
-
-
-async def convert_quote_to_currency(session: Session, quote: StockQuote) -> StockQuote:
-    quote.current, quote.currency = await convert_to_currency(session, quote.current, quote.currency)
-    quote.previous_close, quote.previous_close_currency = await convert_to_currency(
-        session,
-        quote.previous_close,
-        quote.previous_close_currency,
-    )
-    return quote

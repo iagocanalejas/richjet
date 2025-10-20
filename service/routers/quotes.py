@@ -4,7 +4,7 @@ from db import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from log import logger
 from models.quote import create_quote_history_point, get_quote_point
-from models.rates import convert_quote_to_currency
+from models.rates import convert_to_currency
 
 from routers.auth import get_session
 
@@ -40,5 +40,10 @@ async def get_quote(
     if not quote:
         raise HTTPException(status_code=404, detail=f"no quote found for {ticker}")
 
-    quote = await convert_quote_to_currency(session, quote)
+    quote.current, quote.currency = await convert_to_currency(session, quote.current, quote.currency)
+    quote.previous_close, quote.previous_close_currency = await convert_to_currency(
+        session,
+        quote.previous_close,
+        quote.previous_close_currency,
+    )
     return quote.to_dict()

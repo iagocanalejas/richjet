@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
 from psycopg2.extensions import connection as Connection
@@ -46,48 +45,42 @@ class StockQuote:
 
 def get_quote_point(db: Connection, ticker: str) -> StockQuote | None:
     sql = """
-    SELECT s.ticker, qp.price AS current, qp.currency, qp.created_at
-    FROM symbols s
-    JOIN quote_history qp ON qp.symbol_id = s.id
-    WHERE s.ticker = %s
-    ORDER BY qp.created_at DESC
-    LIMIT 2
+        SELECT qp_today.price AS price, qp_today.currency AS currency,
+            qp_yesterday.price AS open_price, qp_yesterday.currency AS open_currency
+        FROM symbols s
+        JOIN LATERAL (
+            SELECT price, currency
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = CURRENT_DATE
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp_today ON TRUE
+        JOIN LATERAL (
+            SELECT price, currency
+            FROM quote_history
+            WHERE symbol_id = s.id
+              AND created_at::date = (CURRENT_DATE - INTERVAL '1 day')
+            ORDER BY created_at DESC
+            LIMIT 1
+        ) qp_yesterday ON TRUE
+        WHERE s.ticker = %s
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
         cursor.execute(sql, (ticker,))
-        rows = cursor.fetchall()
+        result = cursor.fetchone()
 
-    if not rows:
+    if not result:
         return None
 
-    maybe_today_quote = rows[0]
-    maybe_yesterday_quote = rows[1] if len(rows) > 1 else None
-
-    today = datetime.now(timezone.utc).date()
-    created_date = maybe_today_quote["created_at"].date()
-
-    if created_date not in (today, today - timedelta(days=1)):
-        # no recent quotes
-        return None
-
-    if created_date == (today - timedelta(days=1)):
-        return StockQuote(
-            ticker=ticker,
-            previous_close=maybe_today_quote["current"],
-            previous_close_currency=maybe_today_quote["currency"],
-        )
-
-    if created_date == today:
-        quote = StockQuote(
-            ticker=ticker,
-            current=maybe_today_quote["current"],
-            currency=maybe_today_quote["currency"],
-        )
-        if maybe_yesterday_quote and maybe_yesterday_quote["created_at"].date() == (today - timedelta(days=1)):
-            quote.previous_close = maybe_yesterday_quote["current"]
-            quote.previous_close_currency = maybe_yesterday_quote["currency"]
-        return quote
+    return StockQuote(
+        ticker=ticker,
+        current=result["price"],
+        currency=result["currency"],
+        previous_close=result["open_price"],
+        previous_close_currency=result["open_currency"],
+    )
 
 
 def create_quote_history_point(db: Connection, quote: StockQuote) -> None:
