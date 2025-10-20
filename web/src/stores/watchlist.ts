@@ -11,8 +11,9 @@ export const useWatchlistStore = defineStore('watchlist', () => {
     async function init() {
         const tempWatchlist = await WatchlistService.retrieveWatchlist();
 
+        const quotes = await stockStore.getStockQuotes(tempWatchlist.filter((s) => !s.price));
         for (const item of tempWatchlist.filter((s) => !s.price)) {
-            const quote = await stockStore.getStockQuote(item);
+            const quote = quotes.find((q) => q.ticker === item.ticker);
             if (!quote) continue;
 
             item.price = quote.current;
@@ -29,7 +30,7 @@ export const useWatchlistStore = defineStore('watchlist', () => {
     async function addToWatchlist(item: StockSymbol) {
         const newSymbol = await WatchlistService.addToWatchlist(item);
         if (!newSymbol) return;
-        const quote = await stockStore.getStockQuote(item);
+        const quote = (await stockStore.getStockQuotes([item]))[0];
 
         watchlist.value.push({ ...newSymbol, price: quote?.current, open_price: quote?.previous_close });
         watchlist.value.sort((a, b) => a.display_name.localeCompare(b.display_name));

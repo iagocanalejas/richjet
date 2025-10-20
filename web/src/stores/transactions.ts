@@ -11,7 +11,7 @@ import { useWatchlistStore } from './watchlist';
 export const useTransactionsStore = defineStore('transactions', () => {
     const settingsStore = useSettingsStore();
     const { addError } = useErrorsStore();
-    const { getStockQuote } = useStocksStore();
+    const { getStockQuotes } = useStocksStore();
     const { account, accounts } = storeToRefs(settingsStore);
     const { updateSymbolManualPrice } = useWatchlistStore();
 
@@ -30,10 +30,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         transactions.value = structuredClone(trs);
 
         const symbols = [...new Set(trs.map((t) => t.symbol).filter((s) => !s.price))];
-        for (let i = 0; i < symbols.length; i += 5) {
-            const batch = symbols.slice(i, i + 5);
-            await Promise.all(batch.map((symbol) => getStockQuote(symbol)));
-        }
+        await getStockQuotes(symbols);
     }
 
     async function addTransaction(t: TransactionItem) {

@@ -9,14 +9,21 @@ export const useStocksStore = defineStore('stocks', () => {
         return StocksService.symbolSearch(query, is_load_more);
     }
 
-    async function getStockQuote(symbol: StockSymbol) {
-        if (!symbol.source || !symbol || symbol.is_user_created || symbol.is_manual_price) return;
-        if (_quoteCache.has(symbol.ticker)) return _quoteCache.get(symbol.ticker)!;
+    async function getStockQuotes(symbols: StockSymbol[]) {
+        const eligible = symbols.filter((s) => s.source && !s.is_user_created && !s.is_manual_price);
+        const cached = eligible.filter((s) => _quoteCache.has(s.ticker));
+        const uncachedTickers = eligible.filter((s) => !_quoteCache.has(s.ticker)).map((s) => s.ticker);
 
-        const data = await StocksService.getStockQuote(symbol);
-        if (!data) return;
-        _quoteCache.set(symbol.ticker, data);
-        return data;
+        const results = cached.map((s) => _quoteCache.get(s.ticker)!);
+        if (uncachedTickers.length > 0) {
+            const fetched = await StocksService.getStockQuote(uncachedTickers);
+            if (fetched?.length) {
+                fetched.forEach((q) => _quoteCache.set(q.ticker, q));
+                results.push(...fetched);
+            }
+        }
+
+        return results;
     }
 
     function getStockQuoteSync(symbol: StockSymbol) {
@@ -24,5 +31,5 @@ export const useStocksStore = defineStore('stocks', () => {
         return _quoteCache.get(symbol.ticker);
     }
 
-    return { symbolSearch, getStockQuote, getStockQuoteSync };
+    return { symbolSearch, getStockQuotes, getStockQuoteSync };
 });

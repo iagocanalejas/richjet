@@ -6,8 +6,8 @@ import { ref } from 'vue';
 import { StockSymbol } from '../../src/types/stock';
 import { hasBoughtSharesIfNeeded } from '../../src/utils/rules';
 
-const getStockQuoteMock = vi.fn(() => Promise.resolve({ current: 100 }));
-vi.mock('@/stores/stocks', () => ({ useStocksStore: () => ({ getStockQuote: () => getStockQuoteMock() }) }));
+const getStockQuoteMock = vi.fn(() => Promise.resolve([{ current: 100 }]));
+vi.mock('@/stores/stocks', () => ({ useStocksStore: () => ({ getStockQuotes: () => getStockQuoteMock() }) }));
 
 vi.mock('@/stores/settings', () => ({
     useSettingsStore: () => ({

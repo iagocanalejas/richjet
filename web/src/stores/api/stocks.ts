@@ -6,8 +6,7 @@ const BASE_URL = import.meta.env.VITE_BACKEND_BASE_URL || '/api';
 
 const addError = (e: CustomError) => useErrorsStore().addError(e);
 
-// NOTE: Don't use safeFetch in this module.
-
+// NOTE: Don't use safeFetch in symbolSearch.
 async function symbolSearch(query: string, is_load_more: boolean) {
     const url = `${BASE_URL}/search?q=${query}&load_more=${is_load_more}`;
     try {
@@ -40,9 +39,12 @@ async function symbolSearch(query: string, is_load_more: boolean) {
     return [];
 }
 
-async function getStockQuote(symbol: StockSymbol) {
-    const f = fetch(`${BASE_URL}/quotes/${symbol.ticker}`, { method: 'GET', credentials: 'include' });
-    return safeFetch<StockQuote>(f, 'Failed to fetch stock quote for ' + symbol.ticker);
+function getStockQuote(tickers: string[]) {
+    const params = new URLSearchParams();
+    tickers.forEach((ticker) => params.append('tickers', ticker));
+
+    const f = fetch(`${BASE_URL}/quotes/${params.toString()}`, { method: 'GET', credentials: 'include' });
+    return safeFetch<StockQuote[]>(f, 'Failed to fetch stock quote for ' + tickers.join(', '));
 }
 
 const StocksService = { symbolSearch, getStockQuote };
