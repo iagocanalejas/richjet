@@ -23,6 +23,10 @@ async def get_quote(
     """
     Fetches the stock quote for the given symbol.
     """
+    quotes = list({t.upper() for t in tickers})
+    if len(quotes) > 10:
+        raise HTTPException(status_code=400, detail="maximum 10 tickers allowed per request")
+
     quotes = await get_quote_point(db, session, tickers)
     results = []
 

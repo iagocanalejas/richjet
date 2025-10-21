@@ -30,7 +30,10 @@ export const useTransactionsStore = defineStore('transactions', () => {
         transactions.value = structuredClone(trs);
 
         const symbols = [...new Set(trs.map((t) => t.symbol).filter((s) => !s.price))];
-        await getStockQuotes(symbols);
+        for (let i = 0; i < symbols.length; i += 10) {
+            const batch = symbols.slice(i, i + 10);
+            await getStockQuotes(batch);
+        }
     }
 
     async function addTransaction(t: TransactionItem) {

@@ -43,7 +43,9 @@ function getStockQuote(tickers: string[]) {
     const params = new URLSearchParams();
     tickers.forEach((ticker) => params.append('tickers', ticker));
 
-    const f = fetch(`${BASE_URL}/quotes/${params.toString()}`, { method: 'GET', credentials: 'include' });
+    const opts = { method: 'GET', credentials: 'include', timeout: 15000 };
+    // @ts-expect-error: opts type is not correct as timeout is not standard
+    const f = fetch(`${BASE_URL}/quotes/?${params.toString()}`, opts);
     return safeFetch<StockQuote[]>(f, 'Failed to fetch stock quote for ' + tickers.join(', '));
 }
 
