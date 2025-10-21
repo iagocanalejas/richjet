@@ -6,21 +6,9 @@ import { useSettingsStore } from './stores/settings';
 const router = createRouter({
     history: createWebHistory(import.meta.env.VITE_VUE_BASE_URL),
     routes: [
-        {
-            path: '/',
-            name: 'portfolio',
-            component: PortfolioView,
-        },
-        {
-            path: '/shares',
-            name: 'shares',
-            component: () => import('./views/SharesView.vue'),
-        },
-        {
-            path: '/transactions',
-            name: 'transactions',
-            component: () => import('./views/TransactionsView.vue'),
-        },
+        { path: '/', name: 'portfolio', component: PortfolioView },
+        { path: '/shares', name: 'shares', component: () => import('./views/SharesView.vue') },
+        { path: '/transactions', name: 'transactions', component: () => import('./views/TransactionsView.vue') },
         {
             path: '/settings',
             name: 'settings',
@@ -35,21 +23,9 @@ const router = createRouter({
             name: 'privacy-policy',
             component: () => import('./views/legal/PrivacyPolicyView.vue'),
         },
-        {
-            path: '/conditions',
-            name: 'conditions',
-            component: () => import('./views/legal/ConditionsView.vue'),
-        },
-        {
-            path: '/checkout-success',
-            name: 'checkout-success',
-            component: () => PortfolioView,
-        },
-        {
-            path: '/checkout-cancel',
-            name: 'checkout-cancel',
-            component: () => PortfolioView,
-        },
+        { path: '/conditions', name: 'conditions', component: () => import('./views/legal/ConditionsView.vue') },
+        { path: '/checkout-success', name: 'checkout-success', component: () => PortfolioView },
+        { path: '/checkout-cancel', name: 'checkout-cancel', component: () => PortfolioView },
         {
             path: '/auth/callback',
             name: 'auth-callback',

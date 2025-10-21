@@ -1,33 +1,16 @@
 import { defineStore } from 'pinia';
-import { type StockQuote, type StockSymbol } from '@/types/stock';
+import { type StockSymbol } from '@/types/stock';
 import { ref } from 'vue';
 import { useStocksStore } from './stocks';
 import WatchlistService from './api/watchlist';
 
 export const useWatchlistStore = defineStore('watchlist', () => {
     const watchlist = ref<StockSymbol[]>([]);
-    const { getStockQuotes } = useStocksStore();
+    const { fillSymbolQuotes } = useStocksStore();
 
-    // TODO: is required to currently have this being called before the transactions init, it shouldn't be like that
     async function init() {
         const tempWatchlist = await WatchlistService.retrieveWatchlist();
-
-        const symbols = [...new Set(tempWatchlist.filter((s) => !s.price))];
-        const quotes: StockQuote[] = [];
-        for (let i = 0; i < symbols.length; i += 10) {
-            const batch = symbols.slice(i, i + 10);
-            const batch_quotes = await getStockQuotes(batch);
-            quotes.push(...batch_quotes);
-        }
-        for (const item of symbols) {
-            const quote = quotes.find((q) => q.ticker === item.ticker);
-            if (!quote) continue;
-
-            item.price = quote.current;
-            item.open_price = quote.previous_close;
-        }
-
-        watchlist.value = tempWatchlist;
+        watchlist.value = await fillSymbolQuotes(tempWatchlist);
     }
 
     function isInWatchlist(symbol: StockSymbol) {
@@ -37,9 +20,9 @@ export const useWatchlistStore = defineStore('watchlist', () => {
     async function addToWatchlist(item: StockSymbol) {
         const newSymbol = await WatchlistService.addToWatchlist(item);
         if (!newSymbol) return;
-        const quote = (await getStockQuotes([item]))[0];
 
-        watchlist.value.push({ ...newSymbol, price: quote?.current, open_price: quote?.previous_close });
+        await fillSymbolQuotes([newSymbol]);
+        watchlist.value.push({ ...newSymbol });
         watchlist.value.sort((a, b) => a.display_name.localeCompare(b.display_name));
     }
 

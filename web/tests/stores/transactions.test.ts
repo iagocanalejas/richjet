@@ -6,8 +6,8 @@ import { ref } from 'vue';
 import { StockSymbol } from '../../src/types/stock';
 import { hasBoughtSharesIfNeeded } from '../../src/utils/rules';
 
-const getStockQuoteMock = vi.fn(() => Promise.resolve([{ current: 100 }]));
-vi.mock('@/stores/stocks', () => ({ useStocksStore: () => ({ getStockQuotes: () => getStockQuoteMock() }) }));
+const mockStocksStore = { fillSymbolQuotes: vi.fn(), fillTransactionQuotes: (tr: TransactionItem[]) => tr };
+vi.mock('@/stores/stocks', () => ({ useStocksStore: () => mockStocksStore }));
 
 vi.mock('@/stores/settings', () => ({
     useSettingsStore: () => ({
@@ -30,6 +30,7 @@ const mockSymbol: StockSymbol = {
     display_name: 'APPLE',
     name: 'Apple',
     currency: 'USD',
+    price: 100,
     source: 'NASDAQ',
     is_user_created: false,
     is_manual_price: false,

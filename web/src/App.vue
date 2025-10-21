@@ -105,15 +105,15 @@ watch(
     () => isLogged.value,
     async (newValue, prevValue) => {
         if (!prevValue && newValue) {
-            await useWatchlistStore().init();
             await useTransactionsStore().init();
+            await useWatchlistStore().init();
         }
     }
 );
 
 onMounted(async () => {
     if (!authStore.isLogged) return;
-    await useWatchlistStore().init();
     await useTransactionsStore().init();
+    await useWatchlistStore().init();
 });
 </script>

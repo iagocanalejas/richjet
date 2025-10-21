@@ -8,8 +8,8 @@ import { Account } from '../../src/types/user';
 import { isDividend } from '../../src/utils/rules';
 
 const MOCK_CURRENT_PRICE = 200;
-const getStockQuoteMockSync = vi.fn(() => ({ current: MOCK_CURRENT_PRICE, currency: 'USD' }));
-vi.mock('@/stores/stocks', () => ({ useStocksStore: () => ({ getStockQuoteSync: () => getStockQuoteMockSync() }) }));
+const mockStocksStore = { fillSymbolQuotes: vi.fn(), fillTransactionQuotes: vi.fn() };
+vi.mock('@/stores/stocks', () => ({ useStocksStore: () => mockStocksStore }));
 
 const mockTransactions = ref<TransactionItem[]>([]);
 const mockCashDividends = ref(0);
@@ -36,8 +36,9 @@ const mockSymbol: StockSymbol = {
     ticker: 'AAPL',
     display_name: 'APPLE',
     name: 'Apple',
-    currency: 'USD',
     source: 'NASDAQ',
+    price: MOCK_CURRENT_PRICE,
+    currency: 'USD',
     is_user_created: false,
     is_manual_price: false,
     is_favorite: true,

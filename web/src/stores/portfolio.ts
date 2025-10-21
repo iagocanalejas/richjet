@@ -1,7 +1,6 @@
 import { defineStore, storeToRefs } from 'pinia';
 import { type PortfolioItem, type TransactionItem } from '@/types/portfolio';
 import { computed, toRaw } from 'vue';
-import { useStocksStore } from './stocks';
 import { useSettingsStore } from './settings';
 import { useTransactionsStore } from './transactions';
 import { isSavingsAccount } from '@/utils/rules';
@@ -9,7 +8,6 @@ import { isSavingsAccount } from '@/utils/rules';
 export const usePortfolioStore = defineStore('portfolio', () => {
     const { transactions, cashDividends } = storeToRefs(useTransactionsStore());
     const { account, accounts } = storeToRefs(useSettingsStore());
-    const { getStockQuoteSync } = useStocksStore();
 
     const _accountKey = computed(() => account.value?.name ?? 'all');
 
@@ -43,21 +41,11 @@ export const usePortfolioStore = defineStore('portfolio', () => {
             throw new Error(`First transaction for symbol ${firstTr.symbol.ticker} must be a BUY transaction`);
         }
 
-        let currentPrice = firstTr.symbol.price;
-        if (!currentPrice) {
-            const quote = getStockQuoteSync(firstTr.symbol);
-            if (quote && quote.current) {
-                currentPrice = quote.current;
-            } else {
-                currentPrice = 0.0;
-            }
-        }
-
         const portfolioItem: PortfolioItem = {
             symbol: firstTr.symbol,
             currency: firstTr.currency,
             quantity: firstTr.quantity,
-            current_price: currentPrice,
+            current_price: firstTr.symbol.price ?? 0.0,
             current_invested: firstTr.quantity * firstTr.price,
             total_invested: firstTr.quantity * firstTr.price,
             total_retrieved: 0,

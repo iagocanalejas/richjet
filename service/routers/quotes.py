@@ -12,7 +12,6 @@ router = APIRouter()
 client = GoogleClient()
 
 
-# TODO: limit amount of tickers per request
 # TODO: add fallback to https://markets.ft.com/data/funds/tearsheet/historical?s=IE00BD0NCM55:EUR
 @router.get("/")
 async def get_quote(
