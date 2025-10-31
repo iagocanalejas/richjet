@@ -16,6 +16,7 @@
 		"lint": "run-s lint:*"
 	},
 	"dependencies": {
+		"@emmetio/css-parser": "^0.4.0",
 		"@vuepic/vue-datepicker": "^11.0.3",
 		"pinia": "^3.0.3",
 		"vue-router": "^4.6.3"
