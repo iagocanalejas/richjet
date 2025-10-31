@@ -446,12 +446,13 @@ async def _validate_sell_transaction(db: Connection, session: Session, transacti
         symbol_id=transaction.symbol_id,
         account_id=transaction.account_id,
     )
-    transactions = [t for t in transactions if t.transaction_type in {TransactionType.BUY, TransactionType.SELL}]
+    hoard_transactions = {TransactionType.BUY, TransactionType.SELL, TransactionType.DIVIDEND}
+    transactions = [t for t in transactions if t.transaction_type in hoard_transactions]
     transactions.reverse()
     if transaction.id:  # if we are updating an existing transaction, exclude it from the check
         idx = next(i for i, t in enumerate(transactions) if t.id == transaction.id)
         transactions = transactions[:idx]
-    remaining = sum(t.quantity if t.transaction_type == TransactionType.BUY else -t.quantity for t in transactions)
-    if remaining < transaction.quantity:
+    remaining = sum(-t.quantity if t.transaction_type == TransactionType.SELL else t.quantity for t in transactions)
+    if remaining <= transaction.quantity:
         msg = f"Not enough shares to sell. Available: {remaining}, Trying to sell: {transaction.quantity}"
         raise HTTPException(status_code=400, detail=msg)
