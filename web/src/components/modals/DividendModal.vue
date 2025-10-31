@@ -63,7 +63,7 @@
                     <VueDatePicker
                         v-model="transactionCopy.date"
                         :format="dateFormat"
-                        :locale="locale()"
+                        :locale="await dateFnsLocale()"
                         :enable-time-picker="false"
                         auto-apply
                         dark
@@ -111,7 +111,7 @@
                     <VueDatePicker
                         v-model="transactionCopy.date"
                         :format="dateFormat"
-                        :locale="locale()"
+                        :locale="await dateFnsLocale()"
                         :enable-time-picker="false"
                         auto-apply
                         dark
@@ -139,11 +139,11 @@
 
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/portfolio';
-import VueDatePicker from '@vuepic/vue-datepicker';
-import { normalizeDecimalInput, locale } from '@/utils/utils';
+import { normalizeDecimalInput, locale, dateFnsLocale } from '@/utils/utils';
 import { reactive, ref, watch, type PropType } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSettingsStore } from '@/stores/settings';
+import { VueDatePicker } from '@vuepic/vue-datepicker';
 
 const props = defineProps({
     transaction: { type: Object as PropType<Omit<TransactionItem, 'id' | 'user_id'>>, required: true },
