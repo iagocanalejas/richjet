@@ -453,6 +453,6 @@ async def _validate_sell_transaction(db: Connection, session: Session, transacti
         idx = next(i for i, t in enumerate(transactions) if t.id == transaction.id)
         transactions = transactions[:idx]
     remaining = sum(-t.quantity if t.transaction_type == TransactionType.SELL else t.quantity for t in transactions)
-    if remaining <= transaction.quantity:
+    if float(remaining) < transaction.quantity:
         msg = f"Not enough shares to sell. Available: {remaining}, Trying to sell: {transaction.quantity}"
         raise HTTPException(status_code=400, detail=msg)
