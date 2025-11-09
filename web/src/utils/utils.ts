@@ -28,6 +28,19 @@ export function locale() {
     return mapWeirdLocales(navigator.language || 'en-US');
 }
 
+export function dateFnsLocale() {
+    switch (locale()) {
+        case 'es-ES':
+            return import('date-fns/locale/es');
+        default:
+            try {
+                return import(`date-fns/locale/${locale()}`);
+            } catch {
+                return import('date-fns/locale/en-US');
+            }
+    }
+}
+
 function mapWeirdLocales(locale: string) {
     switch (locale) {
         case 'gl':
