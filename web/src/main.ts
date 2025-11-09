@@ -7,8 +7,7 @@ import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 import { useLoadingStore } from './stores/loading';
-
-import VueDatePicker from '@vuepic/vue-datepicker';
+import { VueDatePicker } from '@vuepic/vue-datepicker';
 
 const pinia = createPinia();
 const app = createApp(App);
@@ -42,10 +41,7 @@ window.fetch = async function fetchWithRetry(resource: RequestInfo, options: Req
         attempt++;
 
         try {
-            return await originalFetch(resource, {
-                ...rest,
-                signal: controller.signal,
-            });
+            return await originalFetch(resource, { ...rest, signal: controller.signal });
         } catch (err) {
             const isTimeout =
                 err instanceof Error

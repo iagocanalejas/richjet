@@ -83,7 +83,7 @@
                         v-else
                         v-model="transactionCopy.date"
                         :format="dateFormat"
-                        :locale="locale()"
+                        :locale="await dateFnsLocale()"
                         :enable-time-picker="false"
                         auto-apply
                         dark
@@ -128,11 +128,11 @@
 
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/portfolio';
-import VueDatePicker from '@vuepic/vue-datepicker';
-import { normalizeDecimalInput, locale, formatDate } from '@/utils/utils';
+import { normalizeDecimalInput, locale, formatDate, dateFnsLocale } from '@/utils/utils';
 import { onMounted, reactive, ref, watch, type PropType } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 import { storeToRefs } from 'pinia';
+import { VueDatePicker } from '@vuepic/vue-datepicker';
 
 // TODO: allow to add a balance account from where the transaction is paid
 // something should be saved in the transaction as this should be reversible
