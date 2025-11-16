@@ -1,5 +1,5 @@
 async-lru==2.0.5
-fastapi[standard]==0.121.1
+fastapi[standard]==0.121.2
 google-auth==2.43.0
 parsel==1.10.0
 psycopg2-binary==2.9.11
