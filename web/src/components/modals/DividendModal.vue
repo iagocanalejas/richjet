@@ -63,7 +63,7 @@
                     <VueDatePicker
                         v-model="transactionCopy.date"
                         :format="dateFormat"
-                        :locale="await dateFnsLocale()"
+                        :locale="datePickerLocale"
                         :enable-time-picker="false"
                         auto-apply
                         dark
@@ -111,7 +111,7 @@
                     <VueDatePicker
                         v-model="transactionCopy.date"
                         :format="dateFormat"
-                        :locale="await dateFnsLocale()"
+                        :locale="datePickerLocale"
                         :enable-time-picker="false"
                         auto-apply
                         dark
@@ -140,10 +140,11 @@
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/portfolio';
 import { normalizeDecimalInput, locale, dateFnsLocale } from '@/utils/utils';
-import { reactive, ref, watch, type PropType } from 'vue';
+import { onMounted, reactive, ref, watch, type PropType } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSettingsStore } from '@/stores/settings';
 import { VueDatePicker } from '@vuepic/vue-datepicker';
+import type { Locale } from 'date-fns';
 
 const props = defineProps({
     transaction: { type: Object as PropType<Omit<TransactionItem, 'id' | 'user_id'>>, required: true },
@@ -152,12 +153,16 @@ const props = defineProps({
 const emit = defineEmits(['add-dividend', 'close']);
 
 const { accounts } = storeToRefs(useSettingsStore());
+const datePickerLocale = ref<Locale | undefined>();
 
 const dividendType = ref<'cash' | 'stock'>('cash');
 const priceInput = ref('');
 const $errors = ref<{ price?: string; quantity?: string }>({});
 
 const transactionCopy = reactive({ ...props.transaction });
+onMounted(async () => {
+    datePickerLocale.value = await dateFnsLocale();
+});
 watch(
     () => props.transaction,
     (newVal) => Object.assign(transactionCopy, newVal)

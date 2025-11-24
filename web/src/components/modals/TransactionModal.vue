@@ -83,7 +83,7 @@
                         v-else
                         v-model="transactionCopy.date"
                         :format="dateFormat"
-                        :locale="await dateFnsLocale()"
+                        :locale="datePickerLocale"
                         :enable-time-picker="false"
                         auto-apply
                         dark
@@ -133,6 +133,7 @@ import { onMounted, reactive, ref, watch, type PropType } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 import { storeToRefs } from 'pinia';
 import { VueDatePicker } from '@vuepic/vue-datepicker';
+import type { Locale } from 'date-fns';
 
 // TODO: allow to add a balance account from where the transaction is paid
 // something should be saved in the transaction as this should be reversible
@@ -146,17 +147,20 @@ const props = defineProps({
 const emit = defineEmits(['buy', 'sell', 'save', 'close']);
 
 const { accounts } = storeToRefs(useSettingsStore());
+const datePickerLocale = ref<Locale | undefined>();
 
 const priceInput = ref('');
 const quantityInput = ref('');
 const transactionCopy = reactive({ ...props.transaction });
 const $errors = ref<{ price?: string; quantity?: string }>({});
 
-onMounted(() => {
+onMounted(async () => {
     Object.assign(transactionCopy, props.transaction);
     priceInput.value = transactionCopy.price ? transactionCopy.price.toString() : '';
     quantityInput.value = transactionCopy.quantity ? transactionCopy.quantity.toString() : '';
     transactionCopy.date = transactionCopy.date ? new Date(transactionCopy.date).toISOString().split('T')[0]! : '';
+
+    datePickerLocale.value = await dateFnsLocale();
 });
 watch(
     () => props.transaction,
