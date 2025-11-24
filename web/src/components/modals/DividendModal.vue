@@ -99,7 +99,7 @@
                             class="mt-1 block w-full bg-gray-800 border border-gray-700 rounded-md py-2 px-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
                         >
                             <option :value="undefined">No account</option>
-                            <option v-for="account in accounts" :key="account.name" :value="account">
+                            <option v-for="account in usableAccounts" :key="account.name" :value="account">
                                 {{ account.name }}
                             </option>
                         </select>
@@ -140,11 +140,13 @@
 <script setup lang="ts">
 import type { TransactionItem } from '@/types/portfolio';
 import { normalizeDecimalInput, locale, dateFnsLocale } from '@/utils/utils';
-import { onMounted, reactive, ref, watch, type PropType } from 'vue';
+import { computed, onMounted, reactive, ref, watch, type PropType } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useSettingsStore } from '@/stores/settings';
 import { VueDatePicker } from '@vuepic/vue-datepicker';
 import type { Locale } from 'date-fns';
+import { useTransactionsStore } from '@/stores/transactions';
+import { isSavingsAccount } from '@/utils/rules';
 
 const props = defineProps({
     transaction: { type: Object as PropType<Omit<TransactionItem, 'id' | 'user_id'>>, required: true },
@@ -153,19 +155,36 @@ const props = defineProps({
 const emit = defineEmits(['add-dividend', 'close']);
 
 const { accounts } = storeToRefs(useSettingsStore());
+const { transactions } = storeToRefs(useTransactionsStore());
 const datePickerLocale = ref<Locale | undefined>();
 
 const dividendType = ref<'cash' | 'stock'>('cash');
 const priceInput = ref('');
 const $errors = ref<{ price?: string; quantity?: string }>({});
 
+const usableAccounts = computed(() =>
+    accounts.value
+        .filter((account) => !isSavingsAccount(account))
+        .filter((account) =>
+            transactions.value.some((t) => t.symbol.id === props.transaction.symbol.id && t.account?.id === account.id)
+        )
+);
+
 const transactionCopy = reactive({ ...props.transaction });
 onMounted(async () => {
+    if (usableAccounts.value.length === 1 && !transactionCopy.account) {
+        transactionCopy.account = usableAccounts.value[0];
+    }
     datePickerLocale.value = await dateFnsLocale();
 });
 watch(
     () => props.transaction,
-    (newVal) => Object.assign(transactionCopy, newVal)
+    (newVal) => {
+        Object.assign(transactionCopy, newVal);
+        if (usableAccounts.value.length === 1 && !transactionCopy.account) {
+            transactionCopy.account = usableAccounts.value[0];
+        }
+    }
 );
 
 function dateFormat(date: Date) {
