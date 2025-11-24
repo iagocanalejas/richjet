@@ -75,8 +75,8 @@ const { totalInvested, portfolioCurrentValue, savingAccountsValue, closedPositio
 
 const isSavings = computed(() => isSavingsAccount(selectedAccount.value));
 const gridClass = computed(() => {
-    if (!selectedAccount.value && savingAccountsValue.value > 0) return 'grid-cols-3 md:grid-cols-6';
+    if (!selectedAccount.value && savingAccountsValue.value > 0) return 'grid-cols-2 md:grid-cols-6';
     if (isSavings.value) return 'grid-cols-2 cursor-pointer';
-    return 'grid-cols-3 md:grid-cols-5';
+    return 'grid-cols-2 md:grid-cols-5';
 });
 </script>

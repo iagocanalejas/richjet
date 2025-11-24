@@ -2,7 +2,7 @@
     <header class="flex items-center justify-between p-4 bg-gray-800 text-white shadow-md">
         <RouterLink to="/" class="flex items-center space-x-2 hover:opacity-80 transition">
             <img src="@/assets/logo.png" alt="Logo" class="h-10 w-10" />
-            <span class="text-xl font-semibold text-white">RichJet</span>
+            <span class="text-xl font-semibold text-white hidden md:block">RichJet</span>
         </RouterLink>
 
         <MobileHeader v-if="isLogged" />
