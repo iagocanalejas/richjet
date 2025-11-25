@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from fastapi import HTTPException
 from log.errors import required_msg
+from psycopg2.errors import UniqueViolation
 from psycopg2.extensions import connection as Connection
 from psycopg2.extras import RealDictCursor, RealDictRow
 
@@ -175,11 +176,11 @@ def get_symbol_by_ticker(db: Connection, ticker: str) -> Symbol:
     return Symbol.from_row(result)
 
 
-def create_symbol(db: Connection, session: Session, symbol: Symbol) -> Symbol:
+def create_symbol(db: Connection, session: Session, symbol: Symbol, no_commit: bool = False) -> Symbol:
     """
     Creates a symbol in the database.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol.ticker:
@@ -199,25 +200,31 @@ def create_symbol(db: Connection, session: Session, symbol: Symbol) -> Symbol:
     """
 
     with db.cursor() as cursor:
-        cursor.execute(
-            sql,
-            (
-                symbol.ticker,
-                symbol.name,
-                symbol.display_name or symbol.name,
-                symbol.currency,
-                symbol.source,
-                symbol.isin,
-                symbol.picture,
-                user_id,
-            ),
-        )
-        row = cursor.fetchone()
+        try:
+            cursor.execute(
+                sql,
+                (
+                    symbol.ticker,
+                    symbol.name,
+                    symbol.display_name or symbol.name,
+                    symbol.currency,
+                    symbol.source,
+                    symbol.isin,
+                    symbol.picture,
+                    user_id,
+                ),
+            )
+            row = cursor.fetchone()
+        except UniqueViolation:
+            if not no_commit:
+                db.rollback()
+            raise HTTPException(status_code=409, detail=f"Symbol '{symbol.ticker}' already exists.")
 
     if not row:
         raise HTTPException(status_code=500, detail="Failed to create symbol")
 
-    db.commit()
+    if not no_commit:
+        db.commit()
     return get_symbol_by_id(db, row[0])
 
 
@@ -225,7 +232,7 @@ def remove_symbol_by_id(db: Connection, session: Session, symbol_id: str) -> Non
     """
     Removes a symbol by its id from the database.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol_id:

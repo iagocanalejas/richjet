@@ -15,10 +15,17 @@ async def api_create_symbol(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     symbol = Symbol.from_dict(**symbol_data, created_by=user_id)
-    symbol = create_symbol(db, session, symbol)
-    create_watchlist_item(db, session, symbol)
+    with db:
+        with db.cursor() as cursor:
+            cursor.execute(f"SAVEPOINT symbol_create_{user_id.replace('-', '_')};")
+            try:
+                symbol = create_symbol(db, session, symbol, no_commit=True)
+                symbol = create_watchlist_item(db, session, symbol)
+            except Exception as e:
+                cursor.execute(f"ROLLBACK TO SAVEPOINT symbol_create_{user_id.replace('-', '_')};")
+                raise e
     return symbol.to_dict()
 
 

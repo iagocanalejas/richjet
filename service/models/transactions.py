@@ -347,7 +347,7 @@ async def update_stock_account(
     """
     Updates the account for a transaction.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not ticker:
@@ -390,7 +390,7 @@ def remove_transaction_by_id(db: Connection, session: Session, transaction_id: s
     """
     Removes a transaction from the database.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not transaction_id:

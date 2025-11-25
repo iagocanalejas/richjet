@@ -23,7 +23,7 @@ async def get_symbol_by_watchlist_id(
     """
     Retrieves a watchlist item from the database by user ID and watchlist item ID.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not watchlist_item_id:
@@ -67,7 +67,7 @@ async def get_watchlist_by_user(db: Connection, session: Session) -> list[Symbol
     """
     Retrieves a watchlist from the database by user ID.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
 
@@ -109,11 +109,11 @@ async def get_watchlist_by_user(db: Connection, session: Session) -> list[Symbol
     return symbols
 
 
-def create_watchlist_item(db: Connection, session: Session, symbol: Symbol) -> Symbol:
+def create_watchlist_item(db: Connection, session: Session, symbol: Symbol, no_commit: bool = False) -> Symbol:
     """
     Adds a symbol to the watchlist in the database.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol.ticker:
@@ -125,7 +125,7 @@ def create_watchlist_item(db: Connection, session: Session, symbol: Symbol) -> S
         except HTTPException as e:
             if e.status_code != 404:
                 raise e
-            symbol = create_symbol(db, session, symbol)
+            symbol = create_symbol(db, session, symbol, no_commit=True)
 
     if not symbol.id:
         raise HTTPException(status_code=404, detail=f"Symbol {symbol.ticker} not found")
@@ -143,7 +143,8 @@ def create_watchlist_item(db: Connection, session: Session, symbol: Symbol) -> S
     if not result:
         raise HTTPException(status_code=500, detail="Failed to add symbol to watchlist")
 
-    db.commit()
+    if not no_commit:
+        db.commit()
     return symbol
 
 
@@ -156,7 +157,7 @@ async def update_watchlist_item(
     """
     Updates the price of a watchlist item in the database.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol_id:
@@ -186,7 +187,7 @@ def remove_watchlist_item(db: Connection, session: Session, symbol_id: str) -> N
     Removes a symbol from the watchlist in the database.
     Also deletes user-created symbols if no longer referenced.
     """
-    user_id = session.user.id if isinstance(session.user, User) else None
+    user_id = session.user.id if isinstance(session.user, User) else session.user
     if not user_id:
         raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol_id:
