@@ -39,6 +39,12 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         watchlist.value = watchlist.value.filter((s) => s.ticker !== item.ticker);
     }
 
+    async function removeFromWatchlistAndDeleteSymbol(item: StockSymbol) {
+        const isRemoved = await WatchlistService.removeFromWatchlistAndDeleteSymbol(item);
+        if (!isRemoved) return;
+        watchlist.value = watchlist.value.filter((s) => s.ticker !== item.ticker);
+    }
+
     function updateSymbolManualPrice(symbol_id: string, price?: number) {
         if (price && price < 0) throw new Error('Price cannot be negative');
         if (price && isNaN(price)) throw new Error('Price must be a number');
@@ -53,6 +59,7 @@ export const useWatchlistStore = defineStore('watchlist', () => {
         addToWatchlist,
         addToWatchlistCreatingSymbol,
         removeFromWatchlist,
+        removeFromWatchlistAndDeleteSymbol,
         updateSymbolManualPrice,
     };
 });

@@ -38,7 +38,7 @@ def sample_row():
         "isin": "ISIN123",
         "figi": "FIGI123",
         "picture": None,
-        "user_created": True,
+        "created_by": "user-1",
         "account_name": "Brokerage",
         "account_type": "BROKER",
         "balance": 1000,

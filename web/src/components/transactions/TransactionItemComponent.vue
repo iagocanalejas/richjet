@@ -28,7 +28,11 @@
     </div>
 
     <div class="hidden md:flex items-center justify-end text-gray-400">
-        <button @click.stop="emit('remove', item)" class="hover:text-red-500 transition-colors" title="Remove">
+        <button
+            @click.stop="emit('remove', item)"
+            class="text-gray-400 hover:text-red-500 transition-colors"
+            title="Remove"
+        >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -40,8 +44,8 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M10 12h4M4 6h16M9 6h6a2 2 0 012 2v12a2 2 0
-             01-2 2H7a2 2 0 01-2-2V8a2 2 0 012-2z"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0
+               011-1h8a1 1 0 011 1v1a1 1 0 01-1 1m-7 0h8"
                 />
             </svg>
         </button>

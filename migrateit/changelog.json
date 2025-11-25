@@ -125,6 +125,13 @@
             "parents": [
                 "0016_quote_history.sql"
             ]
+        },
+        {
+            "name": "0018_symbol_created_by.sql",
+            "initial": false,
+            "parents": [
+                "0017_quote_history_close.sql"
+            ]
         }
     ]
 }

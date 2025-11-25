@@ -91,7 +91,7 @@ class Transaction:
 _TRANSACTION_SELECT = """
 t.id, t.user_id, t.account_id, t.quantity, t.price, t.commission, t.currency, t.transaction_type, t.date, t.created_at,
 s.id AS symbol_id, s.name, s.ticker, s.display_name, s.currency AS symbol_currency, s.source, s.isin, s.picture,
-s.user_created, w.manual_price AS manual_price, TRUE AS is_favorite,
+s.created_by, w.manual_price AS manual_price, TRUE AS is_favorite,
 a.id AS account_id, a.name AS account_name, a.account_type, a.balance, a.currency as account_currency,
 qp.price as symbol_price, qp.previous_close, qp.currency as symbol_currency
 """

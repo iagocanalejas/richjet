@@ -6,6 +6,9 @@ from log.errors import required_msg
 from psycopg2.extensions import connection as Connection
 from psycopg2.extras import RealDictCursor, RealDictRow
 
+from models.session import Session
+from models.user import User
+
 
 @dataclass
 class Symbol:
@@ -19,9 +22,13 @@ class Symbol:
     picture: str | None = None
     price: float | None = None
     open_price: float | None = None
-    is_user_created: bool = False
     is_manual_price: bool = False
     is_favorite: bool = False
+    created_by: str | None = None
+
+    @property
+    def is_user_created(self) -> bool:
+        return self.created_by is not None
 
     def __eq__(self, value: object, /) -> bool:
         return isinstance(value, Symbol) and self.ticker == value.ticker
@@ -41,7 +48,7 @@ class Symbol:
             picture=self.picture or other.picture,
             price=self.price or other.price,
             open_price=self.open_price or other.open_price,
-            is_user_created=self.is_user_created or other.is_user_created,
+            created_by=self.created_by or other.created_by,
             is_manual_price=self.is_manual_price or other.is_manual_price,
             is_favorite=self.is_favorite or other.is_favorite,
         )
@@ -58,7 +65,7 @@ class Symbol:
             currency=row["symbol_currency"] if "symbol_currency" in row else row["currency"],
             picture=row["picture"],
             price=row.get("manual_price", None),
-            is_user_created=row["user_created"],
+            created_by=row["created_by"],
             is_manual_price=bool(row.get("manual_price", False)),
             is_favorite=row.get("is_favorite", False),
         )
@@ -106,9 +113,9 @@ def is_supported_ticker(ticker: str) -> bool:
 def search_symbol(db: Connection, query: str) -> list[Symbol]:
     like_query = f"%{query}%"
     sql = """
-        SELECT id, ticker, display_name, name, source, isin, currency, picture, user_created
+        SELECT id, ticker, display_name, name, source, isin, currency, picture, created_by
         FROM symbols
-        WHERE NOT user_created AND (
+        WHERE created_by IS NULL AND (
             ticker ILIKE %s OR
             name ILIKE %s OR
             isin ILIKE %s
@@ -130,7 +137,7 @@ def get_symbol_by_id(db: Connection, id: str) -> Symbol:
         raise HTTPException(status_code=400, detail=required_msg("id"))
 
     sql = """
-        SELECT id, ticker, display_name, name, source, isin, currency, picture, user_created
+        SELECT id, ticker, display_name, name, source, isin, currency, picture, created_by
         FROM symbols
         WHERE id = %s
     """
@@ -153,9 +160,9 @@ def get_symbol_by_ticker(db: Connection, ticker: str) -> Symbol:
         raise HTTPException(status_code=400, detail=required_msg("ticker"))
 
     sql = """
-        SELECT id, ticker, display_name, name, source, isin, currency, picture, user_created
+        SELECT id, ticker, display_name, name, source, isin, currency, picture, created_by
         FROM symbols
-        WHERE NOT user_created AND ticker ILIKE %s
+        WHERE created_by IS NULL AND ticker ILIKE %s
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -168,10 +175,13 @@ def get_symbol_by_ticker(db: Connection, ticker: str) -> Symbol:
     return Symbol.from_row(result)
 
 
-def create_symbol(db: Connection, symbol: Symbol) -> Symbol:
+def create_symbol(db: Connection, session: Session, symbol: Symbol) -> Symbol:
     """
     Creates a symbol in the database.
     """
+    user_id = session.user.id if isinstance(session.user, User) else None
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
     if not symbol.ticker:
         raise HTTPException(status_code=400, detail=required_msg("symbol.ticker"))
     if not symbol.name:
@@ -183,7 +193,7 @@ def create_symbol(db: Connection, symbol: Symbol) -> Symbol:
 
     # TODO: allow different security types?
     sql = """
-        INSERT INTO symbols (ticker, name, display_name, currency, source, isin, picture, user_created, security_type)
+        INSERT INTO symbols (ticker, name, display_name, currency, source, isin, picture, created_by, security_type)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'STOCK')
         RETURNING id
     """
@@ -199,7 +209,7 @@ def create_symbol(db: Connection, symbol: Symbol) -> Symbol:
                 symbol.source,
                 symbol.isin,
                 symbol.picture,
-                symbol.is_user_created,
+                user_id,
             ),
         )
         row = cursor.fetchone()
@@ -209,3 +219,44 @@ def create_symbol(db: Connection, symbol: Symbol) -> Symbol:
 
     db.commit()
     return get_symbol_by_id(db, row[0])
+
+
+def remove_symbol_by_id(db: Connection, session: Session, symbol_id: str) -> None:
+    """
+    Removes a symbol by its id from the database.
+    """
+    user_id = session.user.id if isinstance(session.user, User) else None
+    if not user_id:
+        raise HTTPException(status_code=400, detail=required_msg("user_id"))
+    if not symbol_id:
+        raise HTTPException(status_code=400, detail=required_msg("symbol_id"))
+
+    symbol = get_symbol_by_id(db, str(symbol_id))
+    if not symbol.is_user_created:
+        raise HTTPException(status_code=400, detail="Cannot delete system-created symbols")
+    if symbol.created_by != user_id:
+        raise HTTPException(status_code=403, detail="Cannot delete symbols created by other users")
+    if _exists_transactions_by_symbol(db, symbol_id):
+        raise HTTPException(status_code=400, detail="Cannot delete symbols associated with existing transactions")
+
+    sql = """
+        DELETE FROM symbols
+        WHERE id = %s AND created_by = %s
+    """
+    with db.cursor() as cursor:
+        cursor.execute(sql, (symbol_id, user_id))
+    db.commit()
+
+
+def _exists_transactions_by_symbol(db: Connection, symbol_id: str) -> bool:
+    sql = """
+        SELECT 1
+        FROM transactions
+        WHERE symbol_id = %s
+        LIMIT 1
+    """
+
+    with db.cursor() as cursor:
+        cursor.execute(sql, (symbol_id,))
+        row = cursor.fetchone()
+    return row is not None

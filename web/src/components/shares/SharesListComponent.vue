@@ -11,11 +11,12 @@
                 <div
                     class="absolute top-0 left-4 -translate-y-1/2 bg-gray-600 text-white text-xs px-2 py-0.5 rounded shadow"
                 >
-                    {{ item.source !== 'created' ? item.source : 'N/A' }}
+                    {{ !isCreated(item) ? item.source : 'N/A' }}
                 </div>
                 <SharesItemComponent
                     :item="item"
-                    @favorite="$emit('favorite', item)"
+                    @favorite="emit('favorite', item)"
+                    @remove="emit('remove', item)"
                     @image-error="item.picture = undefined"
                 />
             </li>
@@ -62,7 +63,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue';
 import TransactionModal from '@/components/modals/TransactionModal.vue';
 import IntersectionObserver from '@/components/utils/IntersectionObserver.vue';
 import type { TransactionItem } from '@/types/portfolio';
-import { accountCanHaveShares } from '@/utils/rules';
+import { accountCanHaveShares, isCreated } from '@/utils/rules';
 import { useErrorsStore } from '@/stores/errors';
 
 const ITEMS_PER_PATE = 20;
@@ -71,7 +72,7 @@ const props = defineProps({
     values: { type: Array as PropType<StockSymbol[]>, default: () => [] },
     showLoadMore: { type: Boolean, default: false },
 });
-const emit = defineEmits(['favorite', 'transact', 'load-more']);
+const emit = defineEmits(['favorite', 'transact', 'load-more', 'remove']);
 
 const { currency, account: selectedAccount } = storeToRefs(useSettingsStore());
 const { isLoading } = storeToRefs(useLoadingStore());

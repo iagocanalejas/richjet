@@ -44,11 +44,17 @@ async function removeFromWatchlist(item: StockSymbol) {
     return safeFetch(f, `Error removing ${item.ticker} from watchlist`, false);
 }
 
+async function removeFromWatchlistAndDeleteSymbol(item: StockSymbol) {
+    const f = fetch(`${BASE_URL}/symbols/${item.id}`, { method: 'DELETE', credentials: 'include' });
+    return safeFetch(f, `Error removing symbol ${item.ticker}`, false);
+}
+
 const WatchlistService = {
     retrieveWatchlist,
     addToWatchlist,
     addToWatchlistCreatingSymbol,
     updateWatchlistSymbolPrice,
     removeFromWatchlist,
+    removeFromWatchlistAndDeleteSymbol,
 };
 export default WatchlistService;

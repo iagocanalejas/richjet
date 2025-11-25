@@ -34,7 +34,7 @@ export function dateFnsLocale() {
             return import('date-fns/locale/es');
         default:
             try {
-                return import(`date-fns/locale/${locale()}`);
+                return import(/* @vite-ignore */ `date-fns/locale/${locale()}`);
             } catch {
                 return import('date-fns/locale/en-US');
             }

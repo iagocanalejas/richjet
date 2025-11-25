@@ -11,7 +11,7 @@ from .symbol import Symbol, create_symbol, get_symbol_by_ticker
 
 _WATCHLIST_SELECT = """
 s.id AS symbol_id, w.user_id, s.ticker, s.display_name, s.name, s.currency, s.source, s.isin, s.picture,
-w.manual_price AS manual_price, s.user_created, TRUE AS is_favorite, qp.price, qp.previous_close, qp.currency
+w.manual_price AS manual_price, s.created_by, TRUE AS is_favorite, qp.price, qp.previous_close, qp.currency
 """
 
 
@@ -125,7 +125,7 @@ def create_watchlist_item(db: Connection, session: Session, symbol: Symbol) -> S
         except HTTPException as e:
             if e.status_code != 404:
                 raise e
-            symbol = create_symbol(db, symbol)
+            symbol = create_symbol(db, session, symbol)
 
     if not symbol.id:
         raise HTTPException(status_code=404, detail=f"Symbol {symbol.ticker} not found")
@@ -203,7 +203,7 @@ def remove_watchlist_item(db: Connection, session: Session, symbol_id: str) -> N
         cursor.execute(
             """
             DELETE FROM symbols
-            WHERE id = %s::uuid AND user_created AND NOT EXISTS (
+            WHERE id = %s::uuid AND created_by IS NOT NULL AND NOT EXISTS (
                 SELECT 1 FROM watchlist WHERE symbol_id = %s::uuid
             )
             """,

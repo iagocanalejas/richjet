@@ -33,6 +33,7 @@
                     <SharesListComponent
                         :values="filteredWatchlist"
                         @favorite="toggleFavorite"
+                        @remove="showConfirmationModal"
                         @transact="addTransaction"
                     />
                 </div>
@@ -57,6 +58,7 @@
     >
         <ShareModal v-if="isShareModalOpen && share" :share="share" @save="save" @close="closeModal" />
     </div>
+    <ConfirmationModal ref="confirmationModal" @confirm="removeCreatedSymbol" />
 </template>
 
 <script setup lang="ts">
@@ -71,14 +73,19 @@ import { storeToRefs } from 'pinia';
 import ShareModal from '@/components/modals/ShareModal.vue';
 import { useSettingsStore } from '@/stores/settings';
 import { useTransactionsStore } from '@/stores/transactions';
+import ConfirmationModal from '@/components/modals/ConfirmationModal.vue';
+import { useErrorsStore } from '@/stores/errors';
 
 const stockStore = useStocksStore();
-const { addTransaction } = useTransactionsStore();
+const transactionsStore = useTransactionsStore();
+const { transactions } = storeToRefs(transactionsStore);
+const { addTransaction } = transactionsStore;
 const watchlistStore = useWatchlistStore();
 const { watchlist } = storeToRefs(watchlistStore);
 const { isInWatchlist, addToWatchlist, removeFromWatchlist } = watchlistStore;
 const settingsStore = useSettingsStore();
 const { currency, settings } = storeToRefs(settingsStore);
+const { addError } = useErrorsStore();
 
 const showFavorites = ref(true);
 const showLoadMore = ref(false);
@@ -136,6 +143,11 @@ watch(
     () => resetSearch()
 );
 
+const confirmationModal = ref<InstanceType<typeof ConfirmationModal> | null>(null);
+function showConfirmationModal(symbol: StockSymbol) {
+    confirmationModal.value?.show('Delete Symbol', 'This action cannot be undone.', [symbol], 'error');
+}
+
 function resetSearch() {
     _query = undefined;
     _isWatchlistFiltered = false;
@@ -163,6 +175,14 @@ function save(shareData: Omit<StockSymbol, 'id'>) {
     watchlistStore.addToWatchlistCreatingSymbol(shareData);
     isShareModalOpen.value = false;
     share.value = undefined;
+}
+
+function removeCreatedSymbol(symbol: StockSymbol) {
+    if (transactions.value.some((tx) => tx.symbol.id === symbol.id)) {
+        addError({ readable_message: 'Trying to remove a symbol with existing transactions' });
+        return;
+    }
+    watchlistStore.removeFromWatchlistAndDeleteSymbol(symbol);
 }
 
 function closeModal() {

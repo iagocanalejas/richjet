@@ -30,6 +30,28 @@
         </div>
 
         <button
+            v-if="isCreated(item)"
+            @click.stop="emit('remove', item)"
+            class="text-gray-400 hover:text-red-500 transition-colors"
+            title="Remove"
+        >
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                class="w-5 h-5"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a1 1 0 01-1-1V5a1 1 0
+               011-1h8a1 1 0 011 1v1a1 1 0 01-1 1m-7 0h8"
+                />
+            </svg>
+        </button>
+        <button
             v-if="!item.is_favorite || item.id"
             @click.stop="$emit('favorite', item)"
             class="text-gray-400 hover:text-red-500 transition-colors"
@@ -81,9 +103,10 @@ import { formatCurrency } from '@/utils/utils';
 import { textColorByRentability } from '@/utils/styles';
 import { storeToRefs } from 'pinia';
 import { type PropType } from 'vue';
+import { isCreated } from '@/utils/rules';
 
 defineProps({ item: { type: Object as PropType<StockSymbol>, required: true } });
-defineEmits(['favorite', 'image-error']);
+const emit = defineEmits(['favorite', 'image-error', 'remove']);
 
 const settingsStore = useSettingsStore();
 const { currency } = storeToRefs(settingsStore);

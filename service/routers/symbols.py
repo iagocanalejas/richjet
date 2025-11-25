@@ -1,6 +1,7 @@
 from db import get_db
 from fastapi import APIRouter, Body, Depends
-from models.symbol import Symbol, create_symbol
+from models.symbol import Symbol, create_symbol, remove_symbol_by_id
+from models.user import User
 from models.watchlist import create_watchlist_item
 
 from routers.auth import get_session
@@ -14,7 +15,17 @@ async def api_create_symbol(
     db=Depends(get_db),
     session=Depends(get_session),
 ):
-    symbol = Symbol.from_dict(**symbol_data, is_user_created=True)
-    symbol = create_symbol(db, symbol)
-    create_watchlist_item(db, session.user.id, symbol)
+    user_id = session.user.id if isinstance(session.user, User) else None
+    symbol = Symbol.from_dict(**symbol_data, created_by=user_id)
+    symbol = create_symbol(db, session, symbol)
+    create_watchlist_item(db, session, symbol)
     return symbol.to_dict()
+
+
+@router.delete("/{symbol_id}")
+async def api_remove_symbol(
+    symbol_id: str,
+    db=Depends(get_db),
+    session=Depends(get_session),
+):
+    remove_symbol_by_id(db, session, symbol_id)

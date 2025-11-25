@@ -1,4 +1,5 @@
 import type { PortfolioItem, TransactionItem, TransactionType } from '@/types/portfolio';
+import type { StockSymbol } from '@/types/stock';
 import type { Account } from '@/types/user';
 
 export function isLite(plan: string): boolean {
@@ -26,6 +27,10 @@ export function isSell(t: TransactionItem | TransactionType): boolean {
 export function isDividend(t: TransactionItem | TransactionType): boolean {
     const type = typeof t === 'string' ? t : t.transaction_type;
     return type === 'DIVIDEND' || type === 'DIVIDEND-CASH';
+}
+
+export function isCreated(s: StockSymbol): boolean {
+    return s.source.toUpperCase() === 'CREATED';
 }
 
 export function isTradePortfolioItem(item: PortfolioItem): boolean {
