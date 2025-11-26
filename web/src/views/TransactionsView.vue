@@ -53,8 +53,8 @@ const selectedType = ref<'BUY' | 'SELL' | 'DIVIDEND' | ''>('');
 const filteredTransactions = computed(() =>
     transactions.value
         .filter((tx) => !selectedAccount.value?.id || tx.account?.id === selectedAccount.value.id)
-        .filter((tx) => tx.symbol.ticker.toLowerCase().includes(query.value.toLowerCase()))
         .filter((tx) => (selectedType.value ? isTransactionOfType(selectedType.value, tx) : true))
+        .filter((tx) => transactionMatchesQuery(tx, query.value))
 );
 
 const confirmationModal = ref<InstanceType<typeof ConfirmationModal> | null>(null);
@@ -79,5 +79,14 @@ function isTransactionOfType(type: 'BUY' | 'SELL' | 'DIVIDEND', transaction: Tra
         return transaction.transaction_type === 'DIVIDEND' || transaction.transaction_type === 'DIVIDEND-CASH';
     }
     return transaction.transaction_type === type;
+}
+
+function transactionMatchesQuery(transaction: TransactionItem, query: string): boolean {
+    const q = query.toLowerCase();
+    return (
+        transaction.symbol.ticker.toLowerCase().includes(q) ||
+        transaction.symbol.name.toLowerCase().includes(q) ||
+        transaction.symbol.display_name.toLowerCase().includes(q)
+    );
 }
 </script>

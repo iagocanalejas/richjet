@@ -116,7 +116,10 @@ async function _filterResults(query: string, is_load_more: boolean = false) {
 
     if (!is_load_more) {
         const results = watchlist.value.filter(
-            (s) => s.ticker.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+            (s) =>
+                s.ticker.toLowerCase().includes(q) ||
+                s.name.toLowerCase().includes(q) ||
+                s.display_name.toLowerCase().includes(q)
         );
         _isWatchlistFiltered = true;
         if (results.length > 0) {
