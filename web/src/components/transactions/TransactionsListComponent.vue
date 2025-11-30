@@ -43,12 +43,12 @@ import TransactionItemComponent from './TransactionItemComponent.vue';
 const emit = defineEmits(['edit', 'remove']);
 const { isLoading } = storeToRefs(useLoadingStore());
 
-const ITEMS_PER_PATE = 20;
+const ITEMS_PER_PAGE = 20;
 
 const props = defineProps({ values: { type: Array as PropType<TransactionItem[]>, default: () => [] } });
 
 const currentPage = ref(0);
 const visibleItems = computed(() => {
-    return props.values.slice(0, (currentPage.value + 1) * ITEMS_PER_PATE);
+    return props.values.slice(0, (currentPage.value + 1) * ITEMS_PER_PAGE);
 });
 </script>
