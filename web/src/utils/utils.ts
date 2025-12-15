@@ -28,15 +28,21 @@ export function locale() {
     return mapWeirdLocales(navigator.language || 'en-US');
 }
 
-export function dateFnsLocale() {
+export async function dateFnsLocale() {
     switch (locale()) {
         case 'es-ES':
-            return import('date-fns/locale/es');
+            const mod = await import('date-fns/locale/es');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (mod as any).default;
         default:
             try {
-                return import(/* @vite-ignore */ `date-fns/locale/${locale()}`);
+                const mod = await import(/* @vite-ignore */ `date-fns/locale/${locale()}`);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                return (mod as any).default;
             } catch {
-                return import('date-fns/locale/en-US');
+                const mod = await import('date-fns/locale/en-US');
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                return (mod as any).default;
             }
     }
 }

@@ -84,7 +84,7 @@
                         v-model="transactionCopy.date"
                         :format="dateFormat"
                         :locale="datePickerLocale"
-                        :enable-time-picker="false"
+                        :time-config="{ enableTimePicker: false }"
                         auto-apply
                         dark
                     />
