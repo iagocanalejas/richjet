@@ -19,7 +19,7 @@ def _normalize_currency_args(func):
 
 
 @_normalize_currency_args
-@alru_cache(maxsize=128)
+@alru_cache(maxsize=128, ttl=43200)  # cache results for 12 hours
 async def _get_exchange_rate(from_currency: str, to_currency: str):
     url = f"{'https://v6.exchangerate-api.com/v6'}/{EXCHANGERATE_API_KEY}/pair/{from_currency}/{to_currency}"
     async with httpx.AsyncClient(timeout=3) as client:

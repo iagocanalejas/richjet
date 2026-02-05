@@ -16,7 +16,7 @@ class GoogleClient:
     NAME = "google"
     BASE_URL = "https://www.google.com/finance/quote"
 
-    @alru_cache(maxsize=128)
+    @alru_cache(maxsize=128, ttl=43200)  # cache results for 12 hours
     async def search_stock(self, q: str) -> list[Symbol]:
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get(
@@ -72,7 +72,7 @@ class GoogleClient:
 
         return symbols
 
-    @alru_cache(maxsize=128)
+    @alru_cache(maxsize=128, ttl=43200)  # cache results for 12 hours
     async def get_quote(self, symbol: str) -> StockQuote:
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get(

@@ -103,7 +103,7 @@ async def get_accounts_by_user(db: Connection, session: Session) -> list[Account
         LEFT JOIN account_balances ab ON a.id = ab.account_id
         WHERE a.user_id = %s::uuid
         GROUP BY a.id
-        ORDER BY MIN(a.created_at);
+        ORDER BY name;
     """
 
     with db.cursor(cursor_factory=RealDictCursor) as cursor:
