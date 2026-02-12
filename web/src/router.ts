@@ -47,17 +47,16 @@ const router = createRouter({
 });
 
 let initialized = false;
-router.beforeEach(async (to, __, next) => {
-    if (to.name === 'auth-callback') return next();
+router.beforeEach(async (to) => {
+    if (to.name === 'auth-callback') return;
     if (!initialized) {
         const authStore = useAuthStore();
         await authStore.init();
-        if (!authStore.isLogged) return next();
+        if (!authStore.isLogged) return;
 
         await useSettingsStore().init();
         initialized = true;
     }
-    next();
 });
 
 export default router;

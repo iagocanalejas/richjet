@@ -31,15 +31,18 @@ export function locale() {
 export async function dateFnsLocale() {
     switch (locale()) {
         case 'es-ES':
+            console.info('Using Spanish locale for date-fns');
             const mod = await import('date-fns/locale/es');
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return (mod as any).default;
         default:
             try {
+                console.info(`Trying to load date-fns locale for ${locale()}`);
                 const mod = await import(/* @vite-ignore */ `date-fns/locale/${locale()}`);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 return (mod as any).default;
             } catch {
+                console.warn(`Locale ${locale()} not found for date-fns, falling back to en-US`);
                 const mod = await import('date-fns/locale/en-US');
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 return (mod as any).default;
