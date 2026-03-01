@@ -1,8 +1,8 @@
-async-lru==2.1.0
-fastapi[standard]==0.128.4
+async-lru==2.2.0
+fastapi[standard]==0.134.0
 google-auth==2.48.0
 parsel==1.11.0
 psycopg2-binary==2.9.11
 pyutils @ git+https://github.com/iagocanalejas/pyutils.git@master
 requests==2.32.5
-stripe==14.3.0
+stripe==14.4.0
